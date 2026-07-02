@@ -1,0 +1,89 @@
+D:\Pratima CRM Saas
+├── AGENTS.md
+├── CLAUDE.md
+├── components.json
+├── eslint.config.mjs
+├── generate-artifact.js
+├── lint-staged.config.js
+├── next-env.d.ts
+├── next.config.ts
+├── out.txt
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── prisma
+|  └── schema.prisma
+├── prisma.config.ts
+├── public
+|  ├── file.svg
+|  ├── globe.svg
+|  ├── next.svg
+|  ├── vercel.svg
+|  └── window.svg
+├── README.md
+├── src
+|  ├── app
+|  |  ├── (dashboard)
+|  |  |  ├── layout.tsx
+|  |  |  ├── page.tsx
+|  |  |  ├── profile
+|  |  |  |  └── page.tsx
+|  |  |  └── users
+|  |  |     └── page.tsx
+|  |  ├── actions
+|  |  |  └── user.actions.ts
+|  |  ├── api
+|  |  |  └── v1
+|  |  |     └── users
+|  |  ├── favicon.ico
+|  |  ├── globals.css
+|  |  ├── layout.tsx
+|  |  └── page.tsx
+|  ├── auth.ts
+|  ├── components
+|  |  ├── features
+|  |  |  └── users
+|  |  |     ├── columns.tsx
+|  |  |     ├── user-drawer.tsx
+|  |  |     ├── user-filters.tsx
+|  |  |     ├── user-form.tsx
+|  |  |     └── user-table.tsx
+|  |  ├── layout
+|  |  |  ├── dashboard-shell.tsx
+|  |  |  ├── header.tsx
+|  |  |  └── sidebar.tsx
+|  |  ├── theme-provider.tsx
+|  |  └── ui
+|  |     ├── avatar.tsx
+|  |     ├── badge.tsx
+|  |     ├── breadcrumb.tsx
+|  |     ├── button.tsx
+|  |     ├── card.tsx
+|  |     ├── checkbox.tsx
+|  |     ├── dropdown-menu.tsx
+|  |     ├── form.tsx
+|  |     ├── input.tsx
+|  |     ├── label.tsx
+|  |     ├── select.tsx
+|  |     ├── sheet.tsx
+|  |     └── table.tsx
+|  ├── config
+|  |  └── site.ts
+|  ├── env.ts
+|  ├── lib
+|  |  ├── prisma.ts
+|  |  ├── utils.ts
+|  |  └── validations
+|  |     └── user.schema.ts
+|  ├── proxy.ts
+|  ├── repositories
+|  |  ├── role.repository.ts
+|  |  └── user.repository.ts
+|  └── services
+|     └── user.service.ts
+├── tsconfig.json
+└── tsconfig.tsbuildinfo
+
+directory: 3083 file: 18941
+
+ignored: directory (42)
