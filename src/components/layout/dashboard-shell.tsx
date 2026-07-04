@@ -8,14 +8,15 @@ import { Header } from './header';
 
 interface DashboardShellProps {
   children: React.ReactNode;
+  context: any;
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, context }: DashboardShellProps) {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
+        <Header context={context} />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>

@@ -41,7 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: user.email,
             tenantId: user.tenantId,
             sessionId: loginSession.id,
-            remember: credentials.remember === 'true'
+            remember: (credentials as any).remember === 'true'
           } as any;
         } catch (error: any) {
           throw new Error(error.message);

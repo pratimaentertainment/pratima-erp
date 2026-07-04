@@ -5,14 +5,16 @@
 import { Bell } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
+import { BranchSwitcher } from './branch-switcher';
 
-export function Header() {
+export function Header({ context }: { context?: any }) {
   const { setTheme, theme } = useTheme();
 
   return (
     <header className="h-16 flex items-center justify-between px-6 border-b bg-background">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-semibold">Dashboard</h2>
+        <BranchSwitcher context={context} />
       </div>
       <div className="flex items-center gap-4">
         <Button

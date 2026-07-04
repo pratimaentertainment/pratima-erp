@@ -27,8 +27,11 @@ export default async function UsersPage(props: { searchParams: SearchParams }) {
   const roleId = typeof searchParams.role === 'string' ? searchParams.role : undefined;
 
   // Fetch initial data
-  const { users, total } = await UserService.getUsers(tenantId, { take: 50, search, status, roleId });
-  const roles = await RoleRepository.findAll(tenantId);
+  const [usersData, roles] = await Promise.all([
+    UserService.getUsers(tenantId, { take: 50, search, status, roleId }),
+    RoleRepository.findRolesByTenant(tenantId)
+  ]);
+  const { users, total } = usersData;
 
   return (
     <div className="space-y-6">

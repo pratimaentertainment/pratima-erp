@@ -151,14 +151,28 @@ enum InvoiceStatus {
 // ------------------------------------------------------
 
 model Tenant {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  subdomain      String?        @unique
-  isActive       Boolean        @default(true)
-  
-  currency       String         @default("USD")
-  country        String         @default("US")
-  timezone       String         @default("UTC")
+  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                  String
+  subdomain             String?        @unique
+  companyLegalName      String?
+  tradeName             String?
+  logoUrl               String?
+  gstNumber             String?
+  panNumber             String?
+  cinNumber             String?
+  website               String?
+  email                 String?
+  phone                 String?
+  country               String         @default("US")
+  state                 String?
+  city                  String?
+  address               String?
+  postalCode            String?
+  timezone              String         @default("UTC")
+  currency              String         @default("USD")
+  language              String         @default("en")
+  fiscalYearStartMonth  Int            @default(1)
+  isActive              Boolean        @default(true)
 
   subscriptions  Subscription[]
   branches       Branch[]
@@ -167,13 +181,12 @@ model Tenant {
   packages       Package[]
   auditLogs      AuditLog[]
   roles          Role[]
+  projects       Project[]
+  leads          Lead[]
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
-
-  projects       Project[]
-  leads          Lead[]
 }
 
 model Subscription {
@@ -197,9 +210,25 @@ model Branch {
   tenantId       String         @db.Uuid
   tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   
-  name           String
+  code           String?
+  name           String         // maps to branchName
+  shortName      String?
+  logoUrl        String?
+  gstNumber      String?
+  email          String?
+  phone          String?
   address        String?
+  city           String?
+  state          String?
+  country        String         @default("US")
+  postalCode     String?
+  latitude       Decimal?       @db.Decimal(10, 8)
+  longitude      Decimal?       @db.Decimal(11, 8)
   timezone       String         @default("UTC")
+  
+  managerUserId  String?        @db.Uuid
+  isHeadOffice   Boolean        @default(false)
+  isActive       Boolean        @default(true)
   
   userBranches   UserBranch[]
   leads          Lead[]
@@ -211,6 +240,7 @@ model Branch {
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
 
+  @@unique([tenantId, code])
   @@index([tenantId])
 }
 
@@ -280,9 +310,13 @@ model UserBranch {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   branchId       String   @db.Uuid
   branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  
   isPrimary      Boolean  @default(false)
-
+  isActive       Boolean  @default(true)
+  
+  joinedAt       DateTime @default(now())
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([userId, branchId])
 }

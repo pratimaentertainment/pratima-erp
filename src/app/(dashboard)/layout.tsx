@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { auth, signOut } from '@/auth';
 import { redirect } from 'next/navigation';
 import { AuthRepository } from '@/repositories/auth.repository';
+import { getActiveContext } from '@/lib/context';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -22,5 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  const context = await getActiveContext();
+
+  return <DashboardShell context={context}>{children}</DashboardShell>;
 }
