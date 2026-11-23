@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { SetupInput } from '@/lib/validations/setup.schema';
+import { RoleService } from '@/services/role.service';
 
 export class SetupService {
   /**
@@ -28,6 +29,8 @@ export class SetupService {
       const tenant = await tx.tenant.create({
         data: {
           name: data.companyName,
+          slug: data.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'studio',
+          contactPhone: '+919999999999',
           currency: data.currency,
           country: data.country,
           timezone: data.timezone,
@@ -40,20 +43,14 @@ export class SetupService {
           tenantId: tenant.id,
           name: data.branchName,
           timezone: data.timezone,
+          isHeadOffice: true,
+          isActive: true,
         },
       });
 
-      // 3. Create SUPER_ADMIN Role
-      const role = await tx.role.create({
-        data: {
-          tenantId: tenant.id,
-          name: 'SUPER_ADMIN',
-          description: 'System Administrator with full access',
-          isSystem: true,
-        },
-      });
-
-      // Note: In a full system, you'd insert default permissions into RolePermission here.
+      // 3. Provision Default Roles with full permissions
+      const roles = await RoleService.provisionTenantAdminRoles(tenant.id, tx);
+      const superAdminRole = roles.find(r => r.name === 'SUPER_ADMIN') || roles[0];
 
       // 4. Create First User
       const user = await tx.user.create({
@@ -65,7 +62,7 @@ export class SetupService {
           passwordHash,
           status: 'ACTIVE', // Override default PENDING_INVITATION
           roles: {
-            create: { roleId: role.id },
+            create: { roleId: superAdminRole.id },
           },
           branches: {
             create: { branchId: branch.id, isPrimary: true },

@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { switchActiveBranchAction } from '@/app/actions/branch.actions';
+import { switchActiveBranchAction } from '@/actions/branch.actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 

@@ -10,7 +10,8 @@ export class AuthService {
   /**
    * Log an authentication audit event
    */
-  static async logAuthEvent(tenantId: string, userId: string, action: string, ipAddress?: string) {
+  static async logAuthEvent(tenantId: string | null | undefined, userId: string, action: string, ipAddress?: string) {
+    if (!tenantId) return;
     await prisma.auditLog.create({
       data: {
         tenantId,
@@ -31,16 +32,28 @@ export class AuthService {
     // For this ERP, email + tenantId is unique, but login is usually by email. 
     // We assume email is unique globally for login purposes, or the user enters tenant subdomain.
     // Let's find first user by email.
+    const normalizedEmail = (email || '').trim().toLowerCase();
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: {
+        email: { equals: normalizedEmail, mode: 'insensitive' },
+      },
+      include: { branches: { where: { isActive: true } } }
     });
 
     if (!user) {
       throw new Error('Invalid credentials');
     }
 
-    if (user.status !== 'ACTIVE') {
-      throw new Error('Account is not active.');
+    if (user.status !== 'ACTIVE' || !user.isActive) {
+      throw new Error('Account is not active or has been deactivated.');
+    }
+
+    if (user.canLogin === false) {
+      throw new Error('This account is not authorized for portal login.');
+    }
+
+    if (!user.passwordHash) {
+      throw new Error('This account does not have login credentials configured.');
     }
 
     if (user.isLocked && user.lockUntil && user.lockUntil > new Date()) {
@@ -147,8 +160,9 @@ export class AuthService {
 
     await this.logAuthEvent(user.tenantId, user.id, 'PASSWORD_RESET_REQUESTED', ipAddress);
 
-    // TODO: Send email
-    console.log(`\n\n[DEV] PASSWORD RESET URL: http://localhost:3000/reset-password?token=${tokenStr}\n\n`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n\n[DEV] PASSWORD RESET URL: http://localhost:3000/reset-password?token=${tokenStr}\n\n`);
+    }
   }
 
   /**
@@ -192,16 +206,20 @@ export class AuthService {
         where: { id: token.id },
         data: { usedAt: new Date() },
       }),
-      prisma.auditLog.create({
-        data: {
-          tenantId: user.tenantId,
-          userId: user.id,
-          action: 'PASSWORD_CHANGED',
-          entityType: 'User',
-          entityId: user.id,
-          ipAddress,
-        },
-      }),
+      ...(user.tenantId
+        ? [
+            prisma.auditLog.create({
+              data: {
+                tenantId: user.tenantId,
+                userId: user.id,
+                action: 'PASSWORD_CHANGED',
+                entityType: 'User',
+                entityId: user.id,
+                ipAddress,
+              },
+            }),
+          ]
+        : []),
       // Invalidate all sessions
       prisma.loginSession.updateMany({
         where: { userId: user.id, status: 'ACTIVE' },
@@ -216,6 +234,8 @@ export class AuthService {
   static async changePassword(userId: string, currentPasswordStr: string, newPasswordStr: string, ipAddress?: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
+
+    if (!user.passwordHash) throw new Error('User has no existing password configured');
 
     const isValid = await bcrypt.compare(currentPasswordStr, user.passwordHash);
     if (!isValid) throw new Error('Current password is incorrect');
@@ -232,16 +252,20 @@ export class AuthService {
       prisma.passwordHistory.create({
         data: { userId: user.id, passwordHash },
       }),
-      prisma.auditLog.create({
-        data: {
-          tenantId: user.tenantId,
-          userId: user.id,
-          action: 'PASSWORD_CHANGED',
-          entityType: 'User',
-          entityId: user.id,
-          ipAddress,
-        },
-      }),
+      ...(user.tenantId
+        ? [
+            prisma.auditLog.create({
+              data: {
+                tenantId: user.tenantId,
+                userId: user.id,
+                action: 'PASSWORD_CHANGED',
+                entityType: 'User',
+                entityId: user.id,
+                ipAddress,
+              },
+            }),
+          ]
+        : []),
     ]);
   }
 }

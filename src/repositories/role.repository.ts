@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 
 export class RoleRepository {
   static async findRolesByTenant(tenantId: string) {
-    return prisma.role.findMany({
+    return prisma.tenantRole.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -15,7 +15,7 @@ export class RoleRepository {
   }
 
   static async getRoleWithPermissions(roleId: string, tenantId: string) {
-    return prisma.role.findUnique({
+    return prisma.tenantRole.findUnique({
       where: { id: roleId, tenantId },
       include: {
         permissions: {
@@ -27,8 +27,8 @@ export class RoleRepository {
     });
   }
 
-  static async createRole(tenantId: string, data: Prisma.RoleUncheckedCreateInput) {
-    return prisma.role.create({
+  static async createRole(tenantId: string, data: Prisma.TenantRoleUncheckedCreateInput) {
+    return prisma.tenantRole.create({
       data: {
         ...data,
         tenantId,
@@ -36,15 +36,15 @@ export class RoleRepository {
     });
   }
 
-  static async updateRole(tenantId: string, roleId: string, data: Prisma.RoleUncheckedUpdateInput) {
-    return prisma.role.update({
+  static async updateRole(tenantId: string, roleId: string, data: Prisma.TenantRoleUncheckedUpdateInput) {
+    return prisma.tenantRole.update({
       where: { id: roleId, tenantId },
       data
     });
   }
 
   static async deleteRole(tenantId: string, roleId: string) {
-    return prisma.role.delete({
+    return prisma.tenantRole.delete({
       where: { id: roleId, tenantId }
     });
   }
@@ -69,7 +69,7 @@ export class RoleRepository {
 
   static async cloneRole(tenantId: string, sourceRoleId: string, newName: string) {
     return prisma.$transaction(async (tx) => {
-      const sourceRole = await tx.role.findUnique({
+      const sourceRole = await tx.tenantRole.findUnique({
         where: { id: sourceRoleId, tenantId },
         include: { permissions: true }
       });
@@ -77,7 +77,7 @@ export class RoleRepository {
       if (!sourceRole) throw new Error("Source role not found");
 
       // Create new role
-      const newRole = await tx.role.create({
+      const newRole = await tx.tenantRole.create({
         data: {
           tenantId,
           name: newName,
@@ -89,7 +89,7 @@ export class RoleRepository {
       // Clone permissions
       if (sourceRole.permissions.length > 0) {
         await tx.rolePermission.createMany({
-          data: sourceRole.permissions.map(p => ({
+          data: sourceRole.permissions.map((p: any) => ({
             roleId: newRole.id,
             permissionId: p.permissionId
           }))

@@ -11,8 +11,10 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  // Use a hardcoded tenant ID for now as per our foundation setup
-  const tenantId = '00000000-0000-0000-0000-000000000000';
+  const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) {
+    redirect('/login');
+  }
   const user = await UserRepository.findById(tenantId, session.user.id);
 
   if (!user) {

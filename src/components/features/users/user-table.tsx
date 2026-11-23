@@ -61,6 +61,9 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
+    meta: {
+      roles,
+    },
   });
 
   const exportCsv = () => {

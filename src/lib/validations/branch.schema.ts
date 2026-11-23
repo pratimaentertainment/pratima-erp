@@ -19,6 +19,7 @@ export const branchSchema = z.object({
   managerUserId: z.string().uuid().optional().nullable(),
   isHeadOffice: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  status: z.string().optional().nullable().default('ACTIVE'),
 });
 
 export type BranchCreateInput = z.infer<typeof branchSchema>;

@@ -15,7 +15,7 @@ export const userSchema = z.object({
   alternatePhone: z.string().optional(),
   
   roles: z.array(z.string()).min(1, 'At least one role is required'),
-  branches: z.array(z.string()).min(1, 'At least one branch is required'),
+  branches: z.array(z.string()),
 });
 
 export type UserFormValues = z.infer<typeof userSchema>;

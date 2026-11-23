@@ -11,14 +11,23 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  prisma: any;
 };
 
-export const prisma =
+const rawPrisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter,
     log: env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
+
+export const prisma = new Proxy(rawPrisma, {
+  get(target, prop, receiver) {
+    if (prop === 'role') {
+      return (target as any).tenantRole;
+    }
+    return Reflect.get(target, prop, receiver);
+  },
+}) as PrismaClient & { role: any };
 
 if (env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

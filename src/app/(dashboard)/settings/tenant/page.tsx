@@ -1,4 +1,4 @@
-import { getTenantProfileAction } from '@/app/actions/tenant.actions';
+import { getTenantProfileAction } from '@/actions/tenant.actions';
 import { TenantForm } from './tenant-form';
 import { redirect } from 'next/navigation';
 
@@ -10,16 +10,15 @@ export default async function TenantSettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Tenant Profile</h2>
+    <div className="flex-1 space-y-6 p-8 pt-6 max-w-5xl mx-auto">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Tenant Profile & Storefront SEO</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your main business identity and Google My Business integration for your storefront.
+        </p>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4">
-          <TenantForm initialData={result.data} />
-        </div>
-      </div>
+      <TenantForm initialData={result.data} />
     </div>
   );
 }

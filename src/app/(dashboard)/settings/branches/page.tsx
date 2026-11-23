@@ -1,4 +1,4 @@
-import { getBranchesAction } from '@/app/actions/branch.actions';
+import { getBranchesAction } from '@/actions/branch.actions';
 import { BranchTable } from './branch-table';
 import { redirect } from 'next/navigation';
 import { Plus } from 'lucide-react';

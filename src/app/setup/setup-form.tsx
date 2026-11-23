@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { setupSchema, SetupInput } from '@/lib/validations/setup.schema';
-import { bootstrapAction } from '../actions/setup.actions';
+import { bootstrapAction } from '@/actions/setup.actions';
 import { useRouter } from 'next/navigation';
 
 import {

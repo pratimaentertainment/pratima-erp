@@ -10,8 +10,19 @@ export class UserService {
     return UserRepository.findAll(tenantId, params);
   }
 
+  static async findActiveUsers(ctx: any) {
+    return prisma.user.findMany({
+      where: { tenantId: ctx.tenantId, status: 'ACTIVE', deletedAt: null },
+      select: { id: true, name: true, email: true }
+    });
+  }
+
   static async getUser(tenantId: string, id: string) {
     return UserRepository.findById(tenantId, id);
+  }
+
+  static async findById(ctx: any, id: string) {
+    return UserRepository.findById(ctx.tenantId, id);
   }
 
   static async createUser(

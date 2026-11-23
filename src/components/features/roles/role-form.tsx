@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RoleColumnData } from './columns';
-import { createRoleAction, updateRoleAction, cloneRoleAction } from '@/app/actions/role.actions';
+import { createRoleAction, updateRoleAction, cloneRoleAction } from '@/actions/role.actions';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';

@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  engineType = "library"
+  provider        = "prisma-client-js"
+  engineType      = "library"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -20,21 +20,63 @@ enum UserStatus {
   PENDING_INVITATION
 }
 
+enum EmploymentType {
+  IN_HOUSE
+  FREELANCE
+  FREELANCER
+}
+
+enum IngestionStatus {
+  PENDING
+  COPYING
+  VERIFIED
+  CORRUPT
+  MISSING
+}
+
+enum PayoutStatus {
+  PENDING
+  ELIGIBLE_FOR_PAYMENT
+  PAID
+}
+
+enum DocumentTemplateType {
+  AGREEMENT
+  QUOTATION_TERMS
+  INVOICE_TERMS
+  NDA
+  OTHER
+}
+
+enum UserAgreementStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum TokenType {
   RESET_PASSWORD
   EMAIL_VERIFICATION
   TEMPORARY_PASSWORD
 }
 
-enum ShootRole {
-  PHOTOGRAPHER
-  VIDEOGRAPHER
-  DRONE_PILOT
+enum Role {
+  SUPER_ADMIN
+  TENANT_OWNER
+  STAFF
+
+  @@map("UserSystemRole")
+}
+
+enum RoleType {
+  BRANCH_MANAGER
+  PROJECT_MANAGER
+  SALES_MANAGER
   EDITOR
-  ALBUM_DESIGNER
-  GRAPHIC_DESIGNER
+  DESIGNER
   FREELANCER
-  ASSISTANT
+  ADMIN
+  STUDIO_OWNER
 }
 
 enum PlanTier {
@@ -44,15 +86,24 @@ enum PlanTier {
 }
 
 enum SubscriptionStatus {
+  TRIAL
   ACTIVE
   PAST_DUE
+  CANCELLED
   CANCELED
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+  LIFETIME
 }
 
 enum LeadStatus {
   NEW
-  CONTACTED
-  QUOTED
+  QUALIFIED
+  QUOTATION_SENT
+  NEGOTIATION
   WON
   LOST
 }
@@ -64,13 +115,9 @@ enum QuotationStatus {
   REJECTED
 }
 
-enum ProjectStatus {
-  PLANNING
-  UPCOMING_SHOOT
-  POST_PRODUCTION
-  DELIVERED
-  CLOSED
-  CANCELLED
+enum PricingMode {
+  ITEMIZED
+  LUMP_SUM
 }
 
 enum AgreementStatus {
@@ -79,13 +126,52 @@ enum AgreementStatus {
   SIGNED
 }
 
-enum ShootType {
-  PRE_WEDDING
-  WEDDING
-  MATERNITY
-  COMMERCIAL
-  EVENT
-  OTHER
+enum StorageProvider {
+  GOOGLE_DRIVE
+  AWS_S3
+  CLOUDFLARE_R2
+}
+
+enum IntegrationProvider {
+  FACEBOOK
+  GOOGLE
+  INSTAGRAM
+  ZAPIER
+  PABBLY
+  WHATSAPP
+  CUSTOM
+}
+
+enum StorageRecordStatus {
+  ACTIVE
+  DELIVERED
+  EXPIRED
+  ARCHIVED
+}
+
+enum SelectionStatus {
+  DRAFT
+  SHARED
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  EXTENSION_REQUESTED
+  COMPLETED
+}
+
+enum SelectionItemStatus {
+  PENDING
+  SELECTED
+  REJECTED
+}
+
+enum AlbumStatus {
+  DRAFT
+  IN_POST_PRODUCTION
+  SHARED_FOR_REVIEW
+  CHANGES_REQUESTED
+  APPROVED_FOR_PRINT
+  DELIVERED
 }
 
 enum EquipmentCategory {
@@ -102,6 +188,13 @@ enum AssetStatus {
   IN_USE
   MAINTENANCE
   RETIRED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
 }
 
 enum LeaveType {
@@ -128,22 +221,149 @@ enum WorkflowType {
   VIDEO_EDITING
   ALBUM_DESIGN
   ALBUM_PRINTING
+  RAW_INGEST
+  COLOR_GRADING
+  TEASER_REEL
+  CINEMATIC_FILM
+  DELIVERABLE
+  OTHER
 }
 
 enum TaskStatus {
   PENDING
+  READY
+  TODO
   IN_PROGRESS
   REVIEW
+  IN_REVIEW
+  CLIENT_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
   COMPLETED
+  CANCELLED
+}
+
+enum RoyaltyStatus {
+  PENDING
+  SETTLED
+  WAIVED
 }
 
 enum InvoiceStatus {
   DRAFT
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
   SENT
   PARTIAL
-  PAID
   OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CARD
+  CHEQUE
+  OTHER
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  REFUNDED
+}
+
+enum EventBookingStatus {
+  BLOCKED
+  CONFIRMED
+  COMPLETED
   CANCELLED
+}
+
+enum JourneyStatus {
+  ENQUIRY
+  BOOKED
+  SHOOT_COMPLETED
+  SELECTION_PENDING
+  EDITING_IN_PROGRESS
+  ALBUM_PRINTING
+  DELIVERED
+}
+
+enum StaffAssignmentStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  COMPLETED
+}
+
+enum GearAllocationStatus {
+  ALLOCATED
+  CHECKED_OUT
+  IN_FIELD
+  RETURNED
+  DAMAGED
+}
+
+enum DispatchStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum PostProductionStatus {
+  PENDING
+  DATA_DUMPED
+  CLIENT_SELECTION
+  EDITING
+  REVIEW
+  DELIVERED
+  CANCELLED
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum VoucherType {
+  RECEIPT
+  PAYMENT
+  CONTRA
+  JOURNAL
+}
+
+enum EntryType {
+  DEBIT
+  CREDIT
+}
+
+enum TdsSection {
+  NONE
+  SEC_194J_PROFESSIONAL
+  SEC_194J_TECHNICAL
+  SEC_194C_CONTRACTOR
+}
+
+enum CreditNoteReason {
+  EVENT_CANCELLED
+  POST_PRODUCTION_DEFICIENCY
+  CLIENT_DISCOUNT_ADJUSTMENT
+  OVERBILLING_CORRECTION
+  OTHER
+}
+
+enum BroadcastSeverity {
+  INFO
+  WARNING
+  CRITICAL
 }
 
 // ------------------------------------------------------
@@ -151,94 +371,251 @@ enum InvoiceStatus {
 // ------------------------------------------------------
 
 model Tenant {
-  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                  String
-  subdomain             String?        @unique
-  companyLegalName      String?
-  tradeName             String?
-  logoUrl               String?
-  gstNumber             String?
-  panNumber             String?
-  cinNumber             String?
-  website               String?
-  email                 String?
-  phone                 String?
-  country               String         @default("US")
-  state                 String?
-  city                  String?
-  address               String?
-  postalCode            String?
-  timezone              String         @default("UTC")
-  currency              String         @default("USD")
-  language              String         @default("en")
-  fiscalYearStartMonth  Int            @default(1)
-  isActive              Boolean        @default(true)
+  id                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                       String
+  subdomain                  String?            @unique
+  slug                       String             @unique
+  contactPhone               String             @unique
+  bio                        String?
+  companyLegalName           String?
+  tradeName                  String?
+  logoUrl                    String?
+  gstNumber                  String?
+  gstinNumber                String?
+  isGstRegistered            Boolean            @default(false)
+  isTdsEnabled               Boolean            @default(false)
+  isAdvancedInventoryEnabled Boolean            @default(false)
+  isAIGuestPortalEnabled     Boolean            @default(false)
+  universalStudioQrCode      String?            @unique
+  panNumber                  String?            @unique
+  cinNumber                  String?
+  website                    String?
+  email                      String?
+  phone                      String?
+  subscriptionStatus         SubscriptionStatus @default(TRIAL)
+  trialEndsAt                DateTime?
+  country                    String             @default("US")
+  state                      String?
+  city                       String?
+  address                    String?
+  postalCode                 String?
+  timezone                   String             @default("UTC")
+  currency                   String             @default("USD")
+  language                   String             @default("en")
+  fiscalYearStartMonth       Int                @default(1)
+  bankDetails                Json?
+  defaultPortfolioUrls       String[]           @default([])
+  defaultPromoVideoUrl       String?
+  whyChooseUs                String[]           @default([])
+  gmbPlaceId                 String?
+  isActive                   Boolean            @default(true)
 
-  subscriptions  Subscription[]
-  branches       Branch[]
-  users          User[]
-  vendors        Vendor[]
-  packages       Package[]
-  auditLogs      AuditLog[]
-  roles          Role[]
-  projects       Project[]
-  leads          Lead[]
+  subscriptions     Subscription[]
+  branches          Branch[]
+  users             User[]
+  vendors           Vendor[]
+  packages          Package[]
+  auditLogs         AuditLog[]
+  roles             TenantRole[]
+  leads             Lead[]
+  numberSeries      NumberSeries[]
+  activityTimelines ActivityTimeline[]
+  attachments       Attachment[]
+  states            State[]
+  cities            City[]
+  eventTypes        EventType[]
+  leadSources       LeadSource[]
+  paymentModes      PaymentMode[]
+  packageCategories PackageCategory[]
+  taxRates          TaxRate[]
+  serviceComponents ServiceComponent[]
+  customers         Customer[]
+  inquiries         Inquiry[]
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  followUps              FollowUp[]
+  packageItems           PackageItem[]
+  quotationRevisions     QuotationRevision[]
+  quotationRevisionItems QuotationRevisionItem[]
+  invoices               Invoice[]
+  invoiceItems           InvoiceItem[]
+  payments               Payment[]
+  eventBookings          EventBooking[]
+  subEvents              SubEvent[]
+  staffAssignments       StaffAssignment[]
+  workflowTasks          WorkflowTask[]
+  documentTemplates      DocumentTemplate[]
+  userAgreements         UserAgreement[]
+  storageIntegrations    StorageIntegration[]
+  storageRecords         StorageRecord[]
+  clientSelections       ClientSelection[]
+  selectionItems         SelectionItem[]
+  galleryFolders         GalleryFolder[]
+  galleryPhotos          GalleryPhoto[]
+  albumProjects          AlbumProject[]
+  albumPages             AlbumPage[]
+  albumComments          AlbumComment[]
+  tenantIntegrations     TenantIntegration[]
+  equipments             Equipment[]
+  postProductionJobs     PostProductionJob[]
+  accounts               Account[]
+  financialVouchers      FinancialVoucher[]
+  promotionalOffers      PromotionalOffer[]
+  subscription           TenantSubscription?
+  transactions           BillingTransaction[]
+  shootGearAllocations   ShootGearAllocation[]
+  callSheets             CallSheet[]
+  dispatchLogs           DispatchLog[]
+  dataIngestionJobs      DataIngestionJob[]
+  creditNotes            CreditNote[]
+  equipmentMaintenances  EquipmentMaintenance[]
+  gearCheckLogs          GearCheckLog[]
+  clientGalleries        ClientGallery[]
+  photoSelections        PhotoSelection[]
+  guestLeads             GuestLead[]
+  vehicles               Vehicle[]
+  vehicleBookings        VehicleBooking[]
+  isFranchisor           Boolean                  @default(false)
+  parentTenantId         String?                  @db.Uuid
+  parentTenant           Tenant?                  @relation("FranchiseHierarchy", fields: [parentTenantId], references: [id], onDelete: SetNull)
+  franchisees            Tenant[]                 @relation("FranchiseHierarchy")
+  royaltyPercent         Decimal?                 @db.Decimal(5, 2)
+  franchisorRoyalties    FranchiseRoyaltyLedger[] @relation("FranchisorRoyalties")
+  franchiseeRoyalties    FranchiseRoyaltyLedger[] @relation("FranchiseeRoyalties")
+
+  @@index([slug])
+  @@index([contactPhone])
+  @@index([panNumber])
+  @@index([parentTenantId])
 }
 
 model Subscription {
-  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String             @db.Uuid
-  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  planTier       PlanTier
-  status         SubscriptionStatus @default(ACTIVE)
-  stripeId       String?            @unique
-  expiresAt      DateTime?
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  planTier  PlanTier
+  status    SubscriptionStatus @default(ACTIVE)
+  stripeId  String?            @unique
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }
 
-model Branch {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  code           String?
-  name           String         // maps to branchName
-  shortName      String?
-  logoUrl        String?
-  gstNumber      String?
-  email          String?
-  phone          String?
-  address        String?
-  city           String?
-  state          String?
-  country        String         @default("US")
-  postalCode     String?
-  latitude       Decimal?       @db.Decimal(10, 8)
-  longitude      Decimal?       @db.Decimal(11, 8)
-  timezone       String         @default("UTC")
-  
-  managerUserId  String?        @db.Uuid
-  isHeadOffice   Boolean        @default(false)
-  isActive       Boolean        @default(true)
-  
-  userBranches   UserBranch[]
-  leads          Lead[]
-  projects       Project[]
-  equipments     Equipment[]
-  vehicles       Vehicle[]
+model SubscriptionPlan {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  monthlyPrice    Decimal  @db.Decimal(10, 2)
+  annualPrice     Decimal  @db.Decimal(10, 2)
+  maxBranches     Int      @default(1)
+  maxStaff        Int      @default(3)
+  smsCredits      Int      @default(0)
+  whatsappCredits          Int                  @default(0)
+  allowFranchises          Boolean              @default(false)
+  perFranchiseMonthlyPrice Decimal?             @default(0) @db.Decimal(10, 2)
+  perFranchiseAnnualPrice  Decimal?             @default(0) @db.Decimal(10, 2)
+  isActive                 Boolean              @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+  subscriptions       TenantSubscription[]
+  billingTransactions BillingTransaction[]
+}
+
+model TenantSubscription {
+  id                     String           @id @default(cuid())
+  tenantId               String           @unique @db.Uuid
+  tenant                 Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId                 String
+  plan                   SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  startDate              DateTime         @default(now())
+  endDate                DateTime?
+  billingCycle           BillingCycle     @default(MONTHLY)
+  razorpaySubscriptionId String?          @unique
+  razorpayCustomerId     String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  @@index([planId])
+}
+
+model BillingTransaction {
+  id                String            @id @default(cuid())
+  tenantId          String            @db.Uuid
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId            String?
+  plan              SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  amount            Decimal           @db.Decimal(10, 2)
+  currency          String            @default("INR")
+  status            PaymentStatus     @default(PENDING)
+  paymentMode       String?           @default("RAZORPAY")
+  transactionRef    String?
+  notes             String?
+  transactionDate   DateTime          @default(now())
+  razorpayPaymentId String?           @unique
+  razorpayOrderId   String?           @unique
+  receiptUrl        String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([planId])
+  @@index([status])
+}
+
+model Branch {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code       String?
+  name       String // maps to branchName
+  shortName  String?
+  logoUrl    String?
+  gstNumber  String?
+  email      String?
+  phone      String?
+  address    String?
+  city       String?
+  state      String?
+  country    String   @default("US")
+  postalCode String?
+  latitude   Decimal? @db.Decimal(10, 8)
+  longitude  Decimal? @db.Decimal(11, 8)
+  timezone   String   @default("UTC")
+
+  managerUserId String? @db.Uuid
+  isHeadOffice  Boolean @default(false)
+  isActive      Boolean @default(true)
+  status        String? @default("ACTIVE")
+
+  userBranches           UserBranch[]
+  leads                  Lead[]
+  equipments             Equipment[]
+  vehicles               Vehicle[]
+  customers              Customer[]
+  inquiries              Inquiry[]
+  quotationRevisions     QuotationRevision[]
+  quotationRevisionItems QuotationRevisionItem[]
+
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+  followUps            FollowUp[]
+  packages             Package[]
+  invoices             Invoice[]
+  payments             Payment[]
+  eventBookings        EventBooking[]
+  shootGearAllocations ShootGearAllocation[]
+  creditNotes          CreditNote[]
+  attendances          Attendance[]
+  leaveRequests        LeaveRequest[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -249,127 +626,200 @@ model Branch {
 // ------------------------------------------------------
 
 model User {
-  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId            String         @db.Uuid
-  tenant              Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  email               String
-  passwordHash        String
-  name                String
-  
-  status              UserStatus     @default(PENDING_INVITATION)
-  employeeCode        String?
-  designation         String?
-  department          String?
-  phone               String?
-  alternatePhone      String?
-  profileImage        String?
-  joiningDate         DateTime?      @db.Date
-  
-  reportingManagerId  String?        @db.Uuid
-  reportingManager    User?          @relation("ReportingManager", fields: [reportingManagerId], references: [id], onDelete: SetNull)
-  directReports       User[]         @relation("ReportingManager")
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String? @db.Uuid
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role     Role    @default(STAFF)
+
+  email        String
+  passwordHash String?
+  name         String
+
+  canLogin       Boolean        @default(true)
+  status         UserStatus     @default(PENDING_INVITATION)
+  employmentType EmploymentType @default(IN_HOUSE)
+  isActive       Boolean        @default(true)
+  monthlySalary  Decimal?       @db.Decimal(10, 2)
+  baseSalary     Decimal?       @db.Decimal(10, 2)
+  employeeCode   String?
+  designation    String?
+  department     String?
+  phone          String?
+  alternatePhone String?
+  profileImage   String?
+  joiningDate    DateTime?      @db.Date
+
+  reportingManagerId String? @db.Uuid
+  reportingManager   User?   @relation("ReportingManager", fields: [reportingManagerId], references: [id], onDelete: SetNull)
+  directReports      User[]  @relation("ReportingManager")
 
   lastLoginAt         DateTime?
   passwordChangedAt   DateTime?
-  failedLoginAttempts Int            @default(0)
-  isLocked            Boolean        @default(false)
+  failedLoginAttempts Int       @default(0)
+  isLocked            Boolean   @default(false)
   lockUntil           DateTime?
 
   // Profile fields
-  emergencyContact    Json?
-  address             Json?
-  documents           Json?
-  skills              String[]
-  notes               String?
+  emergencyContact Json?
+  address          String?
+  companyName      String?
+  documents        Json?
+  skills           String[]
+  equipmentList    String?
+  rating           Float?
+  isBlacklisted    Boolean  @default(false)
+  notes            String?
 
-  branches            UserBranch[]
-  roles               UserRole[]
-  loginSessions       LoginSession[]
-  passwordHistory     PasswordHistory[]
-  tokens              Token[]
+  // Banking & Statutory Tax Details (Freelancers & Staff)
+  panNumber         String?
+  bankAccountNumber String?
+  bankIfsc          String?
+  bankName          String?
+  bankBranch        String?
+  accountHolderName String?
+  upiId             String?
 
-  shootAssignments    ShootAssignment[]
-  attendances         Attendance[]
-  leaveRequests       LeaveRequest[]
-  payrolls            Payroll[]
-  workflowTasks       WorkflowTask[]
-  auditLogs           AuditLog[]
+  branches        UserBranch[]
+  roles           UserRole[]
+  loginSessions   LoginSession[]
+  passwordHistory PasswordHistory[]
+  tokens          Token[]
 
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  deletedAt           DateTime?
+  staffAssignments         StaffAssignment[]  @relation("AssignedCrew")
+  assignedStaffAssignments StaffAssignment[]  @relation("StaffAssignedBy")
+  userAgreements           UserAgreement[]
+  attendances              Attendance[]
+  leaveRequests            LeaveRequest[]
+  payrolls                 Payroll[]
+  workflowTasks            WorkflowTask[]
+  auditLogs                AuditLog[]
+  activityTimelines        ActivityTimeline[]
+  attachments              Attachment[]
+  createdCustomers         Customer[]         @relation("CustomerCreatedBy")
+  updatedCustomers         Customer[]         @relation("CustomerUpdatedBy")
+  deletedCustomers         Customer[]         @relation("CustomerDeletedBy")
+  customer                 Customer?          @relation("CustomerUserAccount")
+
+  assignedInquiries Inquiry[] @relation("InquiryAssignedTo")
+  createdInquiries  Inquiry[] @relation("InquiryCreatedBy")
+  updatedInquiries  Inquiry[] @relation("InquiryUpdatedBy")
+  deletedInquiries  Inquiry[] @relation("InquiryDeletedBy")
+
+  assignedLeads Lead[] @relation("LeadAssignedTo")
+  createdLeads  Lead[] @relation("LeadCreatedBy")
+  updatedLeads  Lead[] @relation("LeadUpdatedBy")
+  deletedLeads  Lead[] @relation("LeadDeletedBy")
+
+  assignedFollowUps FollowUp[] @relation("FollowUpAssignedTo")
+  createdFollowUps  FollowUp[] @relation("FollowUpCreatedBy")
+  updatedFollowUps  FollowUp[] @relation("FollowUpUpdatedBy")
+  deletedFollowUps  FollowUp[] @relation("FollowUpDeletedBy")
+
+  createdPackages Package[] @relation("PackageCreatedBy")
+  updatedPackages Package[] @relation("PackageUpdatedBy")
+  deletedPackages Package[] @relation("PackageDeletedBy")
+
+  quotationRevisionsCreated     QuotationRevision[]     @relation("QuotationRevisionCreatedBy")
+  quotationRevisionsUpdated     QuotationRevision[]     @relation("QuotationRevisionUpdatedBy")
+  quotationRevisionsDeleted     QuotationRevision[]     @relation("QuotationRevisionDeletedBy")
+  quotationRevisionItemsCreated QuotationRevisionItem[] @relation("QuotationRevisionItemCreatedBy")
+  quotationRevisionItemsUpdated QuotationRevisionItem[] @relation("QuotationRevisionItemUpdatedBy")
+  quotationRevisionItemsDeleted QuotationRevisionItem[] @relation("QuotationRevisionItemDeletedBy")
+
+  createdInvoices          Invoice[]             @relation("InvoiceCreatedBy")
+  updatedInvoices          Invoice[]             @relation("InvoiceUpdatedBy")
+  createdCreditNotes       CreditNote[]          @relation("CreditNoteCreatedBy")
+  createdPayments          Payment[]             @relation("PaymentCreatedBy")
+  createdEventBookings     EventBooking[]        @relation("EventBookingCreatedBy")
+  eventAssignments         EventAssignment[]     @relation("EventAssignedCrew")
+  assignedEventAssignments EventAssignment[]     @relation("EventAssignedBy")
+  editedAlbums             AlbumProject[]        @relation("AlbumEditor")
+  albumComments            AlbumComment[]        @relation("AlbumCommentAuthor")
+  assignedGearAllocations  ShootGearAllocation[] @relation("AssignedGearUser")
+  directedCallSheets       CallSheet[]           @relation("CallSheetDirector")
+  dispatchLogs             DispatchLog[]
+  handedOverIngestionJobs  DataIngestionJob[]    @relation("IngestionHandedOverBy")
+  receivedIngestionJobs    DataIngestionJob[]    @relation("IngestionReceivedBy")
+
+  gearCheckLogsVerified        GearCheckLog[]         @relation("GearCheckVerifiedBy")
+  equipmentMaintenancesCreated EquipmentMaintenance[] @relation("MaintenanceCreatedBy")
+  createdBroadcasts            PlatformBroadcast[]    @relation("BroadcastCreator")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@unique([tenantId, email])
   @@index([tenantId])
 }
 
 model UserBranch {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @db.Uuid
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  branchId       String   @db.Uuid
-  branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  
-  isPrimary      Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  
-  joinedAt       DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId   String @db.Uuid
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  isPrimary Boolean @default(false)
+  isActive  Boolean @default(true)
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, branchId])
 }
 
-model Role {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String   @db.Uuid
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  name           String
-  description    String?
-  isSystem       Boolean  @default(false)
+model TenantRole {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  permissions    RolePermission[]
-  users          UserRole[]
+  name        String
+  description String?
+  isSystem    Boolean @default(false)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  permissions RolePermission[]
+  users       UserRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, name])
+  @@map("Role")
 }
 
 model Permission {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  module         String
-  action         String
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name   String
+  module String
+  action String
 
-  roles          RolePermission[]
+  roles RolePermission[]
 
-  createdAt      DateTime @default(now())
-  
+  createdAt DateTime @default(now())
+
   @@unique([module, action])
 }
 
 model RolePermission {
-  roleId         String   @db.Uuid
-  role           Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permissionId   String   @db.Uuid
-  permission     Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  roleId       String     @db.Uuid
+  role         TenantRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @db.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  assignedAt     DateTime @default(now())
+  assignedAt DateTime @default(now())
 
   @@unique([roleId, permissionId])
 }
 
 model UserRole {
-  userId         String   @db.Uuid
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId         String   @db.Uuid
-  role           Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  userId String     @db.Uuid
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId String     @db.Uuid
+  role   TenantRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  assignedAt     DateTime @default(now())
+  assignedAt DateTime @default(now())
 
   @@unique([userId, roleId])
 }
@@ -379,11 +829,11 @@ model UserRole {
 // ------------------------------------------------------
 
 model LoginSession {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @db.Uuid
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  loginAt         DateTime @default(now())
+  loginAt         DateTime  @default(now())
   logoutAt        DateTime?
   ipAddress       String?
   browser         String?
@@ -393,44 +843,44 @@ model LoginSession {
   status          String?
   refreshTokenId  String?
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model PasswordHistory {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @db.Uuid
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  passwordHash   String
-  createdAt      DateTime @default(now())
+  passwordHash String
+  createdAt    DateTime @default(now())
 }
 
 model Token {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @db.Uuid
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type           TokenType
-  token          String   @unique
-  expiresAt      DateTime
-  usedAt         DateTime?
+  type      TokenType
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Vendor {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  name           String
-  serviceType    String
-  contactInfo    String?
-  
-  tasks          WorkflowTask[]
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  name        String
+  serviceType String
+  contactInfo String?
+
+  tasks WorkflowTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }
@@ -440,134 +890,345 @@ model Vendor {
 // ------------------------------------------------------
 
 model Package {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  name           String
-  description    String?
-  basePrice      Decimal        @db.Decimal(10, 2)
-  
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String  @db.Uuid
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String? @db.Uuid
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  packageCode  String
+  name         String
+  categoryName String?
+  categoryId   String?          @db.Uuid
+  category     PackageCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  taxRateId    String?          @db.Uuid
+  taxRate      TaxRate?         @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  basePrice         Decimal @db.Decimal(10, 2)
+  advancePercentage Int     @default(25)
+  notes             String?
+  isActive          Boolean @default(true)
+  version           Int     @default(1)
+  isCurrentVersion  Boolean @default(true)
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("PackageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("PackageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String? @db.Uuid
+  deletedBy   User?   @relation("PackageDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  leads                  Lead[]
+  items                  PackageItem[]
+  deliverables           PackageDeliverable[]
+  quotationRevisionItems QuotationRevisionItem[]
+
+  @@unique([tenantId, packageCode, version])
+  @@index([tenantId, isActive])
+}
+
+model PackageDeliverable {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  packageId String  @db.Uuid
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  itemName  String
+  quantity  Int     @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([packageId])
+}
+
+model PromotionalOffer {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String?
+  discountType  DiscountType @default(PERCENTAGE)
+  discountValue Decimal      @db.Decimal(10, 2)
+  validUntil    DateTime
+  isActive      Boolean      @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId, isActive])
+}
+
+model PackageItem {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  packageId String  @db.Uuid
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  serviceComponentId String           @db.Uuid
+  serviceComponent   ServiceComponent @relation(fields: [serviceComponentId], references: [id], onDelete: Restrict)
+
+  quantity      Int      @default(1)
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  priceOverride Decimal? @db.Decimal(10, 2)
+  description   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([packageId, serviceComponentId])
 }
 
 model Lead {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branchId       String         @db.Uuid
-  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  
-  clientName     String
-  clientPhone    String?
-  clientEmail    String?
-  status         LeadStatus     @default(NEW)
-  source         String?
-  expectedValue  Decimal?       @db.Decimal(10, 2)
-  
-  quotations     Quotation[]
-  project        Project?
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+  leadCode String
 
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  inquiryId String?  @unique @db.Uuid
+  inquiry   Inquiry? @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+
+  packageId String?  @db.Uuid
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  assignedToId String? @db.Uuid
+  assignedTo   User?   @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  status              LeadStatus @default(NEW)
+  priority            Priority   @default(MEDIUM)
+  probability         Int        @default(50)
+  expectedRevenue     Decimal?   @db.Decimal(10, 2)
+  expectedBookingDate DateTime?  @db.Date
+  lostReason          String?
+  notes               String?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("LeadCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("LeadUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String? @db.Uuid
+  deletedBy   User?   @relation("LeadDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  quotations    Quotation[]
+  followUps     FollowUp[]
+  invoices      Invoice[]
+  eventBookings EventBooking[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([tenantId, leadCode])
   @@index([tenantId, branchId, status])
+  @@index([customerId])
+  @@index([packageId])
+  @@index([assignedToId])
 }
 
 model Quotation {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leadId         String         @db.Uuid
-  lead           Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  
-  totalAmount    Decimal        @db.Decimal(10, 2)
-  status         QuotationStatus @default(DRAFT)
-  validUntil     DateTime?
-  documentUrl    String?
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId String @db.Uuid
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  totalAmount   Decimal         @db.Decimal(10, 2)
+  status        QuotationStatus @default(DRAFT)
+  pricingMode   PricingMode     @default(ITEMIZED)
+  lumpSumAmount Decimal?        @db.Decimal(10, 2)
+  validUntil    DateTime?
+  documentUrl   String?
+
+  clientSignature String?   @db.Text
+  acceptedAt      DateTime?
+  clientIpAddress String?
+  acceptanceTerms String?   @db.Text
+
+  customPortfolioUrls String[] @default([])
+  customPromoVideoUrl String?
+
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  quotationRevisions QuotationRevision[]
+  invoice            Invoice?
+  eventBooking       EventBooking?
+  subjects           QuotationEventSubject[]
+  functions          QuotationFunction[]
+  deliverables       QuotationDeliverable[]
+}
+
+model QuotationRevision {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quotationId String    @db.Uuid
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  tenantId    String    @db.Uuid
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId    String    @db.Uuid
+  branch      Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  revisionNumber  Int
+  revisionReason  String?
+  revisionComment String?
+
+  currencyCode String  @default("INR")
+  baseCurrency String
+  exchangeRate Decimal @db.Decimal(12, 6)
+
+  status         QuotationStatus @default(DRAFT)
+  pricingMode    PricingMode     @default(ITEMIZED)
+  lumpSumAmount  Decimal?        @db.Decimal(10, 2)
+  subtotal       Decimal         @db.Decimal(10, 2)
+  discountType   DiscountType?
+  discountValue  Decimal?        @db.Decimal(10, 2)
+  discountAmount Decimal         @db.Decimal(10, 2)
+  couponCode     String?
+  taxAmount      Decimal         @db.Decimal(10, 2)
+  roundOff       Decimal         @db.Decimal(10, 2)
+  totalAmount    Decimal         @db.Decimal(10, 2)
+  grandTotal     Decimal         @db.Decimal(10, 2)
+
+  clientSignature String?   @db.Text
+  acceptedAt      DateTime?
+  clientIpAddress String?
+  acceptanceTerms String?   @db.Text
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?   @db.Uuid
+  createdBy   User?     @relation("QuotationRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation("QuotationRevisionUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String?   @db.Uuid
+  deletedBy   User?     @relation("QuotationRevisionDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  items QuotationRevisionItem[]
+
+  @@unique([quotationId, revisionNumber])
+  @@index([tenantId, branchId, status])
+  @@index([quotationId, tenantId, branchId, revisionNumber])
+}
+
+model QuotationRevisionItem {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  revisionId String            @db.Uuid
+  revision   QuotationRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  tenantId   String            @db.Uuid
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId   String            @db.Uuid
+  branch     Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  packageId      String  @db.Uuid
+  package        Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  packageVersion Int
+  itemName       String
+  description    String?
+
+  quantity      Int      @default(1)
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  priceOverride Decimal? @db.Decimal(10, 2)
+
+  itemDiscountType  DiscountType? // enum
+  itemDiscountValue Decimal?      @db.Decimal(10, 2)
+
+  gstInclusive  Boolean  @default(false)
+  taxRateId     String?  @db.Uuid
+  taxRate       TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+  taxPercentage Decimal? @db.Decimal(5, 2)
+
+  calculatedSubtotal       Decimal @db.Decimal(10, 2)
+  calculatedDiscountAmount Decimal @db.Decimal(10, 2)
+  calculatedTaxAmount      Decimal @db.Decimal(10, 2)
+  calculatedTotal          Decimal @db.Decimal(10, 2)
+
+  lineItemType LineItemType @default(STANDARD)
+
+  quotationFunctionId String?
+  quotationFunction   QuotationFunction? @relation(fields: [quotationFunctionId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime  @default(now())
+  snapshotExtra Json?
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  createdById   String?   @db.Uuid
+  createdBy     User?     @relation("QuotationRevisionItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById   String?   @db.Uuid
+  updatedBy     User?     @relation("QuotationRevisionItemUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById   String?   @db.Uuid
+  deletedBy     User?     @relation("QuotationRevisionItemDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@index([revisionId, tenantId, branchId])
+  @@index([quotationFunctionId])
+}
+
+model QuotationEventSubject {
+  id              String    @id @default(cuid())
+  quotationId     String    @db.Uuid
+  quotation       Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  role            String
+  name            String
+  phone           String?
+  email           String?
+  birthDate       DateTime?
+  anniversaryDate DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([quotationId])
+}
+
+model QuotationFunction {
+  id          String                  @id @default(cuid())
+  quotationId String                  @db.Uuid
+  quotation   Quotation               @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  name        String
+  date        DateTime?
+  venue       String?
+  items       QuotationRevisionItem[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@index([quotationId])
+}
+
+model QuotationDeliverable {
+  id            String    @id @default(cuid())
+  quotationId   String    @db.Uuid
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  name          String
+  itemType      String
+  quantity      Int       @default(1)
+  basePageLimit Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([quotationId])
 }
 
 // ------------------------------------------------------
 // OPERATIONS & LOGISTICS
 // ------------------------------------------------------
 
-model Project {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branchId       String         @db.Uuid
-  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  
-  leadId         String?        @unique @db.Uuid
-  lead           Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  clientId       String?        @db.Uuid
-  
-  title          String
-  status         ProjectStatus  @default(PLANNING)
-  totalAmount    Decimal        @db.Decimal(10, 2)
-  
-  agreement      Agreement?
-  shoots         Shoot[]
-  workflowTasks  WorkflowTask[]
-  clientSelections ClientSelection[]
-  invoices       Invoice[]
-  storageRecords StorageRecord[]
-
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
-
-  @@index([tenantId, branchId, status])
-}
-
 model Agreement {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @unique @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  documentUrl    String
-  status         AgreementStatus @default(DRAFT)
-  signedAt       DateTime?
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String? @unique @db.Uuid
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-}
+  documentUrl String
+  status      AgreementStatus @default(DRAFT)
+  signedAt    DateTime?
 
-model Shoot {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  type           ShootType
-  startTime      DateTime
-  endTime        DateTime
-  location       String?
-  
-  assignments    ShootAssignment[]
-  equipments     EquipmentCheckout[]
-  vehicles       VehicleBooking[]
-
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  @@index([projectId, startTime])
-}
-
-model ShootAssignment {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  shootId        String         @db.Uuid
-  shoot          Shoot          @relation(fields: [shootId], references: [id], onDelete: Cascade)
-  userId         String         @db.Uuid
-  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
-  
-  role           ShootRole
-
-  createdAt      DateTime       @default(now())
-
-  @@unique([shootId, userId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ------------------------------------------------------
@@ -575,56 +1236,148 @@ model ShootAssignment {
 // ------------------------------------------------------
 
 model Equipment {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branchId       String         @db.Uuid
-  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  
-  name           String
-  category       EquipmentCategory
-  serialNumber   String?        @unique
-  status         AssetStatus    @default(AVAILABLE)
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String? @db.Uuid
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String  @db.Uuid
+  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  checkouts      EquipmentCheckout[]
+  name                String
+  category            EquipmentCategory
+  serialNumber        String?           @unique
+  assetTag            String?           @unique
+  brand               String?
+  modelNumber         String?
+  status              AssetStatus       @default(AVAILABLE)
+  currentShutterCount Int               @default(0)
+  bufferHours         Int               @default(4)
+  purchasePrice       Decimal?          @db.Decimal(10, 2)
+  purchaseDate        DateTime?         @db.Date
+  warrantyExpiryDate  DateTime?         @db.Date
+  notes               String?
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  checkouts        EquipmentCheckout[]
+  shootAllocations ShootGearAllocation[]
+  maintenances     EquipmentMaintenance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([branchId])
 }
 
 model EquipmentCheckout {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  equipmentId    String         @db.Uuid
-  equipment      Equipment      @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
-  shootId        String         @db.Uuid
-  shoot          Shoot          @relation(fields: [shootId], references: [id], onDelete: Cascade)
-  
-  checkedOutAt   DateTime       @default(now())
-  returnedAt     DateTime?
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  equipmentId String    @db.Uuid
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+
+  checkedOutAt DateTime  @default(now())
+  returnedAt   DateTime?
+
+  @@index([equipmentId])
+}
+
+model EquipmentMaintenance {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String    @db.Uuid
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  equipmentId      String    @db.Uuid
+  equipment        Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  vendorName       String
+  issueCategory    String
+  issueDescription String?
+  actualCost       Decimal?  @db.Decimal(10, 2)
+  status           String    @default("OPEN")
+  sentDate         DateTime  @default(now())
+  returnDate       DateTime?
+  notes            String?
+  createdById      String?   @db.Uuid
+  createdBy        User?     @relation("MaintenanceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId, equipmentId])
+  @@index([status])
+}
+
+model GearCheckLog {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String              @db.Uuid
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  allocationId         String              @db.Uuid
+  allocation           ShootGearAllocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+  checkType            String // DISPATCH_OUT, RETURN_IN
+  scannedAssetTag      String?
+  shutterCountAtCheck  Int?
+  accessoriesChecklist Json?
+  conditionNotes       String?
+  verifiedByUserId     String?             @db.Uuid
+  verifiedByUser       User?               @relation("GearCheckVerifiedBy", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+  timestamp            DateTime            @default(now())
+
+  @@index([tenantId, allocationId])
+  @@index([allocationId, checkType])
 }
 
 model Vehicle {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branchId       String         @db.Uuid
-  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  
-  plateNumber    String         @unique
-  makeModel      String
-  status         AssetStatus    @default(AVAILABLE)
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String? @db.Uuid
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String  @db.Uuid
+  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  bookings       VehicleBooking[]
+  plateNumber String      @unique
+  makeModel   String
+  type        String?     @default("VAN")
+  capacity    Int?        @default(5)
+  fuelType    String?     @default("DIESEL")
+  driverName  String?
+  driverPhone String?
+  notes       String?
+  status      AssetStatus @default(AVAILABLE)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  bookings VehicleBooking[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, status])
 }
 
 model VehicleBooking {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  vehicleId      String         @db.Uuid
-  vehicle        Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
-  shootId        String         @db.Uuid
-  shoot          Shoot          @relation(fields: [shootId], references: [id], onDelete: Cascade)
-  
-  startTime      DateTime
-  endTime        DateTime
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?       @db.Uuid
+  tenant         Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicleId      String        @db.Uuid
+  vehicle        Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  subEventId     String?       @db.Uuid
+  subEvent       SubEvent?     @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+  eventBookingId String?       @db.Uuid
+  eventBooking   EventBooking? @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+
+  driverName  String?
+  driverPhone String?
+  purpose     String?
+  notes       String?
+  status      String        @default("CONFIRMED")
+
+  startTime DateTime
+  endTime   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vehicleId])
+  @@index([tenantId])
+  @@index([subEventId])
+  @@index([eventBookingId])
+  @@index([startTime, endTime])
 }
 
 // ------------------------------------------------------
@@ -632,50 +1385,83 @@ model VehicleBooking {
 // ------------------------------------------------------
 
 model Attendance {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String         @db.Uuid
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  date           DateTime       @db.Date
-  clockIn        DateTime
-  clockOut       DateTime?
-  
-  createdAt      DateTime       @default(now())
+  id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String?          @db.Uuid
+  branchId String?          @db.Uuid
+  branch   Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  userId   String           @db.Uuid
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date     DateTime         @db.Date
+  status   AttendanceStatus @default(PRESENT)
+  clockIn  DateTime?
+  clockOut DateTime?
+  notes    String?
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now()) @updatedAt
 
   @@unique([userId, date])
+  @@index([tenantId, date])
+  @@index([tenantId, branchId, date])
+  @@index([userId, date])
 }
 
 model LeaveRequest {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String         @db.Uuid
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  type           LeaveType
-  startDate      DateTime       @db.Date
-  endDate        DateTime       @db.Date
-  status         ApprovalStatus @default(PENDING)
-  reason         String?
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String?        @db.Uuid
+  branchId        String?        @db.Uuid
+  branch          Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  userId          String         @db.Uuid
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  type            LeaveType
+  startDate       DateTime       @db.Date
+  endDate         DateTime       @db.Date
+  status          ApprovalStatus @default(PENDING)
+  reason          String?
+  rejectionReason String?
+  reviewedById    String?        @db.Uuid
+  reviewedAt      DateTime?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([userId])
 }
 
 model Payroll {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String         @db.Uuid
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  month          Int
-  year           Int
-  baseSalary     Decimal        @db.Decimal(10, 2)
-  deductions     Decimal        @default(0.00) @db.Decimal(10, 2)
-  netPay         Decimal        @db.Decimal(10, 2)
-  status         PayrollStatus  @default(DRAFT)
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String?       @db.Uuid
+  userId           String        @db.Uuid
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  month            Int
+  year             Int
+  baseSalary       Decimal       @db.Decimal(10, 2)
+  deductions       Decimal       @default(0.00) @db.Decimal(10, 2)
+  bonus            Decimal       @default(0.00) @db.Decimal(10, 2)
+  netPay           Decimal       @db.Decimal(10, 2)
+  status           PayrollStatus @default(DRAFT)
+
+  totalWorkingDays Int?          @default(30)
+  presentDays      Int?          @default(0)
+  halfDays         Int?          @default(0)
+  absentDays       Int?          @default(0)
+  leaveDays        Int?          @default(0)
+
+  paymentMode      String?
+  transactionRef   String?
+  paidAt           DateTime?
+  paymentNotes     String?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@unique([userId, month, year])
+  @@index([tenantId, month, year])
 }
 
 // ------------------------------------------------------
@@ -683,72 +1469,548 @@ model Payroll {
 // ------------------------------------------------------
 
 model WorkflowTask {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  type           WorkflowType
-  status         TaskStatus     @default(PENDING)
-  dueDate        DateTime?
-  
-  assignedTo     String?        @db.Uuid
-  user           User?          @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
-  
-  vendorId       String?        @db.Uuid
-  vendor         Vendor?        @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String             @db.Uuid
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventBookingId    String?            @db.Uuid
+  eventBooking      EventBooking?      @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+  jobId             String?            @db.Uuid
+  postProductionJob PostProductionJob? @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  
-  @@index([projectId, status])
-}
+  type     WorkflowType @default(PHOTO_EDITING)
+  taskType String?
+  status   TaskStatus   @default(PENDING)
+  dueDate  DateTime?
+  notes    String?      @db.Text
 
-model ClientSelection {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  photoReference String
-  isSelected     Boolean        @default(false)
-  clientNotes    String?
+  assignedTo String? @db.Uuid
+  user       User?   @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  vendorId String? @db.Uuid
+  vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  // Video Editing Pipeline & Freelancer Vault Fields
+  assetsUrl           String?
+  previewUrl          String?
+  deliveryUrl         String?
+  directorNotes       String?  @db.Text
+  clientFeedback      String?  @db.Text
+  referenceLinks      String[] @default([])
+  revisionsCount      Int      @default(0)
+  editorToken         String?  @unique
+  allowFullDataAccess Boolean  @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([eventBookingId, status])
+  @@index([jobId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([vendorId])
 }
 
 // ------------------------------------------------------
-// FINANCE
+// FINANCE & BOOKING
 // ------------------------------------------------------
 
 model Invoice {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  
-  total          Decimal        @db.Decimal(10, 2)
-  tax            Decimal        @default(0.00) @db.Decimal(10, 2)
-  dueDate        DateTime       @db.Date
-  status         InvoiceStatus  @default(DRAFT)
-  
-  payments       Payment[]
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
-  @@index([projectId, status])
+  leadId String? @db.Uuid
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  quotationId String?    @unique @db.Uuid
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
+  invoiceNumber String
+  status        InvoiceStatus @default(DRAFT)
+
+  subtotal       Decimal @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0.00) @db.Decimal(10, 2)
+  discountAmount Decimal @default(0.00) @db.Decimal(10, 2)
+  grandTotal     Decimal @db.Decimal(10, 2)
+  paidAmount     Decimal @default(0.00) @db.Decimal(10, 2)
+  balanceDue     Decimal @db.Decimal(10, 2)
+
+  // GST Statutory Tax Breakdown & Place of Supply
+  placeOfSupply     String  @default("27-Maharashtra")
+  isInterState      Boolean @default(false)
+  cgstAmount        Decimal @default(0.00) @db.Decimal(10, 2)
+  sgstAmount        Decimal @default(0.00) @db.Decimal(10, 2)
+  igstAmount        Decimal @default(0.00) @db.Decimal(10, 2)
+  customerGstin     String?
+  customerTradeName String?
+
+  issueDate DateTime  @default(now())
+  dueDate   DateTime? @db.Date
+
+  notes String?
+  terms String?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("InvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  items         InvoiceItem[]
+  payments      Payment[]
+  eventBookings EventBooking[]
+  creditNotes   CreditNote[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([invoiceNumber, tenantId])
+  @@unique([id, tenantId])
+  @@index([tenantId, branchId, status])
+  @@index([customerId])
+  @@index([leadId])
+  @@index([quotationId])
+}
+
+model InvoiceItem {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String  @db.Uuid
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoiceId String  @db.Uuid
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  itemType    String?
+  name        String
+  description String?
+
+  sacCode        String  @default("998382")
+  quantity       Int     @default(1)
+  unitPrice      Decimal @db.Decimal(10, 2)
+  gstRate        Decimal @default(0.00) @db.Decimal(5, 2)
+  cgstRate       Decimal @default(0.00) @db.Decimal(5, 2)
+  cgstAmount     Decimal @default(0.00) @db.Decimal(10, 2)
+  sgstRate       Decimal @default(0.00) @db.Decimal(5, 2)
+  sgstAmount     Decimal @default(0.00) @db.Decimal(10, 2)
+  igstRate       Decimal @default(0.00) @db.Decimal(5, 2)
+  igstAmount     Decimal @default(0.00) @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0.00) @db.Decimal(10, 2)
+  discountAmount Decimal @default(0.00) @db.Decimal(10, 2)
+  totalPrice     Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([tenantId])
 }
 
 model Payment {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  invoiceId      String         @db.Uuid
-  invoice        Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  
-  amount         Decimal        @db.Decimal(10, 2)
-  paymentMethod  String
-  date           DateTime       @db.Date
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String  @db.Uuid
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String? @db.Uuid
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime       @default(now())
+  invoiceId String  @db.Uuid
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  receiptNumber  String
+  amount         Decimal       @db.Decimal(10, 2)
+  paymentMethod  PaymentMethod @default(BANK_TRANSFER)
+  transactionRef String?
+  paymentDate    DateTime      @default(now())
+  status         PaymentStatus @default(SUCCESS)
+  notes          String?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([receiptNumber, tenantId])
+  @@unique([id, tenantId])
+  @@index([invoiceId])
+  @@index([customerId])
+  @@index([tenantId])
+  @@index([branchId])
+}
+
+model EventBooking {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  bookingNumber String
+  title         String
+
+  leadId String? @db.Uuid
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  quotationId String?    @unique @db.Uuid
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
+  invoiceId String?  @db.Uuid
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  startDate     DateTime
+  endDate       DateTime
+  status        EventBookingStatus @default(CONFIRMED)
+  journeyStatus JourneyStatus      @default(ENQUIRY)
+
+  notes    String?
+  location String?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("EventBookingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  subEvents            SubEvent[]
+  storageRecords       StorageRecord[]
+  clientSelections     ClientSelection[]
+  galleryFolders       GalleryFolder[]
+  albumProjects        AlbumProject[]
+  assignments          EventAssignment[]
+  shootGearAllocations ShootGearAllocation[]
+  callSheets           CallSheet[]
+  postProductionJob    PostProductionJob?
+  workflowTasks        WorkflowTask[]
+  dataIngestionJobs    DataIngestionJob[]
+  clientGalleries      ClientGallery[]
+  guestLeads           GuestLead[]
+  vehicleBookings      VehicleBooking[]
+  royaltyLedger        FranchiseRoyaltyLedger?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([bookingNumber, tenantId])
+  @@unique([id, tenantId])
+  @@index([tenantId, branchId, status])
+  @@index([tenantId, journeyStatus])
+  @@index([leadId])
+  @@index([customerId])
+  @@index([startDate, endDate])
+  @@index([invoiceId])
+  @@index([tenantId, startDate, endDate])
+  @@index([tenantId, status])
+}
+
+model FranchiseRoyaltyLedger {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  franchisorId   String        @db.Uuid
+  franchisor     Tenant        @relation("FranchisorRoyalties", fields: [franchisorId], references: [id], onDelete: Cascade)
+  franchiseeId   String        @db.Uuid
+  franchisee     Tenant        @relation("FranchiseeRoyalties", fields: [franchiseeId], references: [id], onDelete: Cascade)
+  eventBookingId String        @unique @db.Uuid
+  eventBooking   EventBooking  @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+
+  bookingTitle   String
+  grossAmount    Decimal       @db.Decimal(12, 2)
+  royaltyPercent Decimal       @db.Decimal(5, 2)
+  royaltyAmount  Decimal       @db.Decimal(12, 2)
+  status         RoyaltyStatus @default(PENDING)
+  settledAt      DateTime?
+  settlementRef  String?
+  notes          String?
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([franchisorId, status])
+  @@index([franchiseeId, status])
+  @@index([createdAt])
+}
+
+model SubEvent {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String       @db.Uuid
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventBookingId String       @db.Uuid
+  eventBooking   EventBooking @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+
+  name          String
+  eventDate     DateTime
+  startTime     String
+  endTime       String
+  locationVenue String?
+  notes         String?
+
+  staffAssignments     StaffAssignment[]
+  shootGearAllocations ShootGearAllocation[]
+  callSheets           CallSheet[]
+  dataIngestionJobs    DataIngestionJob[]
+  vehicleBookings      VehicleBooking[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([eventBookingId])
+  @@index([eventDate])
+}
+
+model StaffAssignment {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String   @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subEventId String   @db.Uuid
+  subEvent   SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+  userId     String   @db.Uuid
+  user       User     @relation("AssignedCrew", fields: [userId], references: [id], onDelete: Restrict)
+
+  role                  String
+  status                StaffAssignmentStatus @default(PENDING)
+  payoutAmount          Decimal?              @db.Decimal(10, 2)
+  payoutStatus          PayoutStatus          @default(PENDING)
+  tdsSection            TdsSection            @default(NONE)
+  tdsRate               Decimal               @default(0.00) @db.Decimal(5, 2)
+  tdsAmount             Decimal               @default(0.00) @db.Decimal(10, 2)
+  netPayableAmount      Decimal               @default(0.00) @db.Decimal(10, 2)
+  disbursedAt           DateTime?
+  disbursementReference String?
+  sourceBankAccountId   String?               @db.Uuid
+  voucherId             String?               @db.Uuid
+  voucher               FinancialVoucher?     @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  notes                 String?
+  expectedGearList      String?
+
+  // Tokenized Freelancer / Field Crew Magic Link Portal (Phase 14.2)
+  magicToken            String?   @unique
+  tokenExpiresAt        DateTime?
+  isTokenRevoked        Boolean   @default(false)
+  checkedInAt           DateTime?
+  mediaCardsCount       Int?
+  rawMediaSizeGb        Float?
+  fieldHandoverNotes    String?
+
+  assignedById String? @db.Uuid
+  assignedBy   User?   @relation("StaffAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([subEventId])
+  @@index([userId])
+  @@index([assignedById])
+  @@index([voucherId])
+  @@index([payoutStatus])
+  @@index([sourceBankAccountId])
+}
+
+model EventAssignment {
+  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventBookingId        String            @db.Uuid
+  eventBooking          EventBooking      @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+  userId                String            @db.Uuid
+  user                  User              @relation("EventAssignedCrew", fields: [userId], references: [id], onDelete: Cascade)
+  role                  String
+  agreedPayment         Decimal?          @db.Decimal(10, 2)
+  payoutStatus          PayoutStatus      @default(PENDING)
+  tdsSection            TdsSection        @default(NONE)
+  tdsRate               Decimal           @default(0.00) @db.Decimal(5, 2)
+  tdsAmount             Decimal           @default(0.00) @db.Decimal(10, 2)
+  netPayableAmount      Decimal           @default(0.00) @db.Decimal(10, 2)
+  disbursedAt           DateTime?
+  disbursementReference String?
+  sourceBankAccountId   String?           @db.Uuid
+  voucherId             String?           @db.Uuid
+  voucher               FinancialVoucher? @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  expectedGearList      String?
+  notificationSent      Boolean           @default(false)
+  notificationSentAt    DateTime?
+  assignedAt            DateTime          @default(now())
+  notes                 String?
+
+  assignedById String? @db.Uuid
+  assignedBy   User?   @relation("EventAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventBookingId, userId, role])
+  @@index([eventBookingId])
+  @@index([userId])
+  @@index([assignedById])
+  @@index([voucherId])
+  @@index([payoutStatus])
+  @@index([sourceBankAccountId])
+}
+
+model ShootGearAllocation {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String               @db.Uuid
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId       String               @db.Uuid
+  branch         Branch               @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  eventBookingId String               @db.Uuid
+  eventBooking   EventBooking         @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+  subEventId     String?              @db.Uuid
+  subEvent       SubEvent?            @relation(fields: [subEventId], references: [id], onDelete: SetNull)
+  equipmentId    String               @db.Uuid
+  equipment      Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  assignedToId   String?              @db.Uuid
+  assignedTo     User?                @relation("AssignedGearUser", fields: [assignedToId], references: [id], onDelete: SetNull)
+  status         GearAllocationStatus @default(ALLOCATED)
+  checkedOutAt   DateTime?
+  returnedAt     DateTime?
+  checkoutNotes  String?
+  returnNotes    String?
+
+  gearCheckLogs GearCheckLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, eventBookingId])
+  @@index([branchId])
+  @@index([subEventId])
+  @@index([equipmentId, status])
+  @@index([assignedToId])
+}
+
+model CallSheet {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @db.Uuid
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventBookingId String        @db.Uuid
+  eventBooking   EventBooking  @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+  subEventId     String?       @db.Uuid
+  subEvent       SubEvent?     @relation(fields: [subEventId], references: [id], onDelete: SetNull)
+  callTime       DateTime
+  reportingVenue String
+  googleMapsLink String?
+  leadDirectorId String?       @db.Uuid
+  leadDirector   User?         @relation("CallSheetDirector", fields: [leadDirectorId], references: [id], onDelete: SetNull)
+  dressCode      String?       @default("All Black Professional")
+  specialNotes   String?
+  shareableToken String        @unique @default(dbgenerated("gen_random_uuid()"))
+  dispatchLogs   DispatchLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, eventBookingId])
+  @@index([subEventId])
+  @@index([leadDirectorId])
+}
+
+model DispatchLog {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String         @db.Uuid
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callSheetId String?        @db.Uuid
+  callSheet   CallSheet?     @relation(fields: [callSheetId], references: [id], onDelete: SetNull)
+  userId      String         @db.Uuid
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     String         @default("WHATSAPP")
+  phone       String
+  message     String
+  status      DispatchStatus @default(SENT)
+  sentAt      DateTime       @default(now())
+
+  @@index([tenantId, userId])
+  @@index([callSheetId])
+}
+
+model DataIngestionJob {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String       @db.Uuid
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventBookingId String       @db.Uuid
+  eventBooking   EventBooking @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+  subEventId     String?      @db.Uuid
+  subEvent       SubEvent?    @relation(fields: [subEventId], references: [id], onDelete: SetNull)
+
+  handedOverById String? @db.Uuid
+  handedOverBy   User?   @relation("IngestionHandedOverBy", fields: [handedOverById], references: [id], onDelete: SetNull)
+
+  receivedById String? @db.Uuid
+  receivedBy   User?   @relation("IngestionReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+
+  primaryStoragePath String?
+  backupStoragePath  String?
+  totalSizeGb        Float?
+  status             IngestionStatus @default(PENDING)
+  ingestionNotes     String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([eventBookingId])
+  @@index([subEventId])
+  @@index([handedOverById])
+  @@index([receivedById])
+  @@index([status])
+}
+
+// ------------------------------------------------------
+// DOCUMENTS & DYNAMIC AGREEMENTS
+// ------------------------------------------------------
+
+model DocumentTemplate {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name     String
+  content  String               @db.Text
+  type     DocumentTemplateType @default(AGREEMENT)
+  isActive Boolean              @default(true)
+
+  userAgreements UserAgreement[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+}
+
+model UserAgreement {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String           @db.Uuid
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId     String           @db.Uuid
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId String           @db.Uuid
+  template   DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  status          UserAgreementStatus @default(PENDING)
+  compiledContent String?             @db.Text
+  acceptedAt      DateTime?
+  signatureIp     String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([templateId])
+  @@index([tenantId, status])
 }
 
 // ------------------------------------------------------
@@ -756,34 +2018,990 @@ model Payment {
 // ------------------------------------------------------
 
 model AuditLog {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String         @db.Uuid
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId         String?        @db.Uuid
-  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
-  action         String
-  entityType     String
-  entityId       String
-  
-  oldValues      Json?
-  newValues      Json?
-  ipAddress      String?
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String  @db.Uuid
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String? @db.Uuid
+  user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime       @default(now())
+  action     String
+  entityType String
+  entityId   String
+
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+
+  createdAt DateTime @default(now())
 
   @@index([tenantId, entityType, entityId])
 }
 
-model StorageRecord {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId      String         @db.Uuid
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  location       String
-  sizeGb         Decimal        @db.Decimal(8, 2)
-  status         String
+model PlatformBroadcast {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  message     String            @db.Text
+  severity    BroadcastSeverity @default(INFO)
+  isActive    Boolean           @default(true)
+  expiresAt   DateTime?
+  createdById String?           @db.Uuid
+  createdBy   User?             @relation("BroadcastCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([isActive, expiresAt])
+}
+
+// ------------------------------------------------------
+// CLOUD STORAGE & BYOS (PHASE 2.1)
+// ------------------------------------------------------
+
+model StorageIntegration {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String          @db.Uuid
+  tenant               Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider             StorageProvider
+  encryptedCredentials String          @db.Text
+  isActive             Boolean         @default(true)
+  isDefault            Boolean         @default(false)
+
+  storageRecords StorageRecord[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, provider])
+}
+
+model StorageRecord {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String             @db.Uuid
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integrationId  String             @db.Uuid
+  integration    StorageIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  customerId     String?            @db.Uuid
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  eventBookingId String?            @db.Uuid
+  eventBooking   EventBooking?      @relation(fields: [eventBookingId], references: [id], onDelete: SetNull)
+
+  fileName       String
+  externalFileId String
+  mimeType       String
+  sizeBytes      BigInt
+  url            String?             @db.Text
+  status         StorageRecordStatus @default(ACTIVE)
+
+  selectionItems SelectionItem[]
+  albumCoverFor  AlbumProject[]  @relation("AlbumCoverImage")
+  albumPages     AlbumPage[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([externalFileId])
+  @@index([integrationId])
+  @@index([eventBookingId])
+}
+
+// ------------------------------------------------------
+// OMNICHANNEL LEAD INTEGRATIONS & WEBHOOKS
+// ------------------------------------------------------
+
+model TenantIntegration {
+  id       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String              @db.Uuid
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider IntegrationProvider
+  apiKey   String              @unique
+  name     String?
+  isActive Boolean             @default(true)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+  @@index([apiKey])
+}
+
+// ------------------------------------------------------
+// CLIENT DIGITAL PHOTO SELECTION ENGINE (PHASE 2.2)
+// ------------------------------------------------------
+
+model ClientSelection {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @db.Uuid
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId     String        @db.Uuid
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  eventBookingId String?       @db.Uuid
+  eventBooking   EventBooking? @relation(fields: [eventBookingId], references: [id], onDelete: SetNull)
+
+  title              String
+  status             SelectionStatus @default(DRAFT)
+  pinCode            String?
+  selectionDeadline  DateTime?
+  isSelectionLocked  Boolean         @default(false)
+  extensionRequested Boolean         @default(false)
+  extensionReason    String?         @db.Text
+  operatorNotes      String?         @db.Text
+  isStoragePurged    Boolean         @default(false)
+  purgedAt           DateTime?
+  instructions       String?         @db.Text
+  minSelections      Int?
+  maxSelections      Int?
+
+  galleryMode    String  @default("SELECTION")
+  allowDownloads Boolean @default(false)
+  applyWatermark Boolean @default(true)
+
+  items          SelectionItem[]
+  galleryFolders GalleryFolder[]
+  albumProjects  AlbumProject[]
+
+  jobId              String?            @unique @db.Uuid
+  postProductionJob  PostProductionJob? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  selectedPhotoNames String?            @db.Text
+  submittedAt        DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([eventBookingId])
+  @@index([jobId])
+}
+
+model SelectionItem {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String          @db.Uuid
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  selectionId     String          @db.Uuid
+  selection       ClientSelection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+  storageRecordId String          @db.Uuid
+  storageRecord   StorageRecord   @relation(fields: [storageRecordId], references: [id], onDelete: Cascade)
+
+  status     SelectionItemStatus @default(PENDING)
+  isFavorite Boolean             @default(false)
+  clientNote String?             @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([selectionId, storageRecordId])
+  @@index([tenantId])
+  @@index([selectionId])
+  @@index([storageRecordId])
+}
+
+model GalleryFolder {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String           @db.Uuid
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  selectionId    String?          @db.Uuid
+  selection      ClientSelection? @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+  eventBookingId String?          @db.Uuid
+  eventBooking   EventBooking?    @relation(fields: [eventBookingId], references: [id], onDelete: Cascade)
+
+  name   String
+  order  Int            @default(0)
+  photos GalleryPhoto[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([selectionId])
+  @@index([eventBookingId])
+}
+
+model GalleryPhoto {
+  id       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String        @db.Uuid
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  folderId String        @db.Uuid
+  folder   GalleryFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  url         String
+  filename    String
+  isSelected  Boolean @default(false)
+  clientNote  String? @db.Text
+  aspectRatio Float?  @default(1.0)
+  width       Int?
+  height      Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([folderId])
+  @@index([isSelected])
+}
+
+// ------------------------------------------------------
+// AI GUEST PORTAL, CLIENT GALLERY & LEAD GEN (PHASE 11)
+// ------------------------------------------------------
+
+model ClientGallery {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String       @db.Uuid
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId String       @db.Uuid
+  booking   EventBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  title             String
+  coverImageUrl     String?
+  secureAccessToken String  @unique @default(uuid())
+
+  // Monetization & Digital Protection
+  isWatermarked Boolean  @default(true)
+  priceForHD    Decimal? @db.Decimal(10, 2)
+
+  // Bill Shock Prevention Guardrail: Studio owner must manually toggle ON for an event to authorize AI scanning charges
+  isAiScanEnabled Boolean @default(false)
+
+  status    String    @default("DRAFT") // DRAFT, PUBLISHED, COMPLETED
+  expiresAt DateTime?
+
+  photoSelections PhotoSelection[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([bookingId])
+  @@index([secureAccessToken])
+  @@index([status])
+}
+
+model PhotoSelection {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String        @db.Uuid
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  galleryId String        @db.Uuid
+  gallery   ClientGallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  filename      String
+  status        String   @default("SELECTED") // SELECTED, REJECTED
+  clientComment String?  @db.Text
+  timestamp     DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([galleryId])
+  @@index([status])
+}
+
+model GuestLead {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String        @db.Uuid
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId String?       @db.Uuid
+  booking   EventBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  guestName          String
+  whatsappNumber     String
+  selfieImageUrl     String  @db.Text
+  isMatched          Boolean @default(false)
+  matchedPhotosCount Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([bookingId])
+  @@index([whatsappNumber])
+}
+
+// ------------------------------------------------------
+// POST-PRODUCTION, EDITING WORKFLOW & CLIENT SELECTIONS
+// ------------------------------------------------------
+
+model PostProductionJob {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String       @db.Uuid
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId String       @unique @db.Uuid
+  booking   EventBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  status          PostProductionStatus @default(PENDING)
+  cloudFolderLink String?
+  notes           String?              @db.Text
+
+  workflowTasks   WorkflowTask[]
+  clientSelection ClientSelection?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([bookingId])
+  @@index([status])
+}
+
+// ------------------------------------------------------
+// DIGITAL ALBUM PROOFING & EDITOR WORKFLOW (PHASE 2.3)
+// ------------------------------------------------------
+
+model AlbumProject {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @db.Uuid
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId     String        @db.Uuid
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  eventBookingId String?       @db.Uuid
+  eventBooking   EventBooking? @relation(fields: [eventBookingId], references: [id], onDelete: SetNull)
+
+  clientSelectionId String?          @db.Uuid
+  clientSelection   ClientSelection? @relation(fields: [clientSelectionId], references: [id], onDelete: SetNull)
+
+  title        String
+  status       AlbumStatus    @default(DRAFT)
+  editorId     String?        @db.Uuid
+  editor       User?          @relation("AlbumEditor", fields: [editorId], references: [id], onDelete: SetNull)
+  coverImageId String?        @db.Uuid
+  coverImage   StorageRecord? @relation("AlbumCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+
+  expiresAt   DateTime?
+  description String?   @db.Text
+  totalSheets Int?      @default(0)
+
+  pages AlbumPage[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([editorId])
+  @@index([eventBookingId])
+  @@index([clientSelectionId])
+  @@index([tenantId, status])
+}
+
+model AlbumPage {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String        @db.Uuid
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  albumId         String        @db.Uuid
+  album           AlbumProject  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  storageRecordId String        @db.Uuid
+  storageRecord   StorageRecord @relation(fields: [storageRecordId], references: [id], onDelete: Cascade)
+
+  pageNumber     Int
+  title          String?
+  layoutMetadata Json?
+
+  comments AlbumComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([albumId, pageNumber])
+  @@index([tenantId])
+  @@index([albumId])
+  @@index([storageRecordId])
+}
+
+model AlbumComment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  albumPageId String    @db.Uuid
+  albumPage   AlbumPage @relation(fields: [albumPageId], references: [id], onDelete: Cascade)
+
+  xPos        Float
+  yPos        Float
+  commentText String  @db.Text
+  isResolved  Boolean @default(false)
+
+  authorName String?
+  authorRole String?
+  authorId   String? @db.Uuid
+  author     User?   @relation("AlbumCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([albumPageId])
+  @@index([isResolved])
+  @@index([authorId])
+}
+
+// ------------------------------------------------------
+// FOUNDATION & MASTER DATA (PHASE 7)
+// ------------------------------------------------------
+
+model NumberSeries {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  entityType String // CUSTOMER, INQUIRY, LEAD
+  prefix     String
+  nextNumber Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, entityType])
+}
+
+model ActivityTimeline {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  entityType String // e.g. LEAD, INQUIRY
+  entityId   String @db.Uuid
+
+  action   String
+  notes    String?
+  metadata Json?
+
+  createdById String?  @db.Uuid
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, entityType, entityId])
+}
+
+model Attachment {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  entityType String // e.g. CUSTOMER, LEAD
+  entityId   String @db.Uuid
+
+  fileName  String
+  fileUrl   String
+  sizeBytes Int
+  mimeType  String?
+
+  createdById String?   @db.Uuid
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@index([tenantId, entityType, entityId])
+}
+
+// MASTERS
+model State {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  code      String
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+
+  cities    City[]
+  customers Customer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model City {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  stateId String @db.Uuid
+  state   State  @relation(fields: [stateId], references: [id], onDelete: Restrict)
+
+  name      String
+  isActive  Boolean    @default(true)
+  deletedAt DateTime?
+  customers Customer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventType {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  code        String
+  description String?
+  color       String?   @default("#3b82f6")
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model LeadSource {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  code        String
+  description String?
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+  inquiries   Inquiry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model PaymentMode {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  code        String
+  description String?
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model PackageCategory {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  code        String
+  description String?
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  packages  Package[]
+
+  @@unique([tenantId, code])
+}
+
+model TaxRate {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name       String
+  code       String
+  percentage Decimal   @db.Decimal(5, 2)
+  isActive   Boolean   @default(true)
+  deletedAt  DateTime?
+
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  packages               Package[]
+  quotationRevisionItems QuotationRevisionItem[]
+
+  @@unique([tenantId, code])
+}
+
+model ServiceComponent {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  code        String
+  description String?
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  packageItems PackageItem[]
+
+  @@unique([tenantId, code])
+}
+
+// ------------------------------------------------------
+// BUSINESS ENTITIES (PHASE 7)
+// ------------------------------------------------------
+
+model Customer {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  customerCode String
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  whatsapp     String?
+
+  // B2B & Corporate GST Information
+  isCorporate Boolean @default(false)
+  companyName String?
+  gstin       String?
+  pan         String?
+  stateCode   String?
+
+  cityId  String? @db.Uuid
+  city    City?   @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  stateId String? @db.Uuid
+  state   State?  @relation(fields: [stateId], references: [id], onDelete: SetNull)
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("CustomerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String? @db.Uuid
+  deletedBy   User?   @relation("CustomerDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  isConfirmed         Boolean   @default(false)
+  portalAccessGranted Boolean   @default(false)
+  portalAccessCode    String?
+  portalPin           String?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  confirmedAt         DateTime?
+
+  userId String? @unique @db.Uuid
+  user   User?   @relation("CustomerUserAccount", fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  inquiries        Inquiry[]
+  leads            Lead[]
+  invoices         Invoice[]
+  payments         Payment[]
+  eventBookings    EventBooking[]
+  storageRecords   StorageRecord[]
+  clientSelections ClientSelection[]
+  albumProjects    AlbumProject[]
+  creditNotes      CreditNote[]
+
+  @@unique([tenantId, customerCode])
+  @@index([tenantId, branchId])
+  @@index([cityId])
+  @@index([stateId])
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Inquiry {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  inquiryCode String
+
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  inquiryDate          DateTime  @db.Date
+  eventDate            DateTime? @db.Date
+  eventType            String?
+  preferredContactTime String?
+  budgetRange          String?
+
+  leadSourceId String?     @db.Uuid
+  leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id], onDelete: SetNull)
+
+  assignedToId String? @db.Uuid
+  assignedTo   User?   @relation("InquiryAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  priority Priority      @default(MEDIUM)
+  status   InquiryStatus @default(NEW)
+  notes    String?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("InquiryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("InquiryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String? @db.Uuid
+  deletedBy   User?   @relation("InquiryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  lead      Lead?
+
+  @@unique([tenantId, inquiryCode])
+  @@index([tenantId, branchId, status])
+  @@index([customerId])
+  @@index([leadSourceId])
+  @@index([assignedToId])
+}
+
+enum FollowUpType {
+  CALL
+  WHATSAPP
+  EMAIL
+  MEETING
+  VIDEO_CALL
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum FollowUpOutcome {
+  INTERESTED
+  NOT_INTERESTED
+  CALLBACK_REQUESTED
+  NO_ANSWER
+  INVALID_NUMBER
+  MET
+  OTHER
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model FollowUp {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId String @db.Uuid
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  leadId String @db.Uuid
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  assignedToId String? @db.Uuid
+  assignedTo   User?   @relation("FollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  type   FollowUpType
+  status FollowUpStatus @default(PENDING)
+
+  followUpDate   DateTime
+  reminderDate   DateTime?
+  reminderStatus ReminderStatus?
+  reminderSentAt DateTime?
+
+  priority         Priority  @default(MEDIUM)
+  notes            String?
+  outcome          String?
+  nextFollowUpDate DateTime?
+  completedAt      DateTime?
+
+  createdById String? @db.Uuid
+  createdBy   User?   @relation("FollowUpCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String? @db.Uuid
+  updatedBy   User?   @relation("FollowUpUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedById String? @db.Uuid
+  deletedBy   User?   @relation("FollowUpDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([id, tenantId])
+  @@index([tenantId, branchId, status, followUpDate])
+  @@index([leadId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+  FLAT
+  NONE
+}
+
+enum LineItemType {
+  STANDARD
+  OPTIONAL
+  INFORMATION
+}
+
+// ------------------------------------------------------
+// DOUBLE-ENTRY ACCOUNTING & CHART OF ACCOUNTS (STEP 1)
+// ------------------------------------------------------
+
+model Account {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  type        AccountType
+  isDefault   Boolean     @default(false)
+  description String?     @db.Text
+  code        String?
+
+  entries VoucherEntry[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([type])
+}
+
+model FinancialVoucher {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  voucherNumber String
+  date          DateTime    @default(now())
+  type          VoucherType
+  narration     String?     @db.Text
+  referenceId   String?
+
+  // Strict Audit Trail & Voiding (Immutability)
+  isVoided          Boolean   @default(false)
+  voidedAt          DateTime?
+  voidedById        String?   @db.Uuid
+  voidReason        String?   @db.Text
+  reversalVoucherId String?   @db.Uuid
+
+  entries          VoucherEntry[]
+  staffAssignments StaffAssignment[]
+  eventAssignments EventAssignment[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([tenantId, voucherNumber])
+  @@index([tenantId])
+  @@index([date])
+  @@index([type])
+  @@index([referenceId])
+  @@index([isVoided])
+}
+
+model VoucherEntry {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  voucherId String           @db.Uuid
+  voucher   FinancialVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+
+  accountId String  @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  type   EntryType
+  amount Decimal   @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([voucherId])
+  @@index([accountId])
+}
+
+// ------------------------------------------------------
+// CREDIT NOTES & STATUTORY ADJUSTMENTS (PHASE 9)
+// ------------------------------------------------------
+
+model CreditNote {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String           @db.Uuid
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId         String?          @db.Uuid
+  branch           Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customerId       String           @db.Uuid
+  customer         Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  invoiceId        String           @db.Uuid
+  invoice          Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  creditNoteNumber String
+  status           String           @default("ISSUED") // ISSUED, REFUNDED, APPLIED
+  reason           CreditNoteReason @default(CLIENT_DISCOUNT_ADJUSTMENT)
+  notes            String?          @db.Text
+  issueDate        DateTime         @default(now())
+
+  // Tax and Amounts
+  subtotal     Decimal @db.Decimal(10, 2)
+  cgstAmount   Decimal @default(0.00) @db.Decimal(10, 2)
+  sgstAmount   Decimal @default(0.00) @db.Decimal(10, 2)
+  igstAmount   Decimal @default(0.00) @db.Decimal(10, 2)
+  grandTotal   Decimal @db.Decimal(10, 2)
+  refundAmount Decimal @default(0.00) @db.Decimal(10, 2)
+
+  // Audit
+  createdById String?   @db.Uuid
+  createdBy   User?     @relation("CreditNoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  items CreditNoteItem[]
+
+  @@unique([tenantId, creditNoteNumber])
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, customerId])
+  @@index([branchId])
+}
+
+model CreditNoteItem {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creditNoteId String     @db.Uuid
+  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+
+  name       String
+  sacCode    String  @default("998382")
+  quantity   Int     @default(1)
+  unitPrice  Decimal @db.Decimal(10, 2)
+  gstRate    Decimal @default(0.00) @db.Decimal(5, 2)
+  cgstAmount Decimal @default(0.00) @db.Decimal(10, 2)
+  sgstAmount Decimal @default(0.00) @db.Decimal(10, 2)
+  igstAmount Decimal @default(0.00) @db.Decimal(10, 2)
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([creditNoteId])
 }

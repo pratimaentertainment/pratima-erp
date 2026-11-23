@@ -1,6 +1,7 @@
  
  
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { UserService } from '@/services/user.service';
 import { RoleRepository } from '@/repositories/role.repository';
 import { auth } from '@/auth';
@@ -19,8 +20,10 @@ export default async function UsersPage(props: { searchParams: SearchParams }) {
   const searchParams = await props.searchParams;
   const session = await auth();
   
-  // Use a fallback tenant if auth is not strictly configured yet
-  const tenantId = (session?.user as any)?.tenantId || 'default-tenant-id';
+  const tenantId = (session?.user as any)?.tenantId;
+  if (!tenantId) {
+    redirect('/login');
+  }
 
   const search = typeof searchParams.search === 'string' ? searchParams.search : undefined;
   const status = typeof searchParams.status === 'string' ? searchParams.status : undefined;

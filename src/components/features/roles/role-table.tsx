@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { RoleColumnData, columns } from './columns';
 import { Button } from '@/components/ui/button';
 import { RoleDrawer } from './role-drawer';
-import { deleteRoleAction } from '@/app/actions/role.actions';
+import { deleteRoleAction } from '@/actions/role.actions';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 

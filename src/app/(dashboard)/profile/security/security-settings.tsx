@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { changePasswordAction, revokeSessionAction, revokeOtherSessionsAction } from '@/app/actions/auth.actions';
+import { changePasswordAction, revokeSessionAction, revokeOtherSessionsAction } from '@/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 
 import {

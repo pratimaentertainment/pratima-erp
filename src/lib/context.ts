@@ -1,47 +1,263 @@
 import { auth } from '@/auth';
-import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { buildContextAndAuthorize, ServiceContext } from '@/lib/application/utils/context';
+import { getActiveImpersonationState, ImpersonationState } from '@/lib/impersonation';
 
-export async function getActiveContext() {
+export interface ActiveContextUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  roles: string[];
+}
+
+export interface ActiveContextBranch {
+  id: string;
+  name: string;
+  code?: string | null;
+  isHeadOffice?: boolean;
+  isActive?: boolean;
+}
+
+export interface ActiveContextTenant {
+  id: string;
+  name: string;
+  slug?: string | null;
+  tradeName?: string | null;
+  companyLegalName?: string | null;
+  logoUrl?: string | null;
+  isFranchisor?: boolean;
+  parentTenantId?: string | null;
+}
+
+export interface ActiveContext {
+  user: ActiveContextUser | null;
+  tenant: ActiveContextTenant | null;
+  activeBranch: ActiveContextBranch | null;
+  branches: ActiveContextBranch[];
+  tenantId: string;
+  userId: string;
+  branchId: string | null;
+  isAllBranches: boolean;
+  permissions: string[];
+  isOwnerOrAdmin: boolean;
+  impersonation?: ImpersonationState | null;
+}
+
+export async function getActiveContext(): Promise<ActiveContext | null> {
   const session = await auth();
-  if (!session || !(session.user as any)?.tenantId) {
+  if (!session?.user) {
     return null;
   }
 
-  const tenantId = (session.user as any).tenantId;
-  const userId = session.user?.id;
-  
-  if (!userId) return null;
+  const userId = session.user.id || (session.user as any).sub;
+  if (!userId) {
+    throw new Error('UNAUTHORIZED_ACCESS');
+  }
+  let tenantId = (session.user as any).tenantId;
 
-  // Read cookie
-  const cookieStore = await cookies();
-  const activeBranchIdCookie = cookieStore.get('active-branch-id');
-  
-  let branchId = activeBranchIdCookie?.value;
-
-  // If no branchId in cookie or if we want to validate it against user's assigned branches
-  // let's fetch user branches to be safe and ensure they have access.
-  const userBranches = await prisma.userBranch.findMany({
-    where: { userId, isActive: true, branch: { tenantId, isActive: true, deletedAt: null } },
-    include: { branch: true }
-  });
-
-  if (userBranches.length === 0) {
-    return { tenantId, branchId: null, userBranches: [] };
+  // Check cookie for user branch selection preference
+  let cookieBranchId: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    cookieBranchId = cookieStore.get('pratima_active_branch_id')?.value || null;
+  } catch {
+    cookieBranchId = null;
   }
 
-  // Validate the cookie branchId belongs to the user
-  const isValidCookieBranch = userBranches.some(ub => ub.branchId === branchId);
+  // Support Mode: Check if Super Admin is impersonating a tenant workspace
+  const sessionRole = (session.user as any)?.role;
+  let impersonation: ImpersonationState | null = null;
 
-  if (!branchId || !isValidCookieBranch) {
-    // Fallback to primary branch
-    const primaryBranch = userBranches.find(ub => ub.isPrimary) || userBranches[0];
-    branchId = primaryBranch.branchId;
-    
-    // We could set the cookie here, but cookies().set() is not allowed in Server Components 
-    // unless called inside a Server Action or Route Handler.
-    // So we just return the fallback.
+  const rawImpersonation = await getActiveImpersonationState();
+  if (rawImpersonation && sessionRole === 'SUPER_ADMIN') {
+    impersonation = rawImpersonation;
+    tenantId = rawImpersonation.tenantId;
   }
 
-  return { tenantId, branchId, userBranches, activeBranch: userBranches.find(ub => ub.branchId === branchId)?.branch };
+  const activeBranchId = cookieBranchId || (session.user as any).activeBranchId || null;
+
+  const [dbUser, tenant, userBranches, allTenantBranches] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        roles: {
+          include: {
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    tenantId
+      ? prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            tradeName: true,
+            companyLegalName: true,
+            logoUrl: true,
+            isFranchisor: true,
+            parentTenantId: true,
+          },
+        })
+      : null,
+    prisma.userBranch.findMany({
+      where: { userId, isActive: true },
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            isHeadOffice: true,
+            isActive: true,
+          },
+        },
+      },
+      orderBy: [{ isPrimary: 'desc' }, { branch: { name: 'asc' } }],
+    }),
+    tenantId
+      ? prisma.branch.findMany({
+          where: { tenantId, deletedAt: null, isActive: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            isHeadOffice: true,
+            isActive: true,
+          },
+          orderBy: [{ isHeadOffice: 'desc' }, { name: 'asc' }],
+        })
+      : [],
+  ]);
+
+  const roleNames = dbUser?.roles?.map((r) => r.role.name) || [];
+  const userRole = dbUser?.role || sessionRole;
+
+  let resolvedTenant = tenant;
+  let resolvedBranches = allTenantBranches;
+
+  // In case the user is SUPER_ADMIN in DB but session didn't reflect it
+  if (
+    rawImpersonation &&
+    !impersonation &&
+    (userRole === 'SUPER_ADMIN' || roleNames.includes('SUPER_ADMIN'))
+  ) {
+    impersonation = rawImpersonation;
+    tenantId = rawImpersonation.tenantId;
+
+    const [impTenant, impBranches] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          tradeName: true,
+          companyLegalName: true,
+          logoUrl: true,
+          isFranchisor: true,
+          parentTenantId: true,
+        },
+      }),
+      prisma.branch.findMany({
+        where: { tenantId, deletedAt: null, isActive: true },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          isHeadOffice: true,
+          isActive: true,
+        },
+        orderBy: [{ isHeadOffice: 'desc' }, { name: 'asc' }],
+      }),
+    ]);
+    resolvedTenant = impTenant;
+    resolvedBranches = impBranches;
+  }
+
+  const isOwnerOrAdmin =
+    userRole === 'SUPER_ADMIN' ||
+    userRole === 'TENANT_OWNER' ||
+    roleNames.includes('SUPER_ADMIN') ||
+    roleNames.includes('TENANT_OWNER') ||
+    roleNames.includes('Owner') ||
+    roleNames.includes('Admin');
+
+  let primaryRole = 'STAFF';
+  if (userRole === 'SUPER_ADMIN' || roleNames.includes('SUPER_ADMIN')) {
+    primaryRole = 'SUPER_ADMIN';
+  } else if (
+    userRole === 'TENANT_OWNER' ||
+    roleNames.includes('TENANT_OWNER') ||
+    roleNames.includes('Owner')
+  ) {
+    primaryRole = 'TENANT_OWNER';
+  } else if (roleNames.includes('BRANCH_MANAGER') || roleNames.includes('Manager')) {
+    primaryRole = 'BRANCH_MANAGER';
+  } else if (roleNames[0]) {
+    primaryRole = roleNames[0];
+  }
+
+  // Branch access strictly governed by RBAC:
+  // TENANT_OWNER / SUPER_ADMIN sees all tenant branches.
+  // Lower staff sees only their assigned user branches.
+  const branches = isOwnerOrAdmin
+    ? resolvedBranches
+    : userBranches.map((ub) => ub.branch).filter(Boolean);
+
+  // Evaluate Owner "All Branches" mode
+  const isAllBranches = Boolean(isOwnerOrAdmin && activeBranchId === 'ALL');
+
+  const activeBranch: ActiveContextBranch | null = isAllBranches
+    ? {
+        id: 'ALL',
+        name: 'All Branches (Consolidated)',
+        code: 'ALL',
+        isHeadOffice: false,
+        isActive: true,
+      }
+    : (branches.find((b) => b.id === activeBranchId) ||
+       branches.find((b) => b.isHeadOffice) ||
+       branches[0] ||
+       null);
+
+  const user = dbUser
+    ? {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        role: primaryRole,
+        roles: roleNames,
+      }
+    : null;
+
+  return {
+    user,
+    tenant: resolvedTenant,
+    activeBranch,
+    branches,
+    tenantId: tenantId || '',
+    userId,
+    branchId: isAllBranches ? null : (activeBranch ? activeBranch.id : null),
+    isAllBranches,
+    permissions: [],
+    isOwnerOrAdmin,
+    impersonation,
+  };
 }
+
+export { buildContextAndAuthorize };
+export type { ServiceContext };

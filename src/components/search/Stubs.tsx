@@ -1,0 +1,10 @@
+export const SearchProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+export const SearchCategoryFilter = () => null;
+export const SearchFilters = () => null;
+export const SearchSuggestions = () => null;
+export const SearchHistory = () => null;
+export const RecentItems = () => null;
+export const SavedSearches = () => null;
+export const QuickActions = () => null;
+export const SpotlightSearch = () => null;
+export const KeyboardShortcuts = () => null;

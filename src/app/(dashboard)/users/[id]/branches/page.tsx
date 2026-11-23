@@ -1,5 +1,5 @@
-import { getUserBranchesAction } from '@/app/actions/user.branch.actions';
-import { getBranchesAction } from '@/app/actions/branch.actions';
+import { getUserBranchesAction } from '@/actions/user.branch.actions';
+import { getBranchesAction } from '@/actions/branch.actions';
 import { BranchAssignmentForm } from './branch-assignment-form';
 import { redirect } from 'next/navigation';
 

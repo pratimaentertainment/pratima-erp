@@ -16,23 +16,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { createUser } from '@/app/actions/user.actions';
+import { createUser, updateUser } from '@/actions/user.actions';
 
 interface UserFormProps {
   roles: any[];
+  user?: any;
   onSuccess: () => void;
 }
 
-export function UserForm({ roles, onSuccess }: UserFormProps) {
+export function UserForm({ roles, user, onSuccess }: UserFormProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: user?.name || '',
+      email: user?.email || '',
       password: '',
-      roles: [],
-      branches: [],
-      status: 'PENDING_INVITATION',
+      roles: user?.roles?.map((r: any) => r.roleId) || [],
+      branches: user?.branches?.map((b: any) => b.branchId) || [],
+      status: user?.status || 'PENDING_INVITATION',
     },
   });
 
@@ -41,10 +42,16 @@ export function UserForm({ roles, onSuccess }: UserFormProps) {
     if (data.roles.length === 0 && roles.length > 0) {
       data.roles = [roles[0].id];
     }
-    // Hardcoded branch for MVP test
-    data.branches = ['some-branch-id'];
+    // Branches are optional for MVP if not provided in UI
+    data.branches = [];
     
-    const res = await createUser(data);
+    let res;
+    if (user) {
+      res = await updateUser(user.id, data);
+    } else {
+      res = await createUser(data);
+    }
+    
     if (res.success) {
       onSuccess();
     } else {
@@ -89,6 +96,30 @@ export function UserForm({ roles, onSuccess }: UserFormProps) {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="roles"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <FormControl>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={field.value[0] || ''}
+                  onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                >
+                  <option value="" disabled>Select a role...</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>

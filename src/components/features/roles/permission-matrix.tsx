@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { updateRolePermissionsAction } from '@/app/actions/role.actions';
+import { updateRolePermissionsAction } from '@/actions/role.actions';
 import { useRouter } from 'next/navigation';
 import { Permission, RolePermission } from '@prisma/client';
 
