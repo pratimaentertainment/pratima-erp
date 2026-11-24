@@ -9,11 +9,11 @@ import {
   IndianRupee,
   GitBranch,
   Users,
-  MessageSquare,
-  PhoneCall,
   Loader2,
   CheckCircle2,
   Network,
+  Check,
+  Layers,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -31,6 +31,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  PLAN_FEATURES_CATALOG,
+  PlanFeatureKey,
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '@/lib/constants/plan-features';
 
 interface CreatePlanFormProps {
   onSuccess?: () => void;
@@ -49,8 +57,9 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       annualPrice: '' as unknown as number,
       maxBranches: 1,
       maxStaff: 3,
-      smsCredits: 100,
-      whatsappCredits: 500,
+      features: [...PRO_DEFAULT_FEATURES],
+      smsCredits: 0,
+      whatsappCredits: 0,
       allowFranchises: false,
       perFranchiseMonthlyPrice: 0,
       perFranchiseAnnualPrice: 0,
@@ -58,7 +67,8 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
     },
   });
 
-  // Auto-generate slug when name changes if slug has not been manually customized
+  const selectedFeatures = form.watch('features') || [];
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (val: string) => void) => {
     const val = e.target.value;
     onChange(val);
@@ -70,9 +80,46 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    // Auto-populate slug if empty or previously auto-generated
     if (!currentSlug || currentSlug === autoSlug.slice(0, -1)) {
       form.setValue('slug', autoSlug, { shouldValidate: true });
+    }
+  };
+
+  const toggleFeature = (featureKey: PlanFeatureKey) => {
+    const current = form.getValues('features') || [];
+    let updated: string[];
+    if (current.includes(featureKey)) {
+      updated = current.filter((k) => k !== featureKey);
+      if (featureKey === 'FRANCHISE_NETWORK') {
+        form.setValue('allowFranchises', false);
+      }
+    } else {
+      updated = [...current, featureKey];
+      if (featureKey === 'FRANCHISE_NETWORK') {
+        form.setValue('allowFranchises', true);
+      }
+    }
+    form.setValue('features', updated, { shouldValidate: true });
+  };
+
+  const applyPreset = (preset: 'starter' | 'pro' | 'enterprise') => {
+    if (preset === 'starter') {
+      form.setValue('features', [...STARTER_DEFAULT_FEATURES]);
+      form.setValue('allowFranchises', false);
+      form.setValue('maxBranches', 1);
+      form.setValue('maxStaff', 3);
+    } else if (preset === 'pro') {
+      form.setValue('features', [...PRO_DEFAULT_FEATURES]);
+      form.setValue('allowFranchises', false);
+      form.setValue('maxBranches', 3);
+      form.setValue('maxStaff', 10);
+    } else {
+      form.setValue('features', [...ENTERPRISE_DEFAULT_FEATURES]);
+      form.setValue('allowFranchises', true);
+      form.setValue('maxBranches', 10);
+      form.setValue('maxStaff', 50);
+      form.setValue('perFranchiseMonthlyPrice', 999);
+      form.setValue('perFranchiseAnnualPrice', 9990);
     }
   };
 
@@ -95,7 +142,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
         {/* Tier Name & Slug */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
@@ -200,7 +247,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
                   <GitBranch className="h-3 w-3 text-muted-foreground" />
-                  <span>Max Branches *</span>
+                  <span>Max Branches Allowed *</span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -240,53 +287,80 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
           />
         </div>
 
-        {/* Credits: SMS & WhatsApp */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField
-            control={form.control}
-            name="smsCredits"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3 text-muted-foreground" />
-                  <span>Free SMS Credits</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    className="h-9 text-sm"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="text-xs text-destructive" />
-              </FormItem>
-            )}
-          />
+        {/* Feature Matrix & Add-ons Grid */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-foreground">
+                Included Features &amp; Add-ons ({selectedFeatures.length}/{PLAN_FEATURES_CATALOG.length})
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="h-6 text-[10px] px-2"
+                onClick={() => applyPreset('starter')}
+              >
+                Starter
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="h-6 text-[10px] px-2"
+                onClick={() => applyPreset('pro')}
+              >
+                Pro
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="h-6 text-[10px] px-2"
+                onClick={() => applyPreset('enterprise')}
+              >
+                Enterprise
+              </Button>
+            </div>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="whatsappCredits"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
-                  <PhoneCall className="h-3 w-3 text-emerald-500" />
-                  <span>Free WhatsApp Credits</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    className="h-9 text-sm"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="text-xs text-destructive" />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border border-border/70 rounded-lg p-2.5 bg-muted/20">
+            {PLAN_FEATURES_CATALOG.map((f) => {
+              const isSelected = selectedFeatures.includes(f.key);
+              return (
+                <div
+                  key={f.key}
+                  onClick={() => toggleFeature(f.key)}
+                  className={`flex items-start gap-2.5 p-2 rounded-md border text-left cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-primary/5 border-primary/40 text-foreground'
+                      : 'bg-card/40 border-border/50 text-muted-foreground hover:bg-muted/30'
+                  }`}
+                >
+                  <div
+                    className={`h-4 w-4 rounded mt-0.5 flex items-center justify-center shrink-0 border transition-colors ${
+                      isSelected
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : 'border-muted-foreground/40 bg-background'
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold truncate leading-tight">
+                      {f.label}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {f.shortDescription}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Franchising & Flexi-Billing Tier Options */}
@@ -299,7 +373,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                 <div className="space-y-0.5">
                   <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Network className="h-3.5 w-3.5 text-primary" />
-                    <span>Enable Franchise Network & Flexi-Billing</span>
+                    <span>Enable Franchise Network &amp; Flexi-Billing</span>
                   </FormLabel>
                   <p className="text-[11px] text-muted-foreground">
                     Allow studios on this plan to provision linked franchisee studios.
@@ -308,7 +382,15 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                      if (checked) {
+                        const cur = form.getValues('features') || [];
+                        if (!cur.includes('FRANCHISE_NETWORK')) {
+                          form.setValue('features', [...cur, 'FRANCHISE_NETWORK']);
+                        }
+                      }
+                    }}
                   />
                 </FormControl>
               </FormItem>
@@ -367,7 +449,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
         </div>
 
         {/* Modal Action Buttons */}
-        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border/60">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border/60">
           {onCancel && (
             <Button
               type="button"

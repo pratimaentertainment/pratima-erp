@@ -483,6 +483,7 @@ model Tenant {
   royaltyPercent         Decimal?                 @db.Decimal(5, 2)
   franchisorRoyalties    FranchiseRoyaltyLedger[] @relation("FranchisorRoyalties")
   franchiseeRoyalties    FranchiseRoyaltyLedger[] @relation("FranchiseeRoyalties")
+  enabledAddons            String[]                 @default([])
 
   @@index([slug])
   @@index([contactPhone])
@@ -517,6 +518,7 @@ model SubscriptionPlan {
   smsCredits      Int      @default(0)
   whatsappCredits          Int                  @default(0)
   allowFranchises          Boolean              @default(false)
+  features                 String[]             @default([])
   perFranchiseMonthlyPrice Decimal?             @default(0) @db.Decimal(10, 2)
   perFranchiseAnnualPrice  Decimal?             @default(0) @db.Decimal(10, 2)
   isActive                 Boolean              @default(true)

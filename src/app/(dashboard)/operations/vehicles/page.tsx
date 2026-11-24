@@ -7,6 +7,7 @@ import {
   getUpcomingVehicleDispatchesAction,
 } from '@/actions/vehicle.actions';
 import { VehicleFleetDashboard } from '@/components/features/vehicles/VehicleFleetDashboard';
+import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,13 @@ export default async function VehicleFleetPage() {
   if (!context || !context.tenantId) {
     redirect('/login');
   }
+
+  const isSuperAdmin =
+    context.user?.role === 'SUPER_ADMIN' ||
+    context.user?.roles?.includes('SUPER_ADMIN');
+  const isUnlocked =
+    isSuperAdmin ||
+    Boolean(context.tenant?.features?.includes('FLEET_DISPATCH'));
 
   const [vehiclesRes, statsRes, dispatchesRes] = await Promise.all([
     getVehiclesAction(),
@@ -33,15 +41,17 @@ export default async function VehicleFleetPage() {
   }));
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      <VehicleFleetDashboard
-        initialVehicles={vehicles}
-        initialStats={stats}
-        initialDispatches={dispatches}
-        branches={branches}
-        isAllBranches={context.isAllBranches}
-        activeBranchName={context.activeBranch?.name || 'Active Branch'}
-      />
-    </div>
+    <FeatureLockGate featureKey="FLEET_DISPATCH" isUnlocked={isUnlocked}>
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <VehicleFleetDashboard
+          initialVehicles={vehicles}
+          initialStats={stats}
+          initialDispatches={dispatches}
+          branches={branches}
+          isAllBranches={context.isAllBranches}
+          activeBranchName={context.activeBranch?.name || 'Active Branch'}
+        />
+      </div>
+    </FeatureLockGate>
   );
 }

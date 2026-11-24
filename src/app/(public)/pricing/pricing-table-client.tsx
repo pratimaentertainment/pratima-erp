@@ -7,16 +7,20 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Zap,
   Building2,
   Users,
-  MessageSquare,
-  Smartphone,
   ChevronDown,
+  Network,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  getFeatureDefinition,
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '@/lib/constants/plan-features';
 
 export interface SerializedSubscriptionPlan {
   id: string;
@@ -26,8 +30,10 @@ export interface SerializedSubscriptionPlan {
   annualPrice: number;
   maxBranches: number;
   maxStaff: number;
-  smsCredits: number;
-  whatsappCredits: number;
+  features?: string[];
+  allowFranchises?: boolean;
+  perFranchiseMonthlyPrice?: number;
+  perFranchiseAnnualPrice?: number;
 }
 
 interface PricingTableClientProps {
@@ -56,35 +62,41 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
       tagline = 'For high-end production houses, franchises, and large cinema studios.';
     }
 
-    const features: string[] = [
-      plan.maxBranches === 1 ? '1 Studio Location' : `Up to ${plan.maxBranches} Studio Branches`,
+    const resolvedFeatureKeys =
+      plan.features && plan.features.length > 0
+        ? plan.features
+        : isEnterprise
+        ? ENTERPRISE_DEFAULT_FEATURES
+        : isPro
+        ? PRO_DEFAULT_FEATURES
+        : STARTER_DEFAULT_FEATURES;
+
+    const featureItems: string[] = [
+      plan.maxBranches === 1 ? '1 Studio Headquarters' : `Up to ${plan.maxBranches} Studio Branches`,
       `Up to ${plan.maxStaff} Staff & Crew Accounts`,
-      `${plan.smsCredits.toLocaleString('en-IN')} Transactional SMS Credits`,
-      `${plan.whatsappCredits.toLocaleString('en-IN')} WhatsApp Cloud API Credits`,
-      'GST-Compliant Quotations & Tax Invoices',
-      'Shoot Calendar & Crew Rostering',
+      'GST Quotations, Invoices & Digital Receipts',
+      'Event Shoot Calendar & Crew Rostering',
     ];
 
-    if (isPro || isEnterprise) {
-      features.push('Watermarked Photo Selection & Proofing Portal');
-      features.push('Auto WhatsApp Payment & Shoot Reminders');
-      features.push('Camera & Gear Inventory Maintenance Tracking');
+    for (const key of resolvedFeatureKeys) {
+      const def = getFeatureDefinition(key);
+      if (def && !featureItems.includes(def.label)) {
+        featureItems.push(def.label);
+      }
     }
 
-    if (isEnterprise) {
-      features.push('Double-Entry Accounting & Financial Ledgers');
-      features.push('Shoot Profit & Loss Margin Analytics');
-      features.push('Dedicated VIP Onboarding & Priority Support');
+    if (plan.allowFranchises) {
+      featureItems.push(`Franchise Scaling Network (+₹${plan.perFranchiseMonthlyPrice || 999}/mo per franchise)`);
     }
 
-    return { badge, isRecommended, tagline, features };
+    return { badge, isRecommended, tagline, features: featureItems };
   };
 
   const faqs = [
     {
       question: 'How does the 15-day free trial work?',
       answer:
-        'You receive full, unrestricted access to Pratima ERP immediately after registering your studio. No credit card or upfront deposit is required. You can test real shoot scheduling, client proofing, WhatsApp automations, and GST invoicing.',
+        'You receive full, unrestricted access to Pratima ERP immediately after registering your studio. No credit card or upfront deposit is required. You can test shoot scheduling, crew dispatch, client proofing, and GST invoicing.',
     },
     {
       question: 'Can I provide my GSTIN to claim Input Tax Credit (ITC)?',
@@ -94,22 +106,22 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
     {
       question: 'What happens to my client galleries and data after the trial?',
       answer:
-        'All your leads, events, client photos, approval locks, and invoices remain intact. Once you activate your subscription, your account transitions without any downtime or data migration needed.',
+        'All your leads, events, client photos, approval locks, and invoices remain intact. Once you activate your subscription, your account transitions seamlessly without any downtime or data migration needed.',
     },
     {
       question: 'Can I change my plan or billing cycle later?',
       answer:
-        'Yes. You can upgrade, downgrade, or switch between Monthly and Annual billing anytime directly from your Studio Settings. Plan upgrades are prorated automatically.',
+        'Yes. You can upgrade, downgrade, or switch between Monthly and Annual billing anytime directly from your Studio Settings. Plan upgrades take effect immediately.',
     },
     {
-      question: 'Are there any hidden server setup or onboarding fees?',
+      question: 'Can I add individual premium features as add-ons?',
       answer:
-        'None whatsoever. The pricing displayed above covers cloud infrastructure, database isolation, regular updates, and support. There are zero hidden fees.',
+        'Yes. In addition to our base tiers, studios can enable specific standalone add-ons (such as Google Drive BYOS Mirroring or Meta Lead Ads Inbound capture) directly with your platform administrator.',
     },
     {
       question: 'Which payment methods do you support in India?',
       answer:
-        'We support UPI (Google Pay, PhonePe, Paytm, BHIM), Indian & International Credit/Debit Cards (Visa, MasterCard, RuPay), and Net Banking via Razorpay/Cashfree secure gateways.',
+        'We support UPI (Google Pay, PhonePe, Paytm, BHIM), Indian & International Credit/Debit Cards (Visa, MasterCard, RuPay), and Net Banking via Razorpay secure checkout.',
     },
   ];
 
@@ -231,14 +243,6 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
                     <Users className="h-3.5 w-3.5 text-primary shrink-0" />
                     <span>{plan.maxStaff} Staff Logins</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Smartphone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span>{plan.smsCredits} SMS</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MessageSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span>{plan.whatsappCredits} WhatsApp</span>
-                  </div>
                 </div>
 
                 {/* Features Checklist */}
@@ -255,7 +259,7 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
                         <div className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
                           <Check className="h-3 w-3 stroke-[3]" />
                         </div>
-                        <span>{feature}</span>
+                        <span className="leading-tight">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -271,14 +275,14 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
                       variant: isRecommended ? 'default' : 'outline',
                       size: 'lg',
                     }),
-                    'w-full font-semibold shadow-xs gap-2'
+                    'w-full font-bold text-xs gap-2 shadow-xs'
                   )}
                 >
                   <span>Start 15-Day Free Trial</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <p className="text-center text-[10px] text-muted-foreground mt-2">
-                  15 days free • No card required • Instant setup
+                <p className="text-[10px] text-center text-muted-foreground mt-2">
+                  No credit card required • Instant studio setup
                 </p>
               </div>
             </div>
@@ -286,70 +290,26 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
         })}
       </div>
 
-      {/* Trust & Enterprise Pillars */}
-      <div className="rounded-2xl border border-border/60 bg-muted/30 p-6 sm:p-8" id="features">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mx-auto md:mx-0">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-foreground">Bank-Grade Multi-Tenant Cloud</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Each studio receives isolated database boundaries with encrypted tokens and strict RBAC controls.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mx-auto md:mx-0">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-foreground">WhatsApp Cloud Automation</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Send interactive wedding quotations, shoot reminders, and payment receipts straight to WhatsApp.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mx-auto md:mx-0">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-foreground">100% Indian GST Ready</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Auto-calculate CGST, SGST, IGST with SAC codes, reverse charge handling, and GSTR-1 compliant exports.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Section */}
-      <div className="max-w-3xl mx-auto space-y-8" id="faq">
+      {/* Frequently Asked Questions */}
+      <div className="max-w-3xl mx-auto space-y-6 pt-10">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-foreground">
             Frequently Asked Questions
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Everything you need to know about plans, billing, and onboarding your photography studio.
+            Have questions about billing, quotas, or GST invoicing? We have answers.
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card/40 overflow-hidden">
           {faqs.map((faq, index) => {
             const isOpen = openFaq === index;
             return (
-              <div
-                key={index}
-                className="rounded-xl border border-border/70 overflow-hidden bg-card/40 transition-colors"
-              >
+              <div key={index} className="transition-colors hover:bg-muted/10">
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="w-full flex items-center justify-between p-4 text-left font-medium text-sm text-foreground hover:bg-muted/30 transition-colors"
+                  className="flex w-full items-center justify-between p-5 text-left text-sm font-semibold text-foreground transition-all"
                 >
                   <span>{faq.question}</span>
                   <ChevronDown
@@ -360,44 +320,13 @@ export function PricingTableClient({ plans }: PricingTableClientProps) {
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/40">
+                  <div className="px-5 pb-5 text-xs text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </div>
                 )}
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Bottom CTA Banner */}
-      <div className="rounded-3xl bg-linear-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 p-8 sm:p-12 text-center text-white space-y-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl mx-auto space-y-3">
-          <h2 className="text-2xl sm:text-4xl font-extrabold font-heading tracking-tight">
-            Ready to scale your photography studio?
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-            Join hundreds of wedding and commercial photography studios across India. Start your 15-day free trial in under 2 minutes.
-          </p>
-        </div>
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/signup"
-            className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto font-bold px-8 shadow-md')}
-          >
-            <span>Start 15-Day Free Trial</span>
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </Link>
-          <Link
-            href="/login"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'lg' }),
-              'w-full sm:w-auto bg-transparent border-zinc-700 text-white hover:bg-zinc-800'
-            )}
-          >
-            Studio Login
-          </Link>
         </div>
       </div>
     </div>

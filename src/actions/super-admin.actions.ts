@@ -603,3 +603,53 @@ export async function updateTenantFranchiseConfigAction(
     };
   }
 }
+
+
+/**
+ * Super Admin: Update individual studio feature add-ons (enabledAddons)
+ */
+export async function updateTenantAddonsAction(tenantId: string, enabledAddons: string[]) {
+  try {
+    await requireSuperAdmin();
+
+    if (!tenantId) {
+      return { success: false, error: 'Tenant ID is required.' };
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true },
+    });
+
+    if (!tenant) {
+      return { success: false, error: 'Tenant studio not found.' };
+    }
+
+    const updated = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        enabledAddons,
+      },
+      select: {
+        id: true,
+        name: true,
+        enabledAddons: true,
+      },
+    });
+
+    revalidatePath('/super-admin');
+    revalidatePath('/settings/billing');
+
+    return {
+      success: true,
+      message: `Updated feature add-ons for "". (${enabledAddons.length} active add-ons)`,
+      data: updated,
+    };
+  } catch (error: any) {
+    console.error('[updateTenantAddonsAction] Error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to update tenant add-ons.',
+    };
+  }
+}

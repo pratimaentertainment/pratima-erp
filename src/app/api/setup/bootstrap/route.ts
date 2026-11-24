@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
+import {
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '@/lib/constants/plan-features';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,6 +24,7 @@ interface SubscriptionPlanSeedData {
   perFranchiseMonthlyPrice: number;
   perFranchiseAnnualPrice: number;
   isActive: boolean;
+  features: string[];
 }
 
 const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
@@ -35,6 +41,7 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
     perFranchiseMonthlyPrice: 0,
     perFranchiseAnnualPrice: 0,
     isActive: true,
+    features: [...STARTER_DEFAULT_FEATURES],
   },
   {
     slug: 'pro-studio',
@@ -49,6 +56,7 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
     perFranchiseMonthlyPrice: 0,
     perFranchiseAnnualPrice: 0,
     isActive: true,
+    features: [...PRO_DEFAULT_FEATURES],
   },
   {
     slug: 'enterprise-franchise',
@@ -63,6 +71,7 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
     perFranchiseMonthlyPrice: 999,
     perFranchiseAnnualPrice: 9990,
     isActive: true,
+    features: [...ENTERPRISE_DEFAULT_FEATURES],
   },
 ];
 
@@ -179,6 +188,7 @@ export async function GET(req: Request) {
           perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
           perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
           isActive: plan.isActive,
+          features: plan.features,
         },
         create: {
           name: plan.name,
@@ -193,6 +203,7 @@ export async function GET(req: Request) {
           perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
           perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
           isActive: plan.isActive,
+          features: plan.features,
         },
         select: {
           id: true,
@@ -203,6 +214,7 @@ export async function GET(req: Request) {
           maxBranches: true,
           maxStaff: true,
           allowFranchises: true,
+          features: true,
           isActive: true,
         },
       });
@@ -231,6 +243,7 @@ export async function GET(req: Request) {
         maxBranches: p.maxBranches,
         maxStaff: p.maxStaff,
         allowFranchises: p.allowFranchises,
+        features: p.features,
         isActive: p.isActive,
       })),
       timestamp: new Date().toISOString(),

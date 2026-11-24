@@ -20,6 +20,7 @@ import {
   Lock,
   LogIn,
   Network,
+  Layers,
 } from 'lucide-react';
 import {
   Dialog,
@@ -38,9 +39,11 @@ import {
   updateTenantStatusAction,
   resetTenantOwnerPasswordAction,
   updateTenantFranchiseConfigAction,
+  updateTenantAddonsAction,
 } from '@/actions/super-admin.actions';
 import { Switch } from '@/components/ui/switch';
 import { startTenantImpersonationAction } from '@/actions/impersonation.actions';
+import { PLAN_FEATURES_CATALOG } from '@/lib/constants/plan-features';
 
 interface ManageTenantDialogProps {
   studio: {
@@ -54,6 +57,7 @@ interface ManageTenantDialogProps {
     isFranchisor?: boolean;
     parentTenantId?: string | null;
     royaltyPercent?: any;
+    enabledAddons?: string[];
   };
 }
 
@@ -76,6 +80,9 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
   const [royaltyPercent, setRoyaltyPercent] = useState(
     studio.royaltyPercent ? String(Number(studio.royaltyPercent)) : '10'
   );
+
+  // Studio Add-ons state
+  const [enabledAddons, setEnabledAddons] = useState<string[]>(studio.enabledAddons || []);
 
   // Reset password results
   const [resetResult, setResetResult] = useState<{
@@ -102,97 +109,96 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
         setCurrentStatus(res.data.subscriptionStatus);
         router.refresh();
       } else {
-        toast.error(res.error || 'Failed to extend trial.');
+        toast.error(res.error || 'Failed to extend trial');
       }
     });
   };
 
-  const handleUpdateStatus = (newStatus: string) => {
+  const handleUpdateStatus = (status: string) => {
     startTransition(async () => {
-      const res = await updateTenantStatusAction(studio.id, newStatus);
+      const res = await updateTenantStatusAction(studio.id, status);
       if (res.success && res.data) {
         toast.success(res.message);
         setCurrentStatus(res.data.subscriptionStatus);
         router.refresh();
       } else {
-        toast.error(res.error || 'Failed to update status.');
+        toast.error(res.error || 'Failed to update subscription status');
       }
     });
   };
 
   const handleResetPassword = () => {
-    if (!window.confirm(`Are you sure you want to generate a new temporary password for ${studio.name}'s owner?`)) {
-      return;
-    }
-
     startTransition(async () => {
       const res = await resetTenantOwnerPasswordAction(studio.id);
       if (res.success && res.data) {
         toast.success(res.message);
         setResetResult(res.data);
       } else {
-        toast.error(res.error || 'Failed to reset password.');
+        toast.error(res.error || 'Failed to reset password');
       }
     });
   };
 
-  const handleCopyPassword = () => {
-    if (!resetResult?.temporaryPassword) return;
-    navigator.clipboard.writeText(resetResult.temporaryPassword);
-    setCopied(true);
-    toast.success('Temporary password copied to clipboard.');
-    setTimeout(() => setCopied(false), 2500);
-  };
+  const handleToggleAddon = (featureKey: string) => {
+    const nextAddons = enabledAddons.includes(featureKey)
+      ? enabledAddons.filter((k) => k !== featureKey)
+      : [...enabledAddons, featureKey];
 
-  const handleStartImpersonation = () => {
-    if (
-      !window.confirm(
-        `Start a 15-minute audited support session to inspect "${studio.name}"?\n\nAll support activities will be logged with your administrator identity.`
-      )
-    ) {
-      return;
-    }
+    setEnabledAddons(nextAddons);
 
     startTransition(async () => {
-      const res = await startTenantImpersonationAction(studio.id);
+      const res = await updateTenantAddonsAction(studio.id, nextAddons);
       if (res.success) {
-        toast.success(`Support Mode activated for "${studio.name}". Redirecting...`);
-        window.location.href = res.redirectUrl || '/dashboard';
+        toast.success(res.message);
+        router.refresh();
       } else {
-        toast.error(res.error || 'Failed to start support session.');
+        toast.error(res.error || 'Failed to update add-ons');
       }
     });
   };
 
   const handleSaveFranchiseConfig = () => {
     startTransition(async () => {
-      try {
-        const parsedRoyalty = parseFloat(royaltyPercent);
-        const res = await updateTenantFranchiseConfigAction(studio.id, {
-          isFranchisor,
-          royaltyPercent: isNaN(parsedRoyalty) ? null : parsedRoyalty,
-        });
+      const numRate = parseFloat(royaltyPercent);
+      const res = await updateTenantFranchiseConfigAction(studio.id, {
+        isFranchisor,
+        royaltyPercent: isNaN(numRate) ? null : numRate,
+      });
 
-        if (res.success) {
-          toast.success(res.message);
-          router.refresh();
-        } else {
-          toast.error(res.error || 'Failed to update franchise settings.');
-        }
-      } catch (err: any) {
-        toast.error(err.message || 'An error occurred updating franchise settings.');
+      if (res.success) {
+        toast.success(res.message);
+        router.refresh();
+      } else {
+        toast.error(res.error || 'Failed to update franchise config');
       }
     });
   };
 
-  const isExpired = currentTrialEndsAt && new Date(currentTrialEndsAt) < new Date();
-  const trialFormatted = currentTrialEndsAt
-    ? new Date(currentTrialEndsAt).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
-    : 'No trial date set';
+  const handleCopyPassword = () => {
+    if (resetResult?.temporaryPassword) {
+      navigator.clipboard.writeText(resetResult.temporaryPassword);
+      setCopied(true);
+      toast.success('Temporary password copied to clipboard');
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
+  const handleStartImpersonation = () => {
+    startTransition(async () => {
+      try {
+        const res = await startTenantImpersonationAction(studio.id);
+        if (res.success) {
+          toast.success('Support Mode activated.');
+          setOpen(false);
+          window.location.href = res.redirectUrl || '/dashboard';
+        } else {
+          toast.error(res.error || 'Failed to start support session.');
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'An unexpected error occurred.');
+      }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -201,58 +207,87 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs gap-1 font-medium hover:bg-muted"
-            title="Manage Studio Governance"
+            className="h-8 text-xs font-medium gap-1.5 hover:bg-muted"
+            title={`Manage ${studio.name}`}
           >
-            <SlidersHorizontal className="h-3 w-3 text-muted-foreground" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Manage</span>
           </Button>
         }
       />
 
-      <DialogContent className="sm:max-w-[540px] p-0 overflow-hidden">
-        {/* Header */}
-        <div className="p-6 bg-muted/30 border-b">
-          <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-base font-bold font-heading text-foreground">
-                {studio.name}
-              </DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                  /{studio.slug}
-                </code>
-                {studio.contactPhone && (
-                  <span className="text-xs text-muted-foreground">&bull; {studio.contactPhone}</span>
-                )}
-              </div>
-            </div>
-
-            <Badge
-              variant="outline"
-              className="text-[10px] uppercase font-mono tracking-wider font-semibold"
-            >
-              {currentStatus}
-            </Badge>
+      <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold font-heading">
+              Manage Studio: {studio.name}
+            </DialogTitle>
           </div>
-        </div>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Slug: <code className="font-mono text-foreground font-semibold">{studio.slug}</code> • ID: {studio.id.slice(0, 8)}...
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Governance Controls */}
-        <div className="p-6 space-y-6 text-xs">
-          {/* SECTION 1: TRIAL DURATION EXTENSION */}
+        <div className="space-y-6 pt-2">
+          {/* SECTION 1: SUBSCRIPTION LIFECYCLE & STATUS */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-                Trial Extension
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                Subscription State
               </Label>
-              <div className="text-xs font-medium">
-                Current Expiry:{' '}
-                <span className={isExpired ? 'text-rose-500 font-bold' : 'font-semibold text-foreground'}>
-                  {trialFormatted}
-                </span>
-                {isExpired && ' (Expired)'}
+              <Badge
+                variant="outline"
+                className={`text-[10px] uppercase font-mono font-bold tracking-wider ${
+                  statusOptions.find((o) => o.value === currentStatus)?.color || ''
+                }`}
+              >
+                {currentStatus}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {statusOptions.map((opt) => (
+                <Button
+                  key={opt.value}
+                  type="button"
+                  variant={currentStatus === opt.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleUpdateStatus(opt.value)}
+                  disabled={isPending}
+                  className="h-8 text-xs font-semibold"
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 2: TRIAL EXTENSION DESK */}
+          <div className="pt-2 border-t space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-primary" />
+                  Trial Expiration Extension
+                </Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Extends trial timestamp and lifts any hard lock screen.
+                </p>
               </div>
+
+              {currentTrialEndsAt && (
+                <div className="text-right">
+                  <span className="text-[10px] text-muted-foreground block">Expires On</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">
+                    {new Date(currentTrialEndsAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -262,7 +297,7 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
                 size="sm"
                 onClick={() => handleExtendTrial(7)}
                 disabled={isPending}
-                className="h-8 text-xs font-semibold gap-1 hover:border-primary/40"
+                className="h-8 text-xs font-medium"
               >
                 +7 Days
               </Button>
@@ -270,11 +305,11 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleExtendTrial(14)}
+                onClick={() => handleExtendTrial(15)}
                 disabled={isPending}
-                className="h-8 text-xs font-semibold gap-1 hover:border-primary/40"
+                className="h-8 text-xs font-medium"
               >
-                +14 Days
+                +15 Days
               </Button>
               <Button
                 type="button"
@@ -282,69 +317,85 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
                 size="sm"
                 onClick={() => handleExtendTrial(30)}
                 disabled={isPending}
-                className="h-8 text-xs font-semibold gap-1 hover:border-primary/40"
+                className="h-8 text-xs font-medium"
               >
-                +30 Days
+                +30 Days (1 Month)
               </Button>
 
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center gap-1 ml-auto">
                 <Input
                   type="number"
                   min="1"
                   max="365"
                   value={customDays}
                   onChange={(e) => setCustomDays(e.target.value)}
-                  className="w-16 h-8 text-xs text-center"
+                  className="h-8 w-16 text-xs font-mono text-center"
                 />
                 <Button
                   type="button"
-                  size="sm"
                   variant="secondary"
+                  size="sm"
                   onClick={() => {
-                    const days = parseInt(customDays, 10);
-                    if (!isNaN(days) && days > 0) handleExtendTrial(days);
+                    const parsed = parseInt(customDays, 10);
+                    if (!isNaN(parsed) && parsed > 0) handleExtendTrial(parsed);
                   }}
                   disabled={isPending}
-                  className="h-8 text-xs"
+                  className="h-8 text-xs font-medium"
                 >
-                  Apply
+                  Extend
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* SECTION 2: SUBSCRIPTION STATUS GOVERNANCE */}
-          <div className="space-y-3 pt-3 border-t">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              Subscription Status (Soft-Lock / Activation)
-            </Label>
-            <p className="text-[11px] text-muted-foreground">
-              Changing status to Past Due or Cancelled immediately invokes the layout Hard Lock screen without deleting studio data.
-            </p>
+          {/* SECTION 3: INDIVIDUAL STUDIO ADD-ONS (NEW IN PHASE 18) */}
+          <div className="pt-2 border-t space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Individual Studio Add-ons ({enabledAddons.length})
+                </Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Grant standalone premium add-ons for this specific studio on top of their base plan.
+                </p>
+              </div>
+            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {statusOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleUpdateStatus(opt.value)}
-                  disabled={isPending || currentStatus === opt.value}
-                  className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all ${
-                    currentStatus === opt.value
-                      ? `${opt.color} ring-2 ring-primary/30 font-bold`
-                      : 'border-border/70 hover:bg-muted/40 text-muted-foreground font-medium'
-                  }`}
-                >
-                  <span className="text-xs">{opt.label}</span>
-                  {currentStatus === opt.value && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
-                </button>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20">
+              {PLAN_FEATURES_CATALOG.map((f) => {
+                const isEnabled = enabledAddons.includes(f.key);
+                return (
+                  <div
+                    key={f.key}
+                    onClick={() => handleToggleAddon(f.key)}
+                    className={`flex items-start gap-2.5 p-2 rounded-md border text-left cursor-pointer transition-all ${
+                      isEnabled
+                        ? 'bg-primary/10 border-primary/40 text-foreground'
+                        : 'bg-card/40 border-border/50 text-muted-foreground hover:bg-muted/30'
+                    }`}
+                  >
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={() => handleToggleAddon(f.key)}
+                      className="scale-75 origin-top-left mt-0.5"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold leading-tight truncate">
+                        {f.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                        {f.shortDescription}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* SECTION 3: OWNER PASSWORD RESET */}
-          <div className="space-y-3 pt-3 border-t">
+          {/* SECTION 4: OWNER PASSWORD RECOVERY */}
+          <div className="pt-2 border-t space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -368,7 +419,6 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
               </Button>
             </div>
 
-            {/* Display Generated Temporary Password */}
             {resetResult && (
               <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2">
                 <div className="flex items-center justify-between text-[11px]">
@@ -395,14 +445,11 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
                     <span>{copied ? 'Copied' : 'Copy'}</span>
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Provide this password to the studio owner. They will be able to sign in immediately and update their password in Profile Settings.
-                </p>
               </div>
             )}
           </div>
 
-          {/* SECTION 4: SUPPORT IMPERSONATION */}
+          {/* SECTION 5: SUPPORT IMPERSONATION */}
           <div className="pt-2 border-t space-y-3">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-primary" />
@@ -438,7 +485,7 @@ export function ManageTenantDialog({ studio }: ManageTenantDialogProps) {
             </div>
           </div>
 
-          {/* SECTION 5: FRANCHISE NETWORK GOVERNANCE */}
+          {/* SECTION 6: FRANCHISE NETWORK GOVERNANCE */}
           <div className="pt-2 border-t space-y-3">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <Network className="w-3.5 h-3.5 text-primary" />

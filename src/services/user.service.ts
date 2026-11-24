@@ -1,9 +1,8 @@
- 
- 
 import { UserRepository } from '@/repositories/user.repository';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { assertStaffQuota } from '@/services/billing/entitlement.service';
 
 export class UserService {
   static async getUsers(tenantId: string, params: { skip?: number; take?: number; search?: string; status?: string; roleId?: string }) {
@@ -33,6 +32,9 @@ export class UserService {
     branches: string[],
     ipAddress?: string
   ) {
+    // 1. Enforce SaaS Plan Staff Quota
+    await assertStaffQuota(tenantId);
+
     const passwordHash = await bcrypt.hash(data.password, 10);
     
     // Omit plaintext password and map to DB schema

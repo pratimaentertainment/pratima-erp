@@ -24,6 +24,15 @@ export async function createUser(data: any) {
     revalidatePath('/users');
     return { success: true };
   } catch (error: any) {
+    if (error.code === 'PLAN_LIMIT_EXCEEDED') {
+      return {
+        success: false,
+        error: error.message,
+        code: 'PLAN_LIMIT_EXCEEDED',
+        limit: error.limit,
+        currentUsage: error.currentUsage,
+      };
+    }
     return { success: false, error: error.message };
   }
 }

@@ -1,6 +1,11 @@
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
+import {
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '../src/lib/constants/plan-features';
 
 async function main() {
   console.log('Starting Pratima ERP database seed...');
@@ -63,6 +68,7 @@ async function main() {
       perFranchiseMonthlyPrice: 0,
       perFranchiseAnnualPrice: 0,
       isActive: true,
+      features: [...STARTER_DEFAULT_FEATURES],
     },
     {
       slug: 'pro-studio',
@@ -77,6 +83,7 @@ async function main() {
       perFranchiseMonthlyPrice: 0,
       perFranchiseAnnualPrice: 0,
       isActive: true,
+      features: [...PRO_DEFAULT_FEATURES],
     },
     {
       slug: 'enterprise-franchise',
@@ -91,6 +98,7 @@ async function main() {
       perFranchiseMonthlyPrice: 999,
       perFranchiseAnnualPrice: 9990,
       isActive: true,
+      features: [...ENTERPRISE_DEFAULT_FEATURES],
     },
   ];
 
@@ -110,6 +118,7 @@ async function main() {
         perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
         perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
         isActive: plan.isActive,
+        features: plan.features,
       },
       create: {
         name: plan.name,
@@ -124,6 +133,7 @@ async function main() {
         perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
         perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
         isActive: plan.isActive,
+        features: plan.features,
       },
     });
   }

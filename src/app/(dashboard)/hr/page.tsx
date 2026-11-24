@@ -8,6 +8,8 @@ import {
   getLeaveRequests,
   getMonthlyPayroll,
 } from '@/actions/hr-payroll.actions';
+import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
+import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,13 @@ export default async function HrPayrollPage() {
   }
 
   const tenantId = user.tenantId as string;
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  let isUnlocked = isSuperAdmin;
+  if (!isUnlocked && tenantId) {
+    const entitlements = await getTenantEntitlements(tenantId);
+    isUnlocked = entitlements.features.includes('HR_PAYROLL');
+  }
+
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
@@ -55,11 +64,13 @@ export default async function HrPayrollPage() {
   };
 
   return (
-    <HrPayrollClient
-      initialAttendance={attendanceRes.data || { date: now.toISOString().split('T')[0], stats: {}, roster: [] }}
-      initialLeaves={leavesRes.data || []}
-      initialPayroll={payrollRes.data || { month: currentMonth, year: currentYear, metrics: {}, records: [] }}
-      tenant={tenantBranding}
-    />
+    <FeatureLockGate featureKey="HR_PAYROLL" isUnlocked={isUnlocked}>
+      <HrPayrollClient
+        initialAttendance={attendanceRes.data || { date: now.toISOString().split('T')[0], stats: {}, roster: [] }}
+        initialLeaves={leavesRes.data || []}
+        initialPayroll={payrollRes.data || { month: currentMonth, year: currentYear, metrics: {}, records: [] }}
+        tenant={tenantBranding}
+      />
+    </FeatureLockGate>
   );
 }

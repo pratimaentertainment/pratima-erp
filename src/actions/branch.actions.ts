@@ -7,6 +7,8 @@ import { branchSchema } from '@/lib/validations/branch.schema';
 import { revalidatePath } from 'next/cache';
 import { switchBranchAction } from '@/actions/context.actions';
 
+export { switchBranchAction as switchActiveBranchAction };
+
 export async function getBranchesAction() {
   const session = await auth();
   if (!session) return { success: false, error: 'Unauthorized' };
@@ -29,8 +31,18 @@ export async function createBranchAction(formData: any) {
     const validatedData = branchSchema.parse(formData);
     const branch = await BranchService.createBranch((session.user as any).tenantId, session.user.id, validatedData);
     revalidatePath('/dashboard/settings/branches');
+    revalidatePath('/settings/branches');
     return { success: true, data: branch };
   } catch (error: any) {
+    if (error.code === 'PLAN_LIMIT_EXCEEDED') {
+      return {
+        success: false,
+        error: error.message,
+        code: 'PLAN_LIMIT_EXCEEDED',
+        limit: error.limit,
+        currentUsage: error.currentUsage,
+      };
+    }
     return { success: false, error: error.message || 'Validation failed' };
   }
 }
@@ -44,6 +56,7 @@ export async function updateBranchAction(branchId: string, formData: any) {
     const validatedData = branchSchema.parse(formData);
     const branch = await BranchService.updateBranch((session.user as any).tenantId, branchId, session.user.id, validatedData);
     revalidatePath('/dashboard/settings/branches');
+    revalidatePath('/settings/branches');
     return { success: true, data: branch };
   } catch (error: any) {
     return { success: false, error: error.message || 'Validation failed' };
@@ -58,17 +71,9 @@ export async function toggleBranchStatusAction(branchId: string, isActive: boole
   try {
     const branch = await BranchService.toggleBranchStatus((session.user as any).tenantId, branchId, session.user.id, isActive);
     revalidatePath('/dashboard/settings/branches');
+    revalidatePath('/settings/branches');
     return { success: true, data: branch };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Update failed' };
+    return { success: false, error: error.message || 'Failed to toggle branch status' };
   }
-}
-
-/**
- * @deprecated Use switchBranchAction in context.actions.ts instead.
- * Retained for backward-compatibility; delegates directly to switchBranchAction
- * to ensure single-cookie ('pratima_active_branch_id') synchronization.
- */
-export async function switchActiveBranchAction(branchId: string) {
-  return switchBranchAction(branchId);
 }

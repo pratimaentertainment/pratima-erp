@@ -8,6 +8,8 @@ import {
 } from '@/actions/accounting.actions';
 import { ReportsClient } from './reports-client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
+import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 
 export const metadata = {
   title: 'Chartered Accountant Financial Reports | Pratima ERP',
@@ -70,15 +72,24 @@ async function ReportsDataLoader() {
 
 export default async function FinancialReportsPage() {
   const session = await auth();
-  const user = session?.user as { tenantId?: string; id?: string } | undefined;
+  const user = session?.user as any;
 
   if (!user?.tenantId) {
     redirect('/login');
   }
 
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  let isUnlocked = isSuperAdmin;
+  if (!isUnlocked && user.tenantId) {
+    const entitlements = await getTenantEntitlements(user.tenantId);
+    isUnlocked = entitlements.features.includes('ADVANCED_ANALYTICS');
+  }
+
   return (
-    <Suspense fallback={<ReportsSkeleton />}>
-      <ReportsDataLoader />
-    </Suspense>
+    <FeatureLockGate featureKey="ADVANCED_ANALYTICS" isUnlocked={isUnlocked}>
+      <Suspense fallback={<ReportsSkeleton />}>
+        <ReportsDataLoader />
+      </Suspense>
+    </FeatureLockGate>
   );
 }

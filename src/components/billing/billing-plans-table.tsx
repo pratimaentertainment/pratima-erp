@@ -1,10 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Check, Sparkles, Building2, Users, Smartphone, MessageSquare, ShieldCheck, Zap } from 'lucide-react';
+import { Check, Sparkles, Building2, Users, ShieldCheck, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RazorpayCheckoutButton } from '@/components/billing/razorpay-checkout-button';
 import { cn } from '@/lib/utils';
+import {
+  getFeatureDefinition,
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '@/lib/constants/plan-features';
 
 export interface SerializedPlan {
   id: string;
@@ -14,8 +20,9 @@ export interface SerializedPlan {
   annualPrice: number;
   maxBranches: number;
   maxStaff: number;
-  smsCredits: number;
-  whatsappCredits: number;
+  features?: string[];
+  smsCredits?: number;
+  whatsappCredits?: number;
   isActive: boolean;
 }
 
@@ -53,25 +60,27 @@ export function BillingPlansTable({
       tagline = 'For large production houses, studio franchises, and high-volume media teams.';
     }
 
-    const featureList = [
-      plan.maxBranches === 1 ? '1 Studio Location' : `Up to ${plan.maxBranches} Studio Branches`,
+    const resolvedFeatureKeys =
+      plan.features && plan.features.length > 0
+        ? plan.features
+        : isEnterprise
+        ? ENTERPRISE_DEFAULT_FEATURES
+        : isPro
+        ? PRO_DEFAULT_FEATURES
+        : STARTER_DEFAULT_FEATURES;
+
+    const featureList: string[] = [
+      plan.maxBranches === 1 ? '1 Studio Headquarters' : `Up to ${plan.maxBranches} Studio Branches`,
       `Up to ${plan.maxStaff} Staff & Crew Accounts`,
-      `${plan.smsCredits.toLocaleString('en-IN')} SMS Notifications`,
-      `${plan.whatsappCredits.toLocaleString('en-IN')} WhatsApp Cloud API Credits`,
       'GST Compliant Quotations & Tax Invoices',
       'Shoot Calendar & Crew Rostering',
     ];
 
-    if (isPro || isEnterprise) {
-      featureList.push('Watermarked Proofing Selection Portal');
-      featureList.push('Automated WhatsApp Shoot Reminders');
-      featureList.push('Camera & Gear Inventory Tracking');
-    }
-
-    if (isEnterprise) {
-      featureList.push('Double-Entry Accounting & Financial Ledgers');
-      featureList.push('Shoot Profit & Loss Margin Analytics');
-      featureList.push('VIP Dedicated Support & Custom Domain');
+    for (const key of resolvedFeatureKeys) {
+      const def = getFeatureDefinition(key);
+      if (def && !featureList.includes(def.label)) {
+        featureList.push(def.label);
+      }
     }
 
     return { badge, isRecommended, tagline, featureList };
@@ -202,14 +211,6 @@ export function BillingPlansTable({
                     <Users className="h-3.5 w-3.5 text-primary shrink-0" />
                     <span>{plan.maxStaff} Staff Accounts</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Smartphone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span>{plan.smsCredits} SMS</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MessageSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span>{plan.whatsappCredits} WhatsApp</span>
-                  </div>
                 </div>
 
                 {/* Features */}
@@ -221,7 +222,7 @@ export function BillingPlansTable({
                     {featureList.map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
                         <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                        <span>{f}</span>
+                        <span className="leading-tight">{f}</span>
                       </li>
                     ))}
                   </ul>

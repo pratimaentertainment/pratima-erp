@@ -8,14 +8,13 @@ import {
   Sparkles,
   GitBranch,
   Users,
-  MessageSquare,
-  PhoneCall,
   IndianRupee,
   ShieldCheck,
   CheckCircle2,
   Building2,
   Calendar,
   Layers,
+  Check,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,6 +26,13 @@ import {
 } from '@/components/ui/card';
 import { CreatePlanDialog } from './create-plan-dialog';
 import { PlanActions } from './plan-actions';
+import {
+  PLAN_FEATURES_CATALOG,
+  getFeatureDefinition,
+  STARTER_DEFAULT_FEATURES,
+  PRO_DEFAULT_FEATURES,
+  ENTERPRISE_DEFAULT_FEATURES,
+} from '@/lib/constants/plan-features';
 
 export const metadata: Metadata = {
   title: 'Subscription Plans - Super Admin | Pratima ERP',
@@ -71,11 +77,11 @@ export default async function SuperAdminSubscriptionsPage() {
               variant="outline"
               className="text-[10px] tracking-wider uppercase font-mono border-primary/30 text-primary bg-primary/5"
             >
-              Billing Engine
+              Billing &amp; Features
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure recurring SaaS tiers, pricing models, studio quotas, and automated messaging allocations.
+            Configure recurring SaaS tiers, pricing models, studio quotas, and premium feature allocations.
           </p>
         </div>
 
@@ -99,7 +105,7 @@ export default async function SuperAdminSubscriptionsPage() {
               {plans.length}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              {activePlansCount} currently active for enrollment
+              Configured SaaS packages
             </p>
           </CardContent>
         </Card>
@@ -107,16 +113,16 @@ export default async function SuperAdminSubscriptionsPage() {
         <Card className="border-border/60 bg-card/60 shadow-xs">
           <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Active Subscriptions
+              Active Tiers
             </CardTitle>
-            <CreditCard className="h-4 w-4 text-emerald-500" />
+            <Sparkles className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="text-2xl font-black font-heading text-emerald-600 dark:text-emerald-400">
-              {totalSubscriptionsCount}
+              {activePlansCount}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Live studio subscription contracts
+              Available for public signup
             </p>
           </CardContent>
         </Card>
@@ -124,33 +130,33 @@ export default async function SuperAdminSubscriptionsPage() {
         <Card className="border-border/60 bg-card/60 shadow-xs">
           <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Studios
-            </CardTitle>
-            <Building2 className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-black font-heading text-foreground">
-              {totalTenantsCount}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              Registered studios in the platform
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 bg-card/60 shadow-xs">
-          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Billing Gateway
+              Subscribed Studios
             </CardTitle>
             <ShieldCheck className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-sm font-bold text-foreground">
-              Razorpay &amp; Cashfree
+            <div className="text-2xl font-black font-heading text-foreground">
+              {totalSubscriptionsCount}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              UPI, Recurring Mandate, GST Ready
+              Across all paid studios
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60 bg-card/60 shadow-xs">
+          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Payment Gateway
+            </CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-sm font-bold text-foreground">
+              Razorpay Checkout
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              UPI, Netbanking, Cards &amp; Auto-Reconcile
             </p>
           </CardContent>
         </Card>
@@ -168,7 +174,6 @@ export default async function SuperAdminSubscriptionsPage() {
         </div>
 
         {plans.length === 0 ? (
-          /* Empty State */
           <Card className="border-dashed border-2 border-border/80 bg-muted/20 text-center py-12 p-6">
             <div className="max-w-sm mx-auto space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
@@ -192,11 +197,19 @@ export default async function SuperAdminSubscriptionsPage() {
             {plans.map((plan) => {
               const monthlyNum = Number(plan.monthlyPrice);
               const annualNum = Number(plan.annualPrice);
-              const effectiveAnnualMonthly = Math.round(annualNum / 12);
               const savingsPercentage =
                 monthlyNum > 0
                   ? Math.round(((monthlyNum * 12 - annualNum) / (monthlyNum * 12)) * 100)
                   : 0;
+
+              const planFeatures =
+                plan.features && plan.features.length > 0
+                  ? plan.features
+                  : plan.slug.includes('enterprise')
+                  ? ENTERPRISE_DEFAULT_FEATURES
+                  : plan.slug.includes('pro')
+                  ? PRO_DEFAULT_FEATURES
+                  : STARTER_DEFAULT_FEATURES;
 
               return (
                 <Card
@@ -273,25 +286,30 @@ export default async function SuperAdminSubscriptionsPage() {
                           {plan.maxStaff}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="flex items-center justify-between text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>Included SMS Credits</span>
-                        </span>
-                        <span className="font-semibold text-foreground">
-                          {plan.smsCredits.toLocaleString('en-IN')}
+                    {/* Features Matrix Badge List */}
+                    <div className="pt-3 border-t border-border/50 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-foreground flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                          <span>Included Modules ({planFeatures.length})</span>
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <PhoneCall className="h-3.5 w-3.5 text-emerald-500" />
-                          <span>Included WhatsApp Credits</span>
-                        </span>
-                        <span className="font-semibold text-foreground">
-                          {plan.whatsappCredits.toLocaleString('en-IN')}
-                        </span>
+                      <div className="flex flex-wrap gap-1">
+                        {planFeatures.map((fk) => {
+                          const def = getFeatureDefinition(fk);
+                          return (
+                            <Badge
+                              key={fk}
+                              variant="secondary"
+                              className="text-[10px] font-medium py-0 px-1.5 bg-muted/60 text-foreground"
+                            >
+                              {def?.label || fk}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -319,6 +337,7 @@ export default async function SuperAdminSubscriptionsPage() {
                         annualPrice: Number(plan.annualPrice),
                         maxBranches: plan.maxBranches,
                         maxStaff: plan.maxStaff,
+                        features: plan.features,
                         smsCredits: plan.smsCredits,
                         whatsappCredits: plan.whatsappCredits,
                         allowFranchises: plan.allowFranchises,

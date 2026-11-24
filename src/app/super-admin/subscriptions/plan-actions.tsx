@@ -18,8 +18,9 @@ interface PlanActionsProps {
     annualPrice: number | string;
     maxBranches: number;
     maxStaff: number;
-    smsCredits: number;
-    whatsappCredits: number;
+    features?: string[];
+    smsCredits?: number;
+    whatsappCredits?: number;
     allowFranchises?: boolean;
     perFranchiseMonthlyPrice?: number | string | null;
     perFranchiseAnnualPrice?: number | string | null;

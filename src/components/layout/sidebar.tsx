@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useOptionalAppContext } from '@/providers/app-context';
+import { PlanFeatureKey } from '@/lib/constants/plan-features';
 import {
   LayoutDashboard,
   Users,
@@ -18,20 +19,21 @@ import {
   Receipt,
   FileSpreadsheet,
   Banknote,
-  BookOpen,
-  ShieldAlert,
   Boxes,
   Sparkles,
   Clock,
   BadgeIndianRupee,
   Car,
   Network,
+  HardDrive,
+  Lock,
 } from 'lucide-react';
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  requiredFeature?: PlanFeatureKey;
 }
 
 interface NavGroup {
@@ -56,16 +58,37 @@ const navGroups: NavGroup[] = [
       { name: 'Bookings', href: '/operations/bookings', icon: CalendarCheck },
       { name: 'Follow-ups', href: '/operations/follow-ups', icon: Clock },
       { name: 'Customers', href: '/customers', icon: Building2 },
-      { name: 'AI Marketing Hub', href: '/dashboard/marketing', icon: Sparkles },
+      {
+        name: 'AI Marketing Hub',
+        href: '/dashboard/marketing',
+        icon: Sparkles,
+        requiredFeature: 'GOOGLE_BUSINESS',
+      },
     ],
   },
   {
     title: 'Studio Operations',
     items: [
       { name: 'Operations', href: '/operations', icon: FolderKanban },
-      { name: 'HR & Payroll', href: '/hr', icon: BadgeIndianRupee },
+      {
+        name: 'Photo Proofing',
+        href: '/operations/selections',
+        icon: Sparkles,
+        requiredFeature: 'CLIENT_PROOFING',
+      },
+      {
+        name: 'HR & Payroll',
+        href: '/hr',
+        icon: BadgeIndianRupee,
+        requiredFeature: 'HR_PAYROLL',
+      },
       { name: 'Warehouse & Equipment', href: '/operations/inventory', icon: Boxes },
-      { name: 'Vehicle Fleet', href: '/operations/vehicles', icon: Car },
+      {
+        name: 'Vehicle Fleet',
+        href: '/operations/vehicles',
+        icon: Car,
+        requiredFeature: 'FLEET_DISPATCH',
+      },
       { name: 'Post-Production', href: '/operations/post-production', icon: Film },
       { name: 'Packages', href: '/packages', icon: Package },
     ],
@@ -78,14 +101,24 @@ const navGroups: NavGroup[] = [
       { name: 'Vouchers & Daybook', href: '/finance/vouchers', icon: FileText },
       { name: 'Crew Payouts & TDS', href: '/finance/payouts', icon: Banknote },
       { name: 'Chart of Accounts', href: '/finance/ledgers', icon: Landmark },
-      { name: 'CA Financial Reports', href: '/finance/reports', icon: FileSpreadsheet },
+      {
+        name: 'CA Financial Reports',
+        href: '/finance/reports',
+        icon: FileSpreadsheet,
+        requiredFeature: 'ADVANCED_ANALYTICS',
+      },
     ],
   },
   {
     title: 'Enterprise & Network',
     isAuthorized: ({ isFranchisor }) => isFranchisor,
     items: [
-      { name: 'Franchise Network', href: '/franchise', icon: Network },
+      {
+        name: 'Franchise Network',
+        href: '/franchise',
+        icon: Network,
+        requiredFeature: 'FRANCHISE_NETWORK',
+      },
     ],
   },
   {
@@ -97,6 +130,12 @@ const navGroups: NavGroup[] = [
       allRoles.includes('TENANT_OWNER'),
     items: [
       { name: 'Master Data', href: '/masters', icon: Settings },
+      {
+        name: 'Cloud Storage (BYOS)',
+        href: '/settings/storage',
+        icon: HardDrive,
+        requiredFeature: 'CLOUD_STORAGE_BYOS',
+      },
       { name: 'Settings', href: '/settings', icon: Settings },
     ],
   },
@@ -132,9 +171,17 @@ export function Sidebar() {
 
   const authContext = { isOwnerOrAdmin, allRoles, isFinanceAuthorized, isFranchisor };
 
+  const isSuperAdmin = allRoles.includes('SUPER_ADMIN');
+  const tenantFeatures = (appContext?.currentTenant?.features || []) as string[];
+
+  const isFeatureLocked = (requiredFeature?: PlanFeatureKey) => {
+    if (!requiredFeature) return false;
+    if (isSuperAdmin) return false;
+    return !tenantFeatures.includes(requiredFeature);
+  };
+
   const visibleGroups = navGroups.filter((group) => {
     if (!group.isAuthorized) return true;
-    // If user context not yet loaded during SSR/hydration, show if owner/admin or finance flag is true
     if (!currentUser && !isOwnerOrAdmin) return false;
     return group.isAuthorized(authContext);
   });
@@ -161,18 +208,31 @@ export function Sidebar() {
                     (pathname === '/operations' ||
                       pathname === '/operations/calendar' ||
                       pathname === '/operations/dispatch'));
+                const isLocked = isFeatureLocked(item.requiredFeature);
+
                 return (
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
                         isActive
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                           : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                       }`}
                     >
-                      <item.icon className="h-4 w-4 opacity-80" />
-                      <span className="text-sm">{item.name}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <item.icon className="h-4 w-4 opacity-80 shrink-0" />
+                        <span className="text-sm truncate">{item.name}</span>
+                      </div>
+                      {isLocked && (
+                        <span
+                          title="Premium feature (Upgrade required)"
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0 ml-1"
+                        >
+                          <Lock className="h-2.5 w-2.5" />
+                          <span>PRO</span>
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );

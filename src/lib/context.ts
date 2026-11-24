@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { buildContextAndAuthorize, ServiceContext } from '@/lib/application/utils/context';
 import { getActiveImpersonationState, ImpersonationState } from '@/lib/impersonation';
+import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 
 export interface ActiveContextUser {
   id: string;
@@ -29,6 +30,7 @@ export interface ActiveContextTenant {
   logoUrl?: string | null;
   isFranchisor?: boolean;
   parentTenantId?: string | null;
+  features?: string[];
 }
 
 export interface ActiveContext {
@@ -244,9 +246,26 @@ export async function getActiveContext(): Promise<ActiveContext | null> {
       }
     : null;
 
+  let tenantFeatures: string[] = [];
+  if (tenantId) {
+    try {
+      const entitlements = await getTenantEntitlements(tenantId);
+      tenantFeatures = entitlements.features;
+    } catch {
+      tenantFeatures = [];
+    }
+  }
+
+  const finalTenant: ActiveContextTenant | null = resolvedTenant
+    ? {
+        ...resolvedTenant,
+        features: tenantFeatures,
+      }
+    : null;
+
   return {
     user,
-    tenant: resolvedTenant,
+    tenant: finalTenant,
     activeBranch,
     branches,
     tenantId: tenantId || '',

@@ -42,6 +42,10 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
       };
     }
 
+    // Auto-sync allowFranchises if FRANCHISE_NETWORK is in features
+    const hasFranchiseFeature = (validated.features || []).includes('FRANCHISE_NETWORK');
+    const allowFranchises = validated.allowFranchises || hasFranchiseFeature;
+
     // 4. Create new SubscriptionPlan record in Prisma
     const newPlan = await prisma.subscriptionPlan.create({
       data: {
@@ -51,9 +55,10 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
         annualPrice: validated.annualPrice,
         maxBranches: validated.maxBranches,
         maxStaff: validated.maxStaff,
-        smsCredits: validated.smsCredits,
-        whatsappCredits: validated.whatsappCredits,
-        allowFranchises: validated.allowFranchises ?? false,
+        features: validated.features ?? [],
+        smsCredits: validated.smsCredits ?? 0,
+        whatsappCredits: validated.whatsappCredits ?? 0,
+        allowFranchises,
         perFranchiseMonthlyPrice: validated.perFranchiseMonthlyPrice ?? 0,
         perFranchiseAnnualPrice: validated.perFranchiseAnnualPrice ?? 0,
         isActive: validated.isActive ?? true,
@@ -62,6 +67,8 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
 
     // 5. Revalidate super admin cache
     revalidatePath('/super-admin/subscriptions');
+    revalidatePath('/pricing');
+    revalidatePath('/settings/billing');
 
     return {
       success: true,
@@ -72,6 +79,7 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
         slug: newPlan.slug,
         monthlyPrice: Number(newPlan.monthlyPrice),
         annualPrice: Number(newPlan.annualPrice),
+        features: newPlan.features,
       },
     };
   } catch (error: any) {
@@ -104,6 +112,8 @@ export async function togglePlanActiveStatusAction(planId: string, isActive: boo
     });
 
     revalidatePath('/super-admin/subscriptions');
+    revalidatePath('/pricing');
+    revalidatePath('/settings/billing');
 
     return {
       success: true,
@@ -147,6 +157,14 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
       return { success: false, error: 'Subscription plan not found.' };
     }
 
+    let allowFranchises = validated.allowFranchises;
+    if (validated.features !== undefined) {
+      const hasFranchiseFeature = validated.features.includes('FRANCHISE_NETWORK');
+      if (hasFranchiseFeature) {
+        allowFranchises = true;
+      }
+    }
+
     const updatedPlan = await prisma.subscriptionPlan.update({
       where: { id: planId },
       data: {
@@ -155,9 +173,10 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
         annualPrice: validated.annualPrice,
         maxBranches: validated.maxBranches,
         maxStaff: validated.maxStaff,
-        smsCredits: validated.smsCredits,
-        whatsappCredits: validated.whatsappCredits,
-        ...(validated.allowFranchises !== undefined ? { allowFranchises: validated.allowFranchises } : {}),
+        ...(validated.features !== undefined ? { features: validated.features } : {}),
+        ...(validated.smsCredits !== undefined ? { smsCredits: validated.smsCredits } : {}),
+        ...(validated.whatsappCredits !== undefined ? { whatsappCredits: validated.whatsappCredits } : {}),
+        ...(allowFranchises !== undefined ? { allowFranchises } : {}),
         ...(validated.perFranchiseMonthlyPrice !== undefined ? { perFranchiseMonthlyPrice: validated.perFranchiseMonthlyPrice } : {}),
         ...(validated.perFranchiseAnnualPrice !== undefined ? { perFranchiseAnnualPrice: validated.perFranchiseAnnualPrice } : {}),
         ...(validated.isActive !== undefined ? { isActive: validated.isActive } : {}),
@@ -165,6 +184,8 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
     });
 
     revalidatePath('/super-admin/subscriptions');
+    revalidatePath('/pricing');
+    revalidatePath('/settings/billing');
 
     return {
       success: true,
@@ -175,6 +196,7 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
         slug: updatedPlan.slug,
         monthlyPrice: Number(updatedPlan.monthlyPrice),
         annualPrice: Number(updatedPlan.annualPrice),
+        features: updatedPlan.features,
       },
     };
   } catch (error: any) {

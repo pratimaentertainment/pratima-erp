@@ -26,6 +26,7 @@ export const createPlanSchema = z.object({
     .number()
     .int('Staff count must be a whole number')
     .min(1, 'Must allow at least 1 staff member'),
+  features: z.array(z.string()).default([]),
   smsCredits: z.coerce
     .number()
     .int('SMS credits must be a whole number')
@@ -70,16 +71,17 @@ export const updatePlanSchema = z.object({
     .number()
     .int('Staff count must be a whole number')
     .min(1, 'Must allow at least 1 staff member'),
+  features: z.array(z.string()).optional(),
   smsCredits: z.coerce
     .number()
     .int('SMS credits must be a whole number')
     .min(0, 'SMS credits cannot be negative')
-    .default(0),
+    .optional(),
   whatsappCredits: z.coerce
     .number()
     .int('WhatsApp credits must be a whole number')
     .min(0, 'WhatsApp credits cannot be negative')
-    .default(0),
+    .optional(),
   allowFranchises: z.boolean().optional(),
   perFranchiseMonthlyPrice: z.coerce
     .number()

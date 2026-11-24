@@ -3,6 +3,8 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { listAllSelectionBoardsAction } from '@/actions/selection.actions';
 import { SelectionBoardsClient } from './selection-boards-client';
+import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
+import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,33 +52,42 @@ async function SelectionBoardsDataLoader() {
 
 export default async function SelectionBoardsPage() {
   const session = await auth();
-  const user = session?.user as { tenantId?: string; id?: string } | undefined;
+  const user = session?.user as any;
 
   if (!user?.tenantId) {
     redirect('/login');
   }
 
-  return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/operations"
-          className="p-2 border rounded-lg hover:bg-accent transition-colors"
-          title="Back to Operations"
-        >
-          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Client Photo Selections</h1>
-          <p className="text-muted-foreground mt-1">
-            Digital proofing boards, client approval tracking, deadline extensions, and Lightroom editor exports.
-          </p>
-        </div>
-      </div>
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  let isUnlocked = isSuperAdmin;
+  if (!isUnlocked && user.tenantId) {
+    const entitlements = await getTenantEntitlements(user.tenantId);
+    isUnlocked = entitlements.features.includes('CLIENT_PROOFING');
+  }
 
-      <Suspense fallback={<SelectionBoardsSkeleton />}>
-        <SelectionBoardsDataLoader />
-      </Suspense>
-    </div>
+  return (
+    <FeatureLockGate featureKey="CLIENT_PROOFING" isUnlocked={isUnlocked}>
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/operations"
+            className="p-2 border rounded-lg hover:bg-accent transition-colors"
+            title="Back to Operations"
+          >
+            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Client Photo Selections</h1>
+            <p className="text-muted-foreground mt-1">
+              Digital proofing boards, client approval tracking, deadline extensions, and Lightroom editor exports.
+            </p>
+          </div>
+        </div>
+
+        <Suspense fallback={<SelectionBoardsSkeleton />}>
+          <SelectionBoardsDataLoader />
+        </Suspense>
+      </div>
+    </FeatureLockGate>
   );
 }

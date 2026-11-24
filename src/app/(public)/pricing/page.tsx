@@ -34,8 +34,10 @@ export default async function PricingPage() {
       annualPrice: Number(plan.annualPrice),
       maxBranches: plan.maxBranches,
       maxStaff: plan.maxStaff,
-      smsCredits: plan.smsCredits,
-      whatsappCredits: plan.whatsappCredits,
+      features: plan.features || [],
+      allowFranchises: plan.allowFranchises,
+      perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ? Number(plan.perFranchiseMonthlyPrice) : 0,
+      perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ? Number(plan.perFranchiseAnnualPrice) : 0,
     }));
   } catch (error) {
     console.error('[/pricing] Error fetching subscription plans from database:', error);

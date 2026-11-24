@@ -1,9 +1,13 @@
 import { BranchRepository } from '@/repositories/branch.repository';
 import { BranchCreateInput, BranchUpdateInput } from '@/lib/validations/branch.schema';
 import { prisma } from '@/lib/prisma';
+import { assertBranchQuota } from '@/services/billing/entitlement.service';
 
 export class BranchService {
   static async createBranch(tenantId: string, userId: string, data: BranchCreateInput) {
+    // 1. Enforce SaaS Plan Branch Quota
+    await assertBranchQuota(tenantId);
+
     return prisma.$transaction(async (tx) => {
       // Check Head Office logic
       if (data.isHeadOffice) {
