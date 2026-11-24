@@ -31,9 +31,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   let selectedPlan = null;
   if (planId) {
-    selectedPlan = await prisma.subscriptionPlan.findFirst({
-      where: { id: planId, isActive: true },
-    });
+    try {
+      selectedPlan = await prisma.subscriptionPlan.findFirst({
+        where: { id: planId, isActive: true },
+      });
+    } catch (error) {
+      console.error('[/signup] Error fetching subscription plan:', error);
+      selectedPlan = null;
+    }
   }
 
   return (

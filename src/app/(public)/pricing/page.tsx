@@ -13,27 +13,34 @@ export const metadata: Metadata = {
     'Simple, transparent pricing for Indian photography studios. Scale your wedding shoots, crew roster, client proofing, and GST invoicing.',
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
-  // 1. Fetch active plans from Prisma database ordered by price
-  const dbPlans = await prisma.subscriptionPlan.findMany({
-    where: { isActive: true },
-    orderBy: { monthlyPrice: 'asc' },
-  });
+  let serializedPlans: SerializedSubscriptionPlan[] = [];
 
-  // 2. Serialize Decimal fields for React Server Component -> Client Component boundary
-  const serializedPlans: SerializedSubscriptionPlan[] = dbPlans.map((plan) => ({
-    id: plan.id,
-    name: plan.name,
-    slug: plan.slug,
-    monthlyPrice: Number(plan.monthlyPrice),
-    annualPrice: Number(plan.annualPrice),
-    maxBranches: plan.maxBranches,
-    maxStaff: plan.maxStaff,
-    smsCredits: plan.smsCredits,
-    whatsappCredits: plan.whatsappCredits,
-  }));
+  try {
+    // 1. Fetch active plans from Prisma database ordered by price
+    const dbPlans = await prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: { monthlyPrice: 'asc' },
+    });
+
+    // 2. Serialize Decimal fields for React Server Component -> Client Component boundary
+    serializedPlans = dbPlans.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      slug: plan.slug,
+      monthlyPrice: Number(plan.monthlyPrice),
+      annualPrice: Number(plan.annualPrice),
+      maxBranches: plan.maxBranches,
+      maxStaff: plan.maxStaff,
+      smsCredits: plan.smsCredits,
+      whatsappCredits: plan.whatsappCredits,
+    }));
+  } catch (error) {
+    console.error('[/pricing] Error fetching subscription plans from database:', error);
+    serializedPlans = [];
+  }
 
   return (
     <div className="py-12 sm:py-20 lg:py-24">
