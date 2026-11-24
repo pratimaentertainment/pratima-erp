@@ -78,7 +78,7 @@ ${readSafe('src/app/(dashboard)/users/user-drawer.tsx')}
 
 ## 11. Permission Middleware
 \`\`\`typescript
-${readSafe('src/middleware.ts')}
+${readSafe('src/proxy.ts')}
 \`\`\`
 
 ## 12. Login Session implementation
