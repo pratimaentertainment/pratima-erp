@@ -9,13 +9,15 @@ export const runtime = 'nodejs';
 const createOrderSchema = z.object({
   planId: z.string().min(1, 'planId is required'),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).default('MONTHLY'),
+  addonKeys: z.array(z.string()).default([]),
 });
 
 const GST_RATE = 0.18; // 18% GST (9% CGST + 9% SGST or 18% IGST)
 
 /**
  * POST /api/billing/razorpay/order
- * Authenticated endpoint to initialize a Razorpay checkout order for a SaaS subscription.
+ * Authenticated endpoint to initialize a Razorpay checkout order for a SaaS subscription
+ * and optional modular add-on capabilities.
  */
 export async function POST(req: Request) {
   try {
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { planId, billingCycle } = parseResult.data;
+    const { planId, billingCycle, addonKeys } = parseResult.data;
 
     // 3. Verify tenant existence in database
     const tenant = await prisma.tenant.findUnique({
@@ -86,17 +88,36 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5. Calculate exact pricing and tax amounts
-    const baseAmount =
+    // 5. Calculate add-ons pricing if addonKeys are provided
+    let addonsTotal = 0;
+    let selectedAddonRows: { featureKey: string; name: string }[] = [];
+    if (addonKeys && addonKeys.length > 0) {
+      const activeAddons = await prisma.planAddonConfig.findMany({
+        where: {
+          featureKey: { in: addonKeys },
+          isActive: true,
+        },
+      });
+      selectedAddonRows = activeAddons.map((a) => ({ featureKey: a.featureKey, name: a.name }));
+      addonsTotal = activeAddons.reduce(
+        (sum, a) =>
+          sum + (billingCycle === 'ANNUAL' ? Number(a.annualPrice) : Number(a.monthlyPrice)),
+        0
+      );
+    }
+
+    // 6. Calculate exact pricing and tax amounts
+    const planAmount =
       billingCycle === 'ANNUAL' ? Number(plan.annualPrice) : Number(plan.monthlyPrice);
+    const baseAmount = planAmount + addonsTotal;
     const gstAmount = Math.round(baseAmount * GST_RATE * 100) / 100;
     const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
     const amountInPaise = Math.round(totalAmount * 100);
 
-    // 6. Generate a unique internal receipt number (max 40 chars)
+    // 7. Generate a unique internal receipt number (max 40 chars)
     const receiptId = `rcpt_${tenant.id.slice(0, 8)}_${Date.now().toString().slice(-8)}`;
 
-    // 7. Attach structured metadata notes for audit and webhook correlation
+    // 8. Attach structured metadata notes for audit and webhook correlation
     const notes: Record<string, string> = {
       tenantId: tenant.id,
       tenantName: tenant.name.slice(0, 40),
@@ -105,12 +126,14 @@ export async function POST(req: Request) {
       planSlug: plan.slug,
       billingCycle,
       userId,
+      addonKeys: (addonKeys || []).join(','),
+      addonsTotal: addonsTotal.toFixed(2),
       baseAmount: baseAmount.toFixed(2),
       gstAmount: gstAmount.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
     };
 
-    // 8. Generate Order via Razorpay Enterprise Service
+    // 9. Generate Order via Razorpay Enterprise Service
     const order = await razorpayService.createOrder(
       amountInPaise,
       receiptId,
@@ -118,7 +141,7 @@ export async function POST(req: Request) {
       'INR'
     );
 
-    // 9. Persist PENDING transaction in Prisma for immediate audit trail
+    // 10. Persist PENDING transaction in Prisma for immediate audit trail
     await prisma.billingTransaction.create({
       data: {
         tenantId: tenant.id,
@@ -129,13 +152,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // 10. Return checkout parameters to client
+    // 11. Return checkout parameters to client
     return NextResponse.json({
       success: true,
       orderId: order.id,
       currency: order.currency,
       amount: order.amount, // in paise
       baseAmount,
+      planAmount,
+      addonsTotal,
       gstAmount,
       totalAmount,
       keyId: process.env.RAZORPAY_KEY_ID,
@@ -143,20 +168,20 @@ export async function POST(req: Request) {
         id: plan.id,
         name: plan.name,
         slug: plan.slug,
-        billingCycle,
       },
+      addons: selectedAddonRows,
       customer: {
-        name: user.name || tenant.name,
-        email: user.email || tenant.email || '',
+        name: tenant.name,
+        email: tenant.email || user.email || '',
         contact: tenant.contactPhone || tenant.phone || '',
       },
     });
   } catch (error: any) {
-    console.error('[RAZORPAY_ORDER_API_ERROR]', error);
+    console.error('[RAZORPAY_ORDER_FATAL_ERROR]', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to initialize payment order. Please try again.',
+        error: error.message || 'Failed to initialize payment gateway order.',
       },
       { status: 500 }
     );

@@ -653,3 +653,85 @@ export async function updateTenantAddonsAction(tenantId: string, enabledAddons: 
     };
   }
 }
+
+
+/**
+ * Super Admin: Activate or switch a studio's Base Plan and assign custom Add-ons in 1 click
+ */
+export async function activateTenantPlanAndAddonsAction(params: {
+  tenantId: string;
+  planId: string;
+  billingCycle?: 'MONTHLY' | 'ANNUAL';
+  enabledAddons: string[];
+}) {
+  try {
+    await requireSuperAdmin();
+    const { tenantId, planId, billingCycle = 'MONTHLY', enabledAddons } = params;
+
+    if (!tenantId || !planId) {
+      return { success: false, error: 'Tenant ID and Plan ID are required.' };
+    }
+
+    const plan = await prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan) {
+      return { success: false, error: 'Subscription plan not found.' };
+    }
+
+    const durationDays = billingCycle === 'ANNUAL' ? 365 : 30;
+    const newEndDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const sub = await tx.tenantSubscription.upsert({
+        where: { tenantId },
+        update: {
+          planId: plan.id,
+          billingCycle: billingCycle as any,
+          startDate: new Date(),
+          endDate: newEndDate,
+        },
+        create: {
+          tenantId,
+          planId: plan.id,
+          billingCycle: billingCycle as any,
+          startDate: new Date(),
+          endDate: newEndDate,
+        },
+      });
+
+      const updatedTenant = await tx.tenant.update({
+        where: { id: tenantId },
+        data: {
+          subscriptionStatus: 'ACTIVE',
+          trialEndsAt: null,
+          enabledAddons,
+        },
+        select: {
+          id: true,
+          name: true,
+          subscriptionStatus: true,
+          enabledAddons: true,
+        },
+      });
+
+      return { sub, updatedTenant };
+    });
+
+    revalidatePath('/super-admin');
+    revalidatePath('/settings/billing');
+
+    return {
+      success: true,
+      message: `Studio "${result.updatedTenant.name}" activated on "${plan.name}" with ${enabledAddons.length} active add-on(s).`,
+      data: result,
+    };
+  } catch (error: any) {
+    console.error('[activateTenantPlanAndAddonsAction] Error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to activate plan and add-ons.',
+    };
+  }
+}

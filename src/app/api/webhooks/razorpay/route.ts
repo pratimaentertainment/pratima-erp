@@ -55,6 +55,9 @@ export async function POST(req: Request) {
       let planId = notes.planId;
       const rawCycle = notes.billingCycle?.toUpperCase();
       const billingCycle: 'MONTHLY' | 'ANNUAL' = rawCycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
+      const webhookAddonKeys = notes.addonKeys
+        ? notes.addonKeys.split(',').map((k: string) => k.trim()).filter(Boolean)
+        : [];
 
       // Idempotency Gate: Check if payment was already processed
       if (razorpayPaymentId) {
@@ -190,12 +193,16 @@ export async function POST(req: Request) {
           },
         });
 
-        // 3. Activate Tenant subscription status and clear trial flag
+        // 3. Activate Tenant subscription status, clear trial flag, and merge add-ons
+        const currentAddons = tenant.enabledAddons || [];
+        const mergedAddons = Array.from(new Set([...currentAddons, ...webhookAddonKeys]));
+
         await tx.tenant.update({
           where: { id: tenant.id },
           data: {
             subscriptionStatus: 'ACTIVE',
             trialEndsAt: null,
+            enabledAddons: mergedAddons,
           },
         });
       });

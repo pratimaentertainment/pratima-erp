@@ -508,25 +508,47 @@ model Subscription {
 }
 
 model SubscriptionPlan {
-  id              String   @id @default(cuid())
-  name            String
-  slug            String   @unique
-  monthlyPrice    Decimal  @db.Decimal(10, 2)
-  annualPrice     Decimal  @db.Decimal(10, 2)
-  maxBranches     Int      @default(1)
-  maxStaff        Int      @default(3)
-  smsCredits      Int      @default(0)
-  whatsappCredits          Int                  @default(0)
-  allowFranchises          Boolean              @default(false)
-  features                 String[]             @default([])
-  perFranchiseMonthlyPrice Decimal?             @default(0) @db.Decimal(10, 2)
-  perFranchiseAnnualPrice  Decimal?             @default(0) @db.Decimal(10, 2)
-  isActive                 Boolean              @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  name                     String
+  slug                     String   @unique
+  originalMonthlyPrice     Decimal? @db.Decimal(10, 2)
+  monthlyPrice             Decimal  @db.Decimal(10, 2)
+  originalAnnualPrice      Decimal? @db.Decimal(10, 2)
+  annualPrice              Decimal  @db.Decimal(10, 2)
+  offerBadgeText           String?
+  isBasePlan               Boolean  @default(false)
+  sortOrder                Int      @default(0)
+  maxBranches              Int      @default(1)
+  maxStaff                 Int      @default(3)
+  smsCredits               Int      @default(0)
+  whatsappCredits          Int      @default(0)
+  allowFranchises          Boolean  @default(false)
+  features                 String[] @default([])
+  perFranchiseMonthlyPrice Decimal? @default(0) @db.Decimal(10, 2)
+  perFranchiseAnnualPrice  Decimal? @default(0) @db.Decimal(10, 2)
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   subscriptions       TenantSubscription[]
   billingTransactions BillingTransaction[]
+}
+
+model PlanAddonConfig {
+  id                   String   @id @default(cuid())
+  featureKey           String   @unique
+  name                 String
+  description          String?
+  originalMonthlyPrice Decimal? @db.Decimal(10, 2)
+  monthlyPrice         Decimal  @default(0) @db.Decimal(10, 2)
+  originalAnnualPrice  Decimal? @db.Decimal(10, 2)
+  annualPrice          Decimal  @default(0) @db.Decimal(10, 2)
+  isActive             Boolean  @default(true)
+  sortOrder            Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
 }
 
 model TenantSubscription {

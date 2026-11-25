@@ -45,6 +45,7 @@ const recordOfflinePaymentSchema = z.object({
   paymentMode: z.enum(['UPI', 'NEFT', 'CASH', 'CHEQUE']),
   transactionRef: z.string().min(1, 'Transaction reference / UTR / Cheque number is required'),
   notes: z.string().optional().nullable(),
+  addonKeys: z.array(z.string()).optional(),
 });
 
 // ==========================================
@@ -413,12 +414,16 @@ export async function recordOfflinePaymentAction(input: z.infer<typeof recordOff
         },
       });
 
-      // 3. Activate Tenant subscription status and clear trial lock
+      // 3. Activate Tenant subscription status, clear trial lock, and merge add-ons
+      const currentAddons = tenant.enabledAddons || [];
+      const mergedAddons = Array.from(new Set([...currentAddons, ...(validated.addonKeys || [])]));
+
       const updatedTenant = await tx.tenant.update({
         where: { id: validated.tenantId },
         data: {
           subscriptionStatus: SubscriptionStatus.ACTIVE,
           trialEndsAt: null,
+          enabledAddons: mergedAddons,
         },
       });
 

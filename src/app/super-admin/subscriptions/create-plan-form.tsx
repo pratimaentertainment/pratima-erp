@@ -14,6 +14,9 @@ import {
   Network,
   Check,
   Layers,
+  Tag,
+  ArrowUpDown,
+  Flame,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -53,8 +56,13 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
     defaultValues: {
       name: '',
       slug: '',
+      originalMonthlyPrice: null,
       monthlyPrice: '' as unknown as number,
+      originalAnnualPrice: null,
       annualPrice: '' as unknown as number,
+      offerBadgeText: '',
+      isBasePlan: false,
+      sortOrder: 0,
       maxBranches: 1,
       maxStaff: 3,
       features: [...PRO_DEFAULT_FEATURES],
@@ -68,6 +76,12 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
   });
 
   const selectedFeatures = form.watch('features') || [];
+  const monthlyPriceWatch = Number(form.watch('monthlyPrice') || 0);
+  const originalMonthlyWatch = Number(form.watch('originalMonthlyPrice') || 0);
+  const annualPriceWatch = Number(form.watch('annualPrice') || 0);
+  const originalAnnualWatch = Number(form.watch('originalAnnualPrice') || 0);
+  const isBasePlanWatch = form.watch('isBasePlan');
+  const offerBadgeWatch = form.watch('offerBadgeText');
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (val: string) => void) => {
     const val = e.target.value;
@@ -104,16 +118,43 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
 
   const applyPreset = (preset: 'starter' | 'pro' | 'enterprise') => {
     if (preset === 'starter') {
+      form.setValue('name', 'Starter Studio');
+      form.setValue('slug', 'starter-studio');
+      form.setValue('originalMonthlyPrice', 1499);
+      form.setValue('monthlyPrice', 999);
+      form.setValue('originalAnnualPrice', 14990);
+      form.setValue('annualPrice', 9990);
+      form.setValue('offerBadgeText', 'Base Plan');
+      form.setValue('isBasePlan', true);
+      form.setValue('sortOrder', 1);
       form.setValue('features', [...STARTER_DEFAULT_FEATURES]);
       form.setValue('allowFranchises', false);
       form.setValue('maxBranches', 1);
       form.setValue('maxStaff', 3);
     } else if (preset === 'pro') {
+      form.setValue('name', 'Pro Studio');
+      form.setValue('slug', 'pro-studio');
+      form.setValue('originalMonthlyPrice', 3499);
+      form.setValue('monthlyPrice', 2499);
+      form.setValue('originalAnnualPrice', 34990);
+      form.setValue('annualPrice', 24990);
+      form.setValue('offerBadgeText', 'Most Popular');
+      form.setValue('isBasePlan', false);
+      form.setValue('sortOrder', 2);
       form.setValue('features', [...PRO_DEFAULT_FEATURES]);
       form.setValue('allowFranchises', false);
       form.setValue('maxBranches', 3);
       form.setValue('maxStaff', 10);
     } else {
+      form.setValue('name', 'Enterprise Franchise');
+      form.setValue('slug', 'enterprise-franchise');
+      form.setValue('originalMonthlyPrice', 6999);
+      form.setValue('monthlyPrice', 4999);
+      form.setValue('originalAnnualPrice', 69990);
+      form.setValue('annualPrice', 49990);
+      form.setValue('offerBadgeText', 'Franchise Ready');
+      form.setValue('isBasePlan', false);
+      form.setValue('sortOrder', 3);
       form.setValue('features', [...ENTERPRISE_DEFAULT_FEATURES]);
       form.setValue('allowFranchises', true);
       form.setValue('maxBranches', 10);
@@ -187,25 +228,169 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
           />
         </div>
 
-        {/* Pricing: Monthly & Annual */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+        {/* Pricing: MRP vs Offer (Monthly & Annual) */}
+        <div className="p-3.5 rounded-xl border border-border/70 bg-muted/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              <IndianRupee className="h-3.5 w-3.5 text-primary" />
+              <span>Pricing &amp; Strikethrough MRP</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              Crossed-out MRP creates buyer urgency
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="originalMonthlyPrice"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <span className="line-through">Original Monthly Rate (MRP ₹)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 3499 (optional MRP)"
+                      min="0"
+                      step="1"
+                      className="h-9 text-sm font-mono"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-destructive" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="monthlyPrice"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
+                    <IndianRupee className="h-3 w-3 text-primary" />
+                    <span>Active Offer Monthly Price (₹) *</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 2499"
+                      min="0"
+                      step="1"
+                      className="h-9 text-sm font-semibold"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-destructive" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="originalAnnualPrice"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <span className="line-through">Original Annual Rate (MRP ₹)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 34990 (optional MRP)"
+                      min="0"
+                      step="1"
+                      className="h-9 text-sm font-mono"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-destructive" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="annualPrice"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
+                    <IndianRupee className="h-3 w-3 text-emerald-500" />
+                    <span>Active Offer Annual Price (₹/yr) *</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 24990"
+                      min="0"
+                      step="1"
+                      className="h-9 text-sm font-semibold"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-destructive" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Live Price Preview Snippet */}
+          <div className="p-2.5 rounded-lg bg-background/80 border border-border/50 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+              <Flame className="h-3.5 w-3.5 text-amber-500" />
+              <span>Buyer Display Preview:</span>
+            </span>
+            <div className="flex items-center gap-2">
+              {originalMonthlyWatch > monthlyPriceWatch && (
+                <span className="line-through text-muted-foreground/70 font-mono text-xs">
+                  ₹{originalMonthlyWatch.toLocaleString('en-IN')}
+                </span>
+              )}
+              <span className="font-black text-foreground font-mono text-sm">
+                ₹{monthlyPriceWatch.toLocaleString('en-IN')}/mo
+              </span>
+              {originalMonthlyWatch > monthlyPriceWatch && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] px-1.5 py-0 font-bold">
+                  {Math.round(((originalMonthlyWatch - monthlyPriceWatch) / originalMonthlyWatch) * 100)}% OFF
+                </Badge>
+              )}
+              {isBasePlanWatch && (
+                <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-[10px] font-bold">
+                  Base Plan
+                </Badge>
+              )}
+              {offerBadgeWatch && (
+                <Badge variant="secondary" className="text-[10px] font-medium bg-amber-500/10 text-amber-600 border-amber-500/20">
+                  {offerBadgeWatch}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Marketing Badges & Sorting */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
-            name="monthlyPrice"
+            name="offerBadgeText"
             render={({ field }) => (
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
-                  <IndianRupee className="h-3 w-3 text-primary" />
-                  <span>Monthly Price (₹) *</span>
+                  <Tag className="h-3 w-3 text-muted-foreground" />
+                  <span>Offer Badge Tag</span>
                 </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    placeholder="e.g., 2499"
-                    min="0"
-                    step="1"
+                    placeholder="e.g., Launch Offer, Popular"
                     className="h-9 text-sm"
-                    {...field}
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
                   />
                 </FormControl>
                 <FormMessage className="text-xs text-destructive" />
@@ -215,20 +400,19 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
 
           <FormField
             control={form.control}
-            name="annualPrice"
+            name="sortOrder"
             render={({ field }) => (
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
-                  <IndianRupee className="h-3 w-3 text-emerald-500" />
-                  <span>Annual Price (₹/yr) *</span>
+                  <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                  <span>Display Sort Order</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="e.g., 24999"
-                    min="0"
+                    placeholder="0"
                     step="1"
-                    className="h-9 text-sm"
+                    className="h-9 text-sm font-mono"
                     {...field}
                   />
                 </FormControl>
@@ -237,6 +421,28 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
             )}
           />
         </div>
+
+        {/* Base Plan Switch */}
+        <FormField
+          control={form.control}
+          name="isBasePlan"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-card">
+              <div className="space-y-0.5">
+                <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-primary" />
+                  <span>Designate as Base Plan</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Marks this tier as the foundational starter plan. Studios can subscribe and attach modular Add-ons.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         {/* Quotas: Max Branches & Max Staff */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -252,7 +458,6 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="1"
                     min="1"
                     className="h-9 text-sm"
                     {...field}
@@ -270,12 +475,11 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
               <FormItem className="space-y-1">
                 <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1">
                   <Users className="h-3 w-3 text-muted-foreground" />
-                  <span>Max Staff Accounts *</span>
+                  <span>Max Staff Logins *</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="3"
                     min="1"
                     className="h-9 text-sm"
                     {...field}
@@ -287,61 +491,67 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
           />
         </div>
 
-        {/* Feature Matrix & Add-ons Grid */}
-        <div className="space-y-2 pt-1">
+        {/* Quick Tier Feature Presets */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Quick Presets:
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={() => applyPreset('starter')}
+            className="text-[11px] h-6 px-2 text-muted-foreground hover:text-foreground"
+          >
+            Starter Studio
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={() => applyPreset('pro')}
+            className="text-[11px] h-6 px-2 text-primary border-primary/30 hover:bg-primary/5"
+          >
+            Pro Studio
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={() => applyPreset('enterprise')}
+            className="text-[11px] h-6 px-2 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:bg-purple-500/5"
+          >
+            Enterprise Franchise
+          </Button>
+        </div>
+
+        {/* Feature Allocation Checklist */}
+        <div className="space-y-2 pt-2 border-t border-border/50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
+            <FormLabel className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold text-foreground">
-                Included Features &amp; Add-ons ({selectedFeatures.length}/{PLAN_FEATURES_CATALOG.length})
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                className="h-6 text-[10px] px-2"
-                onClick={() => applyPreset('starter')}
-              >
-                Starter
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                className="h-6 text-[10px] px-2"
-                onClick={() => applyPreset('pro')}
-              >
-                Pro
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                className="h-6 text-[10px] px-2"
-                onClick={() => applyPreset('enterprise')}
-              >
-                Enterprise
-              </Button>
-            </div>
+              <span>Included ERP Modules ({selectedFeatures.length}/9)</span>
+            </FormLabel>
+            <span className="text-[10px] text-muted-foreground">
+              Check to include in base subscription
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border border-border/70 rounded-lg p-2.5 bg-muted/20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20">
             {PLAN_FEATURES_CATALOG.map((f) => {
               const isSelected = selectedFeatures.includes(f.key);
               return (
                 <div
                   key={f.key}
                   onClick={() => toggleFeature(f.key)}
-                  className={`flex items-start gap-2.5 p-2 rounded-md border text-left cursor-pointer transition-all ${
+                  className={`flex items-start gap-2.5 p-2 rounded-lg border text-left cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-primary/5 border-primary/40 text-foreground'
-                      : 'bg-card/40 border-border/50 text-muted-foreground hover:bg-muted/30'
+                      ? 'bg-primary/10 border-primary/40 text-foreground shadow-xs'
+                      : 'bg-card/40 border-border/50 text-muted-foreground hover:bg-muted/40'
                   }`}
                 >
                   <div
-                    className={`h-4 w-4 rounded mt-0.5 flex items-center justify-center shrink-0 border transition-colors ${
+                    className={`h-4 w-4 rounded mt-0.5 flex items-center justify-center border transition-colors ${
                       isSelected
                         ? 'bg-primary border-primary text-primary-foreground'
                         : 'border-muted-foreground/40 bg-background'
@@ -350,7 +560,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
                     {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold truncate leading-tight">
+                    <div className="text-xs font-semibold leading-tight truncate">
                       {f.label}
                     </div>
                     <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
@@ -363,20 +573,20 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
           </div>
         </div>
 
-        {/* Franchising & Flexi-Billing Tier Options */}
-        <div className="rounded-lg border border-border/70 p-3 bg-muted/20 space-y-3">
+        {/* Multi-Branch Franchising Governance */}
+        <div className="p-3 rounded-lg border border-border/70 bg-card space-y-3">
           <FormField
             control={form.control}
             name="allowFranchises"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-y-0">
+              <FormItem className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Network className="h-3.5 w-3.5 text-primary" />
-                    <span>Enable Franchise Network &amp; Flexi-Billing</span>
-                  </FormLabel>
+                    <span>Franchise Network License</span>
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Allow studios on this plan to provision linked franchisee studios.
+                    Grants franchise provisioning desk and child studio management.
                   </p>
                 </div>
                 <FormControl>

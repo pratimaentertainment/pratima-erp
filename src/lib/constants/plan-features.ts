@@ -202,3 +202,108 @@ export function getFeaturesByCategory(): Record<FeatureCategory, PlanFeatureDefi
 
   return groups;
 }
+
+
+export interface DefaultAddonConfigItem {
+  featureKey: PlanFeatureKey;
+  name: string;
+  description: string;
+  originalMonthlyPrice: number;
+  monthlyPrice: number;
+  originalAnnualPrice: number;
+  annualPrice: number;
+  sortOrder: number;
+}
+
+export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
+  {
+    featureKey: 'CLIENT_PROOFING',
+    name: 'Client Proofing & Photo Selection Portal',
+    description: 'Digital client photo proofing with OTP authorization, watermarking & favorites.',
+    originalMonthlyPrice: 499,
+    monthlyPrice: 299,
+    originalAnnualPrice: 4990,
+    annualPrice: 2990,
+    sortOrder: 1,
+  },
+  {
+    featureKey: 'CUSTOM_BRANDING',
+    name: 'Custom Branding & White-Label Documents',
+    description: 'Studio logo watermark, white-label GST invoices, quotes & legal agreements.',
+    originalMonthlyPrice: 399,
+    monthlyPrice: 199,
+    originalAnnualPrice: 3990,
+    annualPrice: 1990,
+    sortOrder: 2,
+  },
+  {
+    featureKey: 'CLOUD_STORAGE_BYOS',
+    name: 'BYOS Cloud Storage & Auto-Mirroring',
+    description: 'Connect studio AWS S3 buckets & Google Drive with automated background sync.',
+    originalMonthlyPrice: 699,
+    monthlyPrice: 499,
+    originalAnnualPrice: 6990,
+    annualPrice: 4990,
+    sortOrder: 3,
+  },
+  {
+    featureKey: 'META_LEADS',
+    name: 'Meta Lead Ads Inbound Webhook Ingestion',
+    description: 'Direct HMAC SHA-256 webhook ingestion from Facebook & Instagram ad campaigns.',
+    originalMonthlyPrice: 799,
+    monthlyPrice: 499,
+    originalAnnualPrice: 7990,
+    annualPrice: 4990,
+    sortOrder: 4,
+  },
+  {
+    featureKey: 'GOOGLE_BUSINESS',
+    name: 'Google My Business & Maps Location Sync',
+    description: 'Google Places venue autocomplete, shoot location maps & review synchronization.',
+    originalMonthlyPrice: 499,
+    monthlyPrice: 299,
+    originalAnnualPrice: 4990,
+    annualPrice: 2990,
+    sortOrder: 5,
+  },
+  {
+    featureKey: 'FLEET_DISPATCH',
+    name: 'Vehicle Fleet & Shoot Dispatch Board',
+    description: 'Studio vehicles, drivers, clash detection, and shoot dispatch worksheets.',
+    originalMonthlyPrice: 599,
+    monthlyPrice: 399,
+    originalAnnualPrice: 5990,
+    annualPrice: 3990,
+    sortOrder: 6,
+  },
+  {
+    featureKey: 'HR_PAYROLL',
+    name: 'Staff Attendance & Monthly Payroll Suite',
+    description: 'Staff biometric/selfie attendance, leave management, and monthly salary slips.',
+    originalMonthlyPrice: 899,
+    monthlyPrice: 599,
+    originalAnnualPrice: 8990,
+    annualPrice: 5990,
+    sortOrder: 7,
+  },
+  {
+    featureKey: 'ADVANCED_ANALYTICS',
+    name: 'Chartered Accountant Ledgers & Profit Desk',
+    description: 'Double-entry trial balance, P&L statements, balance sheets & shoot margin analytics.',
+    originalMonthlyPrice: 999,
+    monthlyPrice: 699,
+    originalAnnualPrice: 9990,
+    annualPrice: 6990,
+    sortOrder: 8,
+  },
+  {
+    featureKey: 'FRANCHISE_NETWORK',
+    name: 'Franchise Network Governance & Auto-Royalty',
+    description: 'Multi-franchisee network command, lead routing, and automated royalty settlements.',
+    originalMonthlyPrice: 1499,
+    monthlyPrice: 999,
+    originalAnnualPrice: 14990,
+    annualPrice: 9990,
+    sortOrder: 9,
+  },
+];

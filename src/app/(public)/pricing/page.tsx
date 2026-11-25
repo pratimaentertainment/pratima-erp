@@ -5,7 +5,9 @@ import { Sparkles } from 'lucide-react';
 import {
   PricingTableClient,
   type SerializedSubscriptionPlan,
+  type SerializedPlanAddon,
 } from './pricing-table-client';
+import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
   title: 'Pricing Plans - Pratima ERP | Studio Operating System',
@@ -17,13 +19,22 @@ export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   let serializedPlans: SerializedSubscriptionPlan[] = [];
+  let serializedAddons: SerializedPlanAddon[] = [];
 
   try {
-    // 1. Fetch active plans from Prisma database ordered by price
-    const dbPlans = await prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
-      orderBy: { monthlyPrice: 'asc' },
-    });
+    await ensureAddonPriceListInitialized();
+
+    // 1. Fetch active plans and modular addons from Prisma database
+    const [dbPlans, dbAddons] = await Promise.all([
+      prisma.subscriptionPlan.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
+      }),
+      prisma.planAddonConfig.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+    ]);
 
     // 2. Serialize Decimal fields for React Server Component -> Client Component boundary
     serializedPlans = dbPlans.map((plan) => ({
@@ -32,6 +43,11 @@ export default async function PricingPage() {
       slug: plan.slug,
       monthlyPrice: Number(plan.monthlyPrice),
       annualPrice: Number(plan.annualPrice),
+      originalMonthlyPrice: plan.originalMonthlyPrice ? Number(plan.originalMonthlyPrice) : null,
+      originalAnnualPrice: plan.originalAnnualPrice ? Number(plan.originalAnnualPrice) : null,
+      offerBadgeText: plan.offerBadgeText,
+      isBasePlan: plan.isBasePlan,
+      sortOrder: plan.sortOrder,
       maxBranches: plan.maxBranches,
       maxStaff: plan.maxStaff,
       features: plan.features || [],
@@ -39,9 +55,21 @@ export default async function PricingPage() {
       perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ? Number(plan.perFranchiseMonthlyPrice) : 0,
       perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ? Number(plan.perFranchiseAnnualPrice) : 0,
     }));
+
+    serializedAddons = dbAddons.map((addon) => ({
+      id: addon.id,
+      featureKey: addon.featureKey,
+      name: addon.name,
+      description: addon.description,
+      originalMonthlyPrice: addon.originalMonthlyPrice ? Number(addon.originalMonthlyPrice) : null,
+      monthlyPrice: Number(addon.monthlyPrice),
+      originalAnnualPrice: addon.originalAnnualPrice ? Number(addon.originalAnnualPrice) : null,
+      annualPrice: Number(addon.annualPrice),
+    }));
   } catch (error) {
     console.error('[/pricing] Error fetching subscription plans from database:', error);
     serializedPlans = [];
+    serializedAddons = [];
   }
 
   return (
@@ -64,8 +92,8 @@ export default async function PricingPage() {
           </p>
         </div>
 
-        {/* Interactive Pricing Engine (Monthly/Annual Switcher, Quotas, CTAs, FAQs) */}
-        <PricingTableClient plans={serializedPlans} />
+        {/* Interactive Pricing Engine (Monthly/Annual Switcher, Quotas, CTAs, Addon Matrix, FAQs) */}
+        <PricingTableClient plans={serializedPlans} addons={serializedAddons} />
       </div>
     </div>
   );

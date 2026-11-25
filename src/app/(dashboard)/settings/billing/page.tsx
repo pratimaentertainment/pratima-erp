@@ -28,11 +28,13 @@ import {
 import {
   BillingPlansTable,
   type SerializedPlan,
+  type SerializedPlanAddonItem,
 } from './billing-plans-table';
+import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
   title: 'Subscription & Billing - Studio Settings | Pratima ERP',
-  description: 'Manage your studio subscription plans, resource allocations, and Razorpay billing invoices.',
+  description: 'Manage your studio subscription plans, modular add-on capabilities, and Razorpay billing invoices.',
 };
 
 export default async function TenantBillingPage() {
@@ -45,8 +47,10 @@ export default async function TenantBillingPage() {
     redirect('/login');
   }
 
-  // 2. Fetch tenant profile, current subscription, usage quotas, and transactions in parallel
-  const [tenant, tenantSubscription, branchCount, staffCount, allPlans, transactions] =
+  await ensureAddonPriceListInitialized();
+
+  // 2. Fetch tenant profile, current subscription, usage quotas, plans, addons, and transactions in parallel
+  const [tenant, tenantSubscription, branchCount, staffCount, allPlans, allAddons, transactions] =
     await Promise.all([
       prisma.tenant.findUnique({
         where: { id: tenantId },
@@ -55,6 +59,7 @@ export default async function TenantBillingPage() {
           name: true,
           subscriptionStatus: true,
           trialEndsAt: true,
+          enabledAddons: true,
           createdAt: true,
         },
       }),
@@ -72,7 +77,11 @@ export default async function TenantBillingPage() {
       }),
       prisma.subscriptionPlan.findMany({
         where: { isActive: true },
-        orderBy: { monthlyPrice: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
+      }),
+      prisma.planAddonConfig.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
       }),
       prisma.billingTransaction.findMany({
         where: { tenantId },
@@ -92,11 +101,28 @@ export default async function TenantBillingPage() {
     slug: p.slug,
     monthlyPrice: Number(p.monthlyPrice),
     annualPrice: Number(p.annualPrice),
+    originalMonthlyPrice: p.originalMonthlyPrice ? Number(p.originalMonthlyPrice) : null,
+    originalAnnualPrice: p.originalAnnualPrice ? Number(p.originalAnnualPrice) : null,
+    offerBadgeText: p.offerBadgeText,
+    isBasePlan: p.isBasePlan,
+    sortOrder: p.sortOrder,
     maxBranches: p.maxBranches,
     maxStaff: p.maxStaff,
+    features: p.features || [],
     smsCredits: p.smsCredits,
     whatsappCredits: p.whatsappCredits,
     isActive: p.isActive,
+  }));
+
+  const serializedAddons: SerializedPlanAddonItem[] = allAddons.map((a) => ({
+    id: a.id,
+    featureKey: a.featureKey,
+    name: a.name,
+    description: a.description,
+    originalMonthlyPrice: a.originalMonthlyPrice ? Number(a.originalMonthlyPrice) : null,
+    monthlyPrice: Number(a.monthlyPrice),
+    originalAnnualPrice: a.originalAnnualPrice ? Number(a.originalAnnualPrice) : null,
+    annualPrice: Number(a.annualPrice),
   }));
 
   // 4. Compute status metrics and trial countdown
@@ -134,7 +160,7 @@ export default async function TenantBillingPage() {
             </Badge>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Manage your studio tier, scale branch and staff quotas, and review secure Razorpay payment receipts.
+            Manage your studio tier, customize modular add-on capabilities, scale branch quotas, and review secure Razorpay payment receipts.
           </p>
         </div>
       </div>
@@ -250,53 +276,53 @@ export default async function TenantBillingPage() {
           </CardContent>
         </Card>
 
-        {/* SMS Credits */}
+        {/* Enabled Add-ons Count */}
         <Card className="shadow-xs">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-semibold uppercase tracking-wider">SMS Quota</span>
-              <Smartphone className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Active Add-ons</span>
+              <Sparkles className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-2xl font-bold font-heading text-foreground">
-              {currentPlan ? currentPlan.smsCredits.toLocaleString('en-IN') : 0}
+              {tenant.enabledAddons?.length || 0}
             </div>
-            <p className="text-[11px] text-muted-foreground">Transactional SMS included</p>
+            <p className="text-[11px] text-muted-foreground">Standalone modular features</p>
           </CardContent>
         </Card>
 
-        {/* WhatsApp Credits */}
+        {/* Security & Gateways */}
         <Card className="shadow-xs">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-semibold uppercase tracking-wider">WhatsApp Quota</span>
-              <MessageSquare className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Gateway Status</span>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
-            <div className="text-2xl font-bold font-heading text-foreground">
-              {currentPlan ? currentPlan.whatsappCredits.toLocaleString('en-IN') : 0}
-            </div>
-            <p className="text-[11px] text-muted-foreground">Cloud API messages included</p>
+            <div className="text-sm font-bold text-foreground">Razorpay Auto-Sync</div>
+            <p className="text-[11px] text-muted-foreground">Instant activation enabled</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Available Plans & Upgrade Matrix */}
+      {/* Available Plans & Modular Add-on Customizer */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-bold font-heading text-foreground">Available Subscription Plans</h2>
+          <h2 className="text-lg font-bold font-heading text-foreground">Available Subscription Plans &amp; Add-ons</h2>
           <p className="text-xs text-muted-foreground">
-            Upgrade or renew your studio tier anytime. Payments are processed securely via Razorpay with instant activation.
+            Upgrade or customize your studio subscription. Select any modular add-on capabilities to bundle into your checkout.
           </p>
         </div>
 
         <BillingPlansTable
           plans={serializedPlans}
+          addons={serializedAddons}
           currentPlanId={tenantSubscription?.planId}
           currentBillingCycle={tenantSubscription?.billingCycle}
           subscriptionStatus={tenant.subscriptionStatus}
+          initialEnabledAddons={tenant.enabledAddons || []}
         />
       </div>
 

@@ -16,6 +16,11 @@ interface PlanActionsProps {
     slug: string;
     monthlyPrice: number | string;
     annualPrice: number | string;
+    originalMonthlyPrice?: number | string | null;
+    originalAnnualPrice?: number | string | null;
+    offerBadgeText?: string | null;
+    isBasePlan?: boolean;
+    sortOrder?: number;
     maxBranches: number;
     maxStaff: number;
     features?: string[];

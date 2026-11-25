@@ -5,6 +5,7 @@ import {
   STARTER_DEFAULT_FEATURES,
   PRO_DEFAULT_FEATURES,
   ENTERPRISE_DEFAULT_FEATURES,
+  DEFAULT_ADDON_CONFIGS,
 } from '../src/lib/constants/plan-features';
 
 async function main() {
@@ -58,8 +59,13 @@ async function main() {
     {
       slug: 'starter-studio',
       name: 'Starter Studio',
+      originalMonthlyPrice: 1499,
       monthlyPrice: 999,
+      originalAnnualPrice: 14990,
       annualPrice: 9990,
+      offerBadgeText: 'Base Plan',
+      isBasePlan: true,
+      sortOrder: 1,
       maxBranches: 1,
       maxStaff: 3,
       smsCredits: 100,
@@ -73,8 +79,13 @@ async function main() {
     {
       slug: 'pro-studio',
       name: 'Pro Studio',
+      originalMonthlyPrice: 3499,
       monthlyPrice: 2499,
+      originalAnnualPrice: 34990,
       annualPrice: 24990,
+      offerBadgeText: 'Most Popular',
+      isBasePlan: false,
+      sortOrder: 2,
       maxBranches: 3,
       maxStaff: 10,
       smsCredits: 500,
@@ -88,8 +99,13 @@ async function main() {
     {
       slug: 'enterprise-franchise',
       name: 'Enterprise Franchise',
+      originalMonthlyPrice: 6999,
       monthlyPrice: 4999,
+      originalAnnualPrice: 69990,
       annualPrice: 49990,
+      offerBadgeText: 'Franchise Ready',
+      isBasePlan: false,
+      sortOrder: 3,
       maxBranches: 10,
       maxStaff: 50,
       smsCredits: 2000,
@@ -108,8 +124,13 @@ async function main() {
       where: { slug: plan.slug },
       update: {
         name: plan.name,
+        originalMonthlyPrice: plan.originalMonthlyPrice,
         monthlyPrice: plan.monthlyPrice,
+        originalAnnualPrice: plan.originalAnnualPrice,
         annualPrice: plan.annualPrice,
+        offerBadgeText: plan.offerBadgeText,
+        isBasePlan: plan.isBasePlan,
+        sortOrder: plan.sortOrder,
         maxBranches: plan.maxBranches,
         maxStaff: plan.maxStaff,
         smsCredits: plan.smsCredits,
@@ -123,8 +144,13 @@ async function main() {
       create: {
         name: plan.name,
         slug: plan.slug,
+        originalMonthlyPrice: plan.originalMonthlyPrice,
         monthlyPrice: plan.monthlyPrice,
+        originalAnnualPrice: plan.originalAnnualPrice,
         annualPrice: plan.annualPrice,
+        offerBadgeText: plan.offerBadgeText,
+        isBasePlan: plan.isBasePlan,
+        sortOrder: plan.sortOrder,
         maxBranches: plan.maxBranches,
         maxStaff: plan.maxStaff,
         smsCredits: plan.smsCredits,
@@ -138,7 +164,36 @@ async function main() {
     });
   }
 
-  // 3. Create or find Tenant
+  // 3. Upsert Modular Add-ons Price Catalog
+  console.log('Upserting modular add-on price catalog...');
+  for (const addon of DEFAULT_ADDON_CONFIGS) {
+    await prisma.planAddonConfig.upsert({
+      where: { featureKey: addon.featureKey },
+      update: {
+        name: addon.name,
+        description: addon.description,
+        originalMonthlyPrice: addon.originalMonthlyPrice,
+        monthlyPrice: addon.monthlyPrice,
+        originalAnnualPrice: addon.originalAnnualPrice,
+        annualPrice: addon.annualPrice,
+        isActive: addon.isActive,
+        sortOrder: addon.sortOrder,
+      },
+      create: {
+        featureKey: addon.featureKey,
+        name: addon.name,
+        description: addon.description,
+        originalMonthlyPrice: addon.originalMonthlyPrice,
+        monthlyPrice: addon.monthlyPrice,
+        originalAnnualPrice: addon.originalAnnualPrice,
+        annualPrice: addon.annualPrice,
+        isActive: addon.isActive,
+        sortOrder: addon.sortOrder,
+      },
+    });
+  }
+
+  // 4. Create or find Tenant
   let tenant = await prisma.tenant.findFirst({ where: { name: 'Pratima Studio' } });
   if (!tenant) {
     tenant = await prisma.tenant.create({
@@ -150,7 +205,7 @@ async function main() {
     });
   }
 
-  // 4. Create or find Branch
+  // 5. Create or find Branch
   let branch = await prisma.branch.findFirst({
     where: { name: 'Headquarters', tenantId: tenant.id },
   });
@@ -164,7 +219,7 @@ async function main() {
     });
   }
 
-  // 5. Link Existing Demo User
+  // 6. Link Existing Demo User
   const existingUser = await prisma.user.findFirst({
     where: { tenantId: tenant.id },
   });
@@ -198,7 +253,7 @@ async function main() {
     userId = newUser.id;
   }
 
-  // 6. Ensure RBAC role and permissions for demo tenant
+  // 7. Ensure RBAC role and permissions for demo tenant
   console.log('Ensuring TENANT_OWNER role for tenant admin...');
   let role = await prisma.role.findFirst({
     where: { tenantId: tenant.id, name: 'TENANT_OWNER' },
@@ -227,7 +282,7 @@ async function main() {
     });
   }
 
-  // 7. Create Lead Sources
+  // 8. Create Lead Sources
   const sources = ['WEBSITE', 'INSTAGRAM', 'WALK_IN'];
   for (const source of sources) {
     const existingSource = await prisma.leadSource.findFirst({
@@ -245,7 +300,7 @@ async function main() {
     }
   }
 
-  // 8. Create Clients
+  // 9. Create Clients
   const clientsToCreate = [
     { firstName: 'Rahul', lastName: 'Sharma', email: 'rahul@example.com', phone: '9876543210' },
     { firstName: 'Priya', lastName: 'Desai', email: 'priya@example.com', phone: '8765432109' },

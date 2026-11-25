@@ -7,6 +7,7 @@ import {
   PRO_DEFAULT_FEATURES,
   ENTERPRISE_DEFAULT_FEATURES,
 } from '@/lib/constants/plan-features';
+import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,8 +15,13 @@ export const runtime = 'nodejs';
 interface SubscriptionPlanSeedData {
   slug: string;
   name: string;
+  originalMonthlyPrice?: number;
   monthlyPrice: number;
+  originalAnnualPrice?: number;
   annualPrice: number;
+  offerBadgeText?: string;
+  isBasePlan: boolean;
+  sortOrder: number;
   maxBranches: number;
   maxStaff: number;
   smsCredits: number;
@@ -31,8 +37,13 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
   {
     slug: 'starter-studio',
     name: 'Starter Studio',
+    originalMonthlyPrice: 1499,
     monthlyPrice: 999,
+    originalAnnualPrice: 14990,
     annualPrice: 9990,
+    offerBadgeText: 'Base Plan',
+    isBasePlan: true,
+    sortOrder: 1,
     maxBranches: 1,
     maxStaff: 3,
     smsCredits: 100,
@@ -46,8 +57,13 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
   {
     slug: 'pro-studio',
     name: 'Pro Studio',
+    originalMonthlyPrice: 3499,
     monthlyPrice: 2499,
+    originalAnnualPrice: 34990,
     annualPrice: 24990,
+    offerBadgeText: 'Most Popular',
+    isBasePlan: false,
+    sortOrder: 2,
     maxBranches: 3,
     maxStaff: 10,
     smsCredits: 500,
@@ -61,8 +77,13 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
   {
     slug: 'enterprise-franchise',
     name: 'Enterprise Franchise',
+    originalMonthlyPrice: 6999,
     monthlyPrice: 4999,
+    originalAnnualPrice: 69990,
     annualPrice: 49990,
+    offerBadgeText: 'Franchise Ready',
+    isBasePlan: false,
+    sortOrder: 3,
     maxBranches: 10,
     maxStaff: 50,
     smsCredits: 2000,
@@ -80,7 +101,8 @@ const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
  *
  * Secure, idempotent, production bootstrap endpoint to provision:
  * 1. Global Super Admin account (suhaswagire.photo@gmail.com)
- * 2. Default tiered Subscription Plans (Starter Studio, Pro Studio, Enterprise Franchise)
+ * 2. Default tiered Subscription Plans (Starter Studio as Base Plan, Pro Studio, Enterprise Franchise)
+ * 3. Default Modular Add-on Capabilities Price Catalog
  *
  * Protected via query param `secret` matching SETUP_SECRET, NEXTAUTH_SECRET, AUTH_SECRET, or JWT_SECRET.
  */
@@ -171,15 +193,20 @@ export async function GET(req: Request) {
       });
     }
 
-    // 2. Upsert Subscription Plans
+    // 2. Upsert Subscription Plans with MRP, Base Plan & Badges
     const seededPlans = [];
     for (const plan of DEFAULT_PLANS) {
       const upsertedPlan = await prisma.subscriptionPlan.upsert({
         where: { slug: plan.slug },
         update: {
           name: plan.name,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
           monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
           annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
           maxBranches: plan.maxBranches,
           maxStaff: plan.maxStaff,
           smsCredits: plan.smsCredits,
@@ -193,8 +220,13 @@ export async function GET(req: Request) {
         create: {
           name: plan.name,
           slug: plan.slug,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
           monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
           annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
           maxBranches: plan.maxBranches,
           maxStaff: plan.maxStaff,
           smsCredits: plan.smsCredits,
@@ -209,8 +241,13 @@ export async function GET(req: Request) {
           id: true,
           name: true,
           slug: true,
+          originalMonthlyPrice: true,
           monthlyPrice: true,
+          originalAnnualPrice: true,
           annualPrice: true,
+          offerBadgeText: true,
+          isBasePlan: true,
+          sortOrder: true,
           maxBranches: true,
           maxStaff: true,
           allowFranchises: true,
@@ -220,6 +257,13 @@ export async function GET(req: Request) {
       });
       seededPlans.push(upsertedPlan);
     }
+
+    // 3. Ensure Modular Add-on Capabilities Price Catalog is Initialized
+    await ensureAddonPriceListInitialized();
+
+    const seededAddons = await prisma.planAddonConfig.findMany({
+      orderBy: { sortOrder: 'asc' },
+    });
 
     return NextResponse.json({
       success: true,
@@ -238,13 +282,26 @@ export async function GET(req: Request) {
         id: p.id,
         name: p.name,
         slug: p.slug,
+        originalMonthlyPrice: p.originalMonthlyPrice ? Number(p.originalMonthlyPrice) : null,
         monthlyPrice: Number(p.monthlyPrice),
+        originalAnnualPrice: p.originalAnnualPrice ? Number(p.originalAnnualPrice) : null,
         annualPrice: Number(p.annualPrice),
+        offerBadgeText: p.offerBadgeText,
+        isBasePlan: p.isBasePlan,
+        sortOrder: p.sortOrder,
         maxBranches: p.maxBranches,
         maxStaff: p.maxStaff,
         allowFranchises: p.allowFranchises,
         features: p.features,
         isActive: p.isActive,
+      })),
+      addonsCount: seededAddons.length,
+      addons: seededAddons.map((a) => ({
+        featureKey: a.featureKey,
+        name: a.name,
+        monthlyPrice: Number(a.monthlyPrice),
+        annualPrice: Number(a.annualPrice),
+        isActive: a.isActive,
       })),
       timestamp: new Date().toISOString(),
     });

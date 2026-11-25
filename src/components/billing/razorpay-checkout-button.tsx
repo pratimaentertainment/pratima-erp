@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 export interface RazorpayCheckoutButtonProps {
   planId: string;
   billingCycle?: 'MONTHLY' | 'ANNUAL';
+  addonKeys?: string[];
   buttonText?: string;
   className?: string;
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
@@ -29,10 +30,12 @@ export interface RazorpayCheckoutButtonProps {
 /**
  * Enterprise Client Component for Razorpay SaaS Subscription Checkout.
  * Initiates server-side order generation, loads client SDK, and handles modal lifecycle.
+ * Supports modular add-on capabilities with automatic entitlement activation upon verification.
  */
 export function RazorpayCheckoutButton({
   planId,
   billingCycle = 'MONTHLY',
+  addonKeys,
   buttonText = 'Upgrade Now',
   className,
   variant = 'default',
@@ -52,13 +55,14 @@ export function RazorpayCheckoutButton({
     setIsLoading(true);
 
     try {
-      // 1. Request signed order from server
+      // 1. Request signed order from server with optional add-on keys
       const orderResponse = await fetch('/api/billing/razorpay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId,
           billingCycle,
+          addonKeys,
         }),
       });
 
@@ -108,7 +112,7 @@ export function RazorpayCheckoutButton({
         handler: (response: RazorpaySuccessResponse) => {
           (async () => {
             try {
-              toast.loading('Verifying secure payment...', { id: 'razorpay-verify' });
+              toast.loading('Verifying secure payment and activating add-ons...', { id: 'razorpay-verify' });
 
               const verifyResponse = await fetch('/api/billing/razorpay/verify', {
                 method: 'POST',
@@ -119,6 +123,7 @@ export function RazorpayCheckoutButton({
                   razorpay_signature: response.razorpay_signature,
                   planId,
                   billingCycle,
+                  addonKeys,
                 }),
               });
 
@@ -128,7 +133,7 @@ export function RazorpayCheckoutButton({
                 throw new Error(verifyData.error || 'Payment signature verification failed.');
               }
 
-              toast.success('Payment verified! Your studio subscription has been activated.', {
+              toast.success('Payment verified! Your studio subscription & add-ons have been activated.', {
                 id: 'razorpay-verify',
               });
 
@@ -136,7 +141,7 @@ export function RazorpayCheckoutButton({
                 onSuccess(response);
               }
 
-              // Hard reload to completely flush the Next.js router cache and instantly break the Hard Lock
+              // Hard reload to completely flush the Next.js router cache and instantly break any Hard Lock
               window.location.reload();
             } catch (verifyErr: any) {
               setIsLoading(false);

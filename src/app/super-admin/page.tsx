@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
   title: 'Super Admin - Studio Management | Pratima ERP',
@@ -35,10 +36,15 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function SuperAdminPage() {
-  const [studios, totalUsers, totalBranches] = await Promise.all([
+  await ensureAddonPriceListInitialized();
+
+  const [studios, totalUsers, totalBranches, plansRaw, addonsRaw] = await Promise.all([
     prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
+        subscription: {
+          select: { planId: true },
+        },
         _count: {
           select: {
             users: true,
@@ -49,7 +55,45 @@ export default async function SuperAdminPage() {
     }),
     prisma.user.count(),
     prisma.branch.count(),
+    prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        monthlyPrice: true,
+        annualPrice: true,
+        isBasePlan: true,
+      },
+    }),
+    prisma.planAddonConfig.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        featureKey: true,
+        name: true,
+        monthlyPrice: true,
+        annualPrice: true,
+      },
+    }),
   ]);
+
+  const availablePlans = plansRaw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    monthlyPrice: Number(p.monthlyPrice),
+    annualPrice: Number(p.annualPrice),
+    isBasePlan: p.isBasePlan,
+  }));
+
+  const availableAddons = addonsRaw.map((a) => ({
+    featureKey: a.featureKey,
+    name: a.name,
+    monthlyPrice: Number(a.monthlyPrice),
+    annualPrice: Number(a.annualPrice),
+  }));
 
   const activeTrials = studios.filter((s) => s.subscriptionStatus === 'TRIAL').length;
 
@@ -325,7 +369,14 @@ export default async function SuperAdminPage() {
                               tenantName={studio.name}
                               tenantSlug={studio.slug}
                             />
-                            <ManageTenantDialog studio={studio} />
+                            <ManageTenantDialog
+                              studio={{
+                                ...studio,
+                                currentPlanId: studio.subscription?.planId || null,
+                              }}
+                              availablePlans={availablePlans}
+                              availableAddons={availableAddons}
+                            />
                             <DeleteTenantButton tenantId={studio.id} tenantName={studio.name} />
                           </div>
                         </TableCell>

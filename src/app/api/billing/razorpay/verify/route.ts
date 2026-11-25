@@ -12,6 +12,7 @@ const verifyPaymentSchema = z.object({
   razorpay_signature: z.string().min(1, 'razorpay_signature is required'),
   planId: z.string().optional(),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).optional(),
+  addonKeys: z.array(z.string()).optional(),
 });
 
 /**
@@ -19,8 +20,8 @@ const verifyPaymentSchema = z.object({
  * Synchronous client-side payment signature verification endpoint.
  *
  * Verifies HMAC SHA-256 signature immediately after client checkout callback,
- * atomically updates the database, activates tenant subscription, and breaks
- * the Hard Lock screen without waiting for external webhooks (critical for localhost & offline dev).
+ * atomically updates the database, activates tenant subscription, unlocks
+ * purchased add-ons, and breaks the Hard Lock screen without waiting for external webhooks.
  */
 export async function POST(req: Request) {
   try {
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
           error: 'Validation failed',
           details: parseResult.error.flatten().fieldErrors,
         },
-        { status: 422 }
+        { status: 400 }
       );
     }
 
@@ -66,16 +67,17 @@ export async function POST(req: Request) {
       razorpay_signature,
       planId: payloadPlanId,
       billingCycle: payloadBillingCycle,
+      addonKeys: payloadAddonKeys,
     } = parseResult.data;
 
-    // 3. Cryptographic HMAC SHA-256 Payment Signature Verification
-    const isSignatureValid = RazorpayService.verifyPaymentSignature(
+    // 3. Cryptographic Signature Verification via Razorpay Service
+    const isValidSignature = RazorpayService.verifyPaymentSignature(
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature
     );
 
-    if (!isSignatureValid) {
+    if (!isValidSignature) {
       console.error(
         `[RAZORPAY_VERIFY_ALERT] Forged or invalid signature for order: ${razorpay_order_id}, payment: ${razorpay_payment_id}`
       );
@@ -90,6 +92,7 @@ export async function POST(req: Request) {
     let resolvedBillingCycle: 'MONTHLY' | 'ANNUAL' =
       payloadBillingCycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
     let resolvedAmountInRupees = 0;
+    let resolvedAddonKeys: string[] = payloadAddonKeys || [];
 
     try {
       const client = razorpayService.getClient();
@@ -106,6 +109,15 @@ export async function POST(req: Request) {
       }
       if (rzpOrder?.amount) {
         resolvedAmountInRupees = Math.round(Number(rzpOrder.amount)) / 100;
+      }
+      if (rzpOrder?.notes?.addonKeys && typeof rzpOrder.notes.addonKeys === 'string') {
+        const parsedKeys = rzpOrder.notes.addonKeys
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter(Boolean);
+        if (parsedKeys.length > 0) {
+          resolvedAddonKeys = parsedKeys;
+        }
       }
     } catch (orderFetchErr) {
       console.warn(
@@ -147,6 +159,7 @@ export async function POST(req: Request) {
     const newEndDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
     // 7. Atomic Database Transaction (Zero inconsistency guarantee)
+    let mergedAddons: string[] = [];
     await prisma.$transaction(async (tx) => {
       // a) Update or record BillingTransaction
       const pendingTx = await tx.billingTransaction.findFirst({
@@ -195,27 +208,36 @@ export async function POST(req: Request) {
         },
       });
 
-      // c) Activate Tenant subscription status and clear trial lock flag
+      // c) Merge purchased add-ons and activate Tenant subscription status
+      const existingTenant = await tx.tenant.findUnique({
+        where: { id: tenantId },
+        select: { enabledAddons: true },
+      });
+      const currentAddons = existingTenant?.enabledAddons || [];
+      mergedAddons = Array.from(new Set([...currentAddons, ...resolvedAddonKeys]));
+
       await tx.tenant.update({
         where: { id: tenantId },
         data: {
           subscriptionStatus: 'ACTIVE',
           trialEndsAt: null,
+          enabledAddons: mergedAddons,
         },
       });
     });
 
     console.log(
-      `[RAZORPAY_VERIFY_SUCCESS] Tenant "${tenantId}" unlocked on plan "${plan.name}" until ${newEndDate.toISOString()}`
+      `[RAZORPAY_VERIFY_SUCCESS] Tenant "${tenantId}" unlocked on plan "${plan.name}" with add-ons [${mergedAddons.join(', ')}] until ${newEndDate.toISOString()}`
     );
 
     return NextResponse.json({
       success: true,
-      message: 'Payment verified successfully and workspace unlocked.',
+      message: 'Payment verified successfully, subscription activated, and add-ons unlocked.',
       subscription: {
         planName: plan.name,
         billingCycle: resolvedBillingCycle,
         endDate: newEndDate.toISOString(),
+        enabledAddons: mergedAddons,
       },
     });
   } catch (err: any) {
