@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 
 export const metadata = {
-  title: 'Customer 360 | Pratima ERP',
+  title: 'Customer 360 | FRAMIQ',
   description: 'Comprehensive 360-degree profile, financial lifecycle, and event operations.',
 };
 

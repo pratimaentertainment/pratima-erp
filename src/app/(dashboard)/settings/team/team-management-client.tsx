@@ -1416,7 +1416,7 @@ export function TeamManagementClient({
               onClick={() => {
                 if (!newCredentials) return;
                 const portalUrl = typeof window !== 'undefined' ? `${window.location.origin}/login` : '';
-                const text = `Pratima ERP Staff Login\nStaff: ${newCredentials.name}\nPortal: ${portalUrl}\nEmail: ${newCredentials.email}\nTemporary Password: ${newCredentials.temporaryPassword}`;
+                const text = `FRAMIQ Staff Login\nStaff: ${newCredentials.name}\nPortal: ${portalUrl}\nEmail: ${newCredentials.email}\nTemporary Password: ${newCredentials.temporaryPassword}`;
                 navigator.clipboard.writeText(text);
                 setHasCopiedCredentials(true);
                 toast.success('All login credentials copied to clipboard!');
@@ -1490,7 +1490,7 @@ export function TeamManagementClient({
                   className="gap-1 text-xs"
                   onClick={() => {
                     if (!resettingMember || !resetResult) return;
-                    const text = `Pratima ERP Password Reset\nStaff: ${resettingMember.name}\nEmail: ${resetResult.email}\nTemporary Password: ${resetResult.temporaryPassword}`;
+                    const text = `FRAMIQ Password Reset\nStaff: ${resettingMember.name}\nEmail: ${resetResult.email}\nTemporary Password: ${resetResult.temporaryPassword}`;
                     navigator.clipboard.writeText(text);
                     setHasCopiedReset(true);
                     toast.success('Credentials copied to clipboard!');

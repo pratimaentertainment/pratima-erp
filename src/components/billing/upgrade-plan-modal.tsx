@@ -91,7 +91,7 @@ export function UpgradePlanModal({
         <div className="p-4 rounded-xl bg-muted/40 border border-border/60 text-xs space-y-2">
           <div className="font-semibold text-foreground flex items-center gap-2">
             <Layers className="h-3.5 w-3.5 text-primary" />
-            <span>Why Upgrade Pratima ERP?</span>
+            <span>Why Upgrade FRAMIQ?</span>
           </div>
           <ul className="space-y-1 text-muted-foreground pl-5 list-disc">
             <li>Instant multi-branch synchronization &amp; isolated inventories</li>

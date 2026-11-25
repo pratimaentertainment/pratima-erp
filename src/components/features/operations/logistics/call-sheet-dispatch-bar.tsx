@@ -202,7 +202,7 @@ ${gearListFormatted}
 
 ⚠️ *Notes:* ${specialNotes || 'Arrive 30 mins prior to call time. Ensure dual card backups.'}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-_Generated via Pratima ERP Shoot Logistics_`;
+_Generated via FRAMIQ Shoot Logistics_`;
   }, [
     booking,
     callTime,

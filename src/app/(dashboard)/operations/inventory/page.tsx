@@ -6,7 +6,7 @@ import { serializePrisma } from '@/lib/serialize';
 import { InventoryClient } from './inventory-client';
 
 export const metadata: Metadata = {
-  title: 'Warehouse & Equipment Workbench | Pratima ERP',
+  title: 'Warehouse & Equipment Workbench | FRAMIQ',
   description:
     'Enterprise asset inventory management, QR barcode dispatch, digital accessory checklists, and maintenance tracking.',
 };

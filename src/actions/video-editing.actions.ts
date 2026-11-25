@@ -217,7 +217,7 @@ export async function assignVideoTaskAction(input: z.infer<typeof assignVideoTas
         ? validReferenceLinks.map((link, idx) => `  ${idx + 1}. ${link}`).join('\n')
         : '  • _Director will share references in chat_';
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.pratimaerp.com';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pratima-erp.vercel.app';
     const magicPortalUrl = editorToken ? `${appUrl}/portal/editor/${editorToken}` : null;
 
     const whatsappBriefMessage = `🎬 *${studioName.toUpperCase()} — VIDEO EDITING CREATIVE BRIEF*
@@ -247,7 +247,7 @@ ${referenceLinksFormatted}
   • Upload review draft link (Vimeo / Frame.io / Drive) via the Magic Link or portal.
   • Client review will be initiated automatically upon submission.
 ━━━━━━━━━━━━━━━━━━━━━━━━
-_Generated via Pratima ERP Video Editing Pipeline_`;
+_Generated via FRAMIQ Video Editing Pipeline_`;
 
     // 6. Construct Direct Click-to-Chat WhatsApp URL
     const targetPhone = validated.freelancerPhone || editorUser?.phone;

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Partner Portal - Pratima ERP',
+  title: 'Partner Portal | FRAMIQ by Pratima Entertainment & Technology',
   description: 'Dealer referral links, referred studios, recurring commission ledger, and bank payouts.',
 };
 

@@ -189,7 +189,10 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col h-screen border-r border-sidebar-border print:hidden">
       <div className="h-14 flex items-center px-6 border-b border-sidebar-border">
-        <h1 className="text-xl font-bold tracking-tighter text-sidebar-primary">Pratima ERP</h1>
+        <div className="flex flex-col">
+          <h1 className="text-lg font-black tracking-tight text-sidebar-primary leading-none">FRAMIQ</h1>
+          <span className="text-[9px] text-sidebar-foreground/60 font-medium tracking-tight mt-0.5">by Pratima Tech</span>
+        </div>
       </div>
       <nav className="flex-1 py-3 overflow-y-auto space-y-4">
         {visibleGroups.map((group) => (
@@ -242,7 +245,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="p-4 border-t border-sidebar-border text-center">
-        <div className="text-xs text-sidebar-foreground/50 font-medium">Pratima ERP v1.0</div>
+        <div className="text-[11px] text-sidebar-foreground/50 font-medium">FRAMIQ by Pratima Entertainment &amp; Technology</div>
       </div>
     </aside>
   );

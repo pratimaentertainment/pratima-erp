@@ -14,7 +14,7 @@ export async function generateMetadata(props: {
   const res = await getBookingCommandCenterData(params.id);
 
   if (!res.success || !res.data?.booking) {
-    return { title: 'Booking Not Found | Pratima ERP' };
+    return { title: 'Booking Not Found | FRAMIQ' };
   }
 
   const booking = res.data.booking;

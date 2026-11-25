@@ -11,7 +11,7 @@ import { UserDrawer } from '@/components/features/users/user-drawer';
 import { UserFilters } from '@/components/features/users/user-filters';
 
 export const metadata = {
-  title: 'User Management - Pratima ERP',
+  title: 'User Management | FRAMIQ',
 };
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

@@ -95,7 +95,7 @@ export function CreateFranchiseModal() {
 
   const copyCredentials = () => {
     if (!createdData) return;
-    const text = `Pratima ERP Franchise Studio Account:\nStudio: ${createdData.name}\nLogin Email: ${createdData.ownerEmail}\nTemporary Password: ${createdData.temporaryPassword}\nLogin Portal: ${window.location.origin}/login`;
+    const text = `FRAMIQ Franchise Studio Account:\nStudio: ${createdData.name}\nLogin Email: ${createdData.ownerEmail}\nTemporary Password: ${createdData.temporaryPassword}\nLogin Portal: ${window.location.origin}/login`;
     navigator.clipboard.writeText(text);
     setHasCopied(true);
     toast.success('Credentials copied to clipboard!');

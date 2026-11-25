@@ -10,7 +10,7 @@ import {
 } from '@/actions/super-admin-billing.actions';
 
 export const metadata: Metadata = {
-  title: 'Revenue & Billing - Super Admin | Pratima ERP',
+  title: 'Revenue & Billing - Super Admin | FRAMIQ by Pratima Entertainment & Technology',
   description: 'SaaS platform revenue analytics, offline payment recording, and billing transaction ledger.',
 };
 

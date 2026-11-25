@@ -9,7 +9,7 @@ import { EnterpriseCalendar } from '@/features/operations/components/calendar';
 import { serializePrisma } from '@/lib/serialize';
 
 export const metadata: Metadata = {
-  title: 'Operations Calendar | Pratima ERP',
+  title: 'Operations Calendar | FRAMIQ',
   description: 'Multi-tenant schedule, shoot management, and staff dispatch calendar.',
 };
 

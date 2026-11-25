@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { PermissionMatrix } from '@/components/features/roles/permission-matrix';
 
 export const metadata = {
-  title: 'Permission Matrix | Pratima ERP',
+  title: 'Permission Matrix | FRAMIQ',
 };
 
 export default async function PermissionMatrixPage({ params }: { params: { id: string } }) {

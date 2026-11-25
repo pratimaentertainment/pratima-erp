@@ -766,7 +766,7 @@ export function StorefrontClient({ data }: StorefrontClientProps) {
               Client Portal Login
             </Link>
             <span>•</span>
-            <span>Powered by Pratima ERP</span>
+            <span>Powered by FRAMIQ</span>
           </div>
         </div>
       </footer>

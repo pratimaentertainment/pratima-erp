@@ -804,7 +804,7 @@ ${gearListFormatted}
 
 ⚠️ *Notes:* ${callSheet.specialNotes || 'Arrive 30 mins prior to call time. Ensure dual card backups.'}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-_Generated via Pratima ERP Shoot Logistics_`;
+_Generated via FRAMIQ Shoot Logistics_`;
 
     // 6. Generate Direct Click-to-Chat WhatsApp URLs and log in DispatchLog
     const targetIds = validated.targetCrewUserIds && validated.targetCrewUserIds.length > 0
@@ -879,7 +879,7 @@ ${tailoredGearSection}
 
 ⚠️ *Notes:* ${callSheet.specialNotes || 'Arrive 30 mins prior to call time. Ensure dual card backups.'}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-_Generated via Pratima ERP Shoot Logistics_`;
+_Generated via FRAMIQ Shoot Logistics_`;
 
       const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(recipientPersonalMessage)}`;
       directWhatsAppUrls.push({

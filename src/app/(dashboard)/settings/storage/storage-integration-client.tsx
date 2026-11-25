@@ -935,7 +935,7 @@ export function StorageIntegrationClient({ initialIntegrations }: StorageIntegra
               <span>Disconnect Storage Provider?</span>
             </DialogTitle>
             <DialogDescription>
-              This will safely remove your API credentials from Pratima ERP. Past delivered file links will remain preserved in historical audit records, but new uploads to this bucket will cease.
+              This will safely remove your API credentials from FRAMIQ. Past delivered file links will remain preserved in historical audit records, but new uploads to this bucket will cease.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="pt-2">

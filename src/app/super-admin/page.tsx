@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
-  title: 'Super Admin - Studio Management | Pratima ERP',
+  title: 'Super Admin - Studio Management | FRAMIQ by Pratima Entertainment & Technology',
   description: 'Enterprise B2B SaaS tenant provisioning and anti-abuse oversight.',
 };
 
@@ -197,7 +197,7 @@ export default async function SuperAdminPage() {
               <Building2 className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
               <h3 className="text-sm font-semibold text-foreground">No studios registered yet</h3>
               <p className="text-xs text-muted-foreground mt-1 mb-4">
-                Click &quot;Register New Studio&quot; to provision the first tenant on Pratima ERP.
+                Click &quot;Register New Studio&quot; to provision the first tenant on FRAMIQ.
               </p>
               <RegisterStudioDialog />
             </div>

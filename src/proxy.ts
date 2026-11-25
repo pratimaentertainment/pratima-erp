@@ -6,7 +6,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 const { auth } = NextAuth(authConfig);
 
 /**
- * Enterprise NextAuth Proxy for Pratima ERP (Next.js 16 `proxy.ts` convention)
+ * Enterprise NextAuth Proxy for FRAMIQ (Next.js 16 `proxy.ts` convention)
  * - Enforces Edge-compatible IP-based Rate Limiting (DDoS & Brute-Force defense).
  * - Strictly guards internal routes (/dashboard, /admin, /settings, etc.).
  * - Redirects root '/' to /login for unauthenticated users, or /dashboard if authenticated.

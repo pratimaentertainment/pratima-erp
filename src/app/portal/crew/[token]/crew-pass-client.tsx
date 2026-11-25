@@ -205,7 +205,7 @@ export function CrewPassClient({ token, preview }: CrewPassClientProps) {
         </div>
 
         <footer className="text-center text-[11px] text-muted-foreground pt-4">
-          Pratima ERP • Field Crew Magic Link Engine
+          FRAMIQ • Field Crew Magic Link Engine
         </footer>
       </div>
     );
@@ -299,7 +299,7 @@ export function CrewPassClient({ token, preview }: CrewPassClientProps) {
         </div>
 
         <footer className="text-center text-[11px] text-muted-foreground pb-2">
-          {previewData.studioName} • Powered by Pratima ERP
+          {previewData.studioName} • Powered by FRAMIQ
         </footer>
       </div>
     );

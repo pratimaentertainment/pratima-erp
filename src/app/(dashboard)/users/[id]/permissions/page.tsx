@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { prisma } from '@/lib/prisma';
 
 export const metadata = {
-  title: 'Effective Permissions | Pratima ERP',
+  title: 'Effective Permissions | FRAMIQ',
 };
 
 export default async function EffectivePermissionsPage({ params }: { params: { id: string } }) {

@@ -33,7 +33,7 @@ export default async function SuperAdminLayout({
   }
 
   const adminName = session.user.name || 'Platform Admin';
-  const adminEmail = session.user.email || 'admin@pratimaerp.com';
+  const adminEmail = session.user.email || 'suhaswagire.photo@gmail.com';
 
   const impersonation = await getActiveImpersonationState();
 
@@ -54,7 +54,7 @@ export default async function SuperAdminLayout({
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-sm font-heading tracking-tight text-foreground">
-                        Pratima Cloud
+                        FRAMIQ Cloud
                       </span>
                       <Badge
                         variant="outline"
@@ -64,7 +64,7 @@ export default async function SuperAdminLayout({
                       </Badge>
                     </div>
                     <span className="text-[11px] text-muted-foreground">
-                      SaaS Control Console
+                      SaaS Control Console • Pratima Tech
                     </span>
                   </div>
                 </Link>

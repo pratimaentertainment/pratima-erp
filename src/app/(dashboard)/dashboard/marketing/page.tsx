@@ -9,7 +9,7 @@ import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'AI Leads & Marketing Hub | Pratima ERP',
+  title: 'AI Leads & Marketing Hub | FRAMIQ',
   description:
     'Track guest leads captured via Universal Studio QR standees, review AI face recognition matches, and launch zero-cost Click-to-WhatsApp promotional campaigns.',
 };

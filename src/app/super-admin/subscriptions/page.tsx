@@ -38,7 +38,7 @@ import {
 } from '@/lib/constants/plan-features';
 
 export const metadata: Metadata = {
-  title: 'Subscription Plans & Add-on Catalog - Super Admin | Pratima ERP',
+  title: 'Subscription Plans & Add-on Catalog - Super Admin | FRAMIQ by Pratima Entertainment & Technology',
   description: 'Enterprise B2B SaaS subscription, modular add-on pricing, and billing tier management.',
 };
 

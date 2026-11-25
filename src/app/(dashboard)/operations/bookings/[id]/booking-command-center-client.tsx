@@ -403,7 +403,7 @@ export function BookingCommandCenterClient({ initialData }: BookingCommandCenter
       )
       .join('\n');
 
-    const callSheet = `🎬 *OFFICIAL SHOOT CALL SHEET • PRATIMA ERP*
+    const callSheet = `🎬 *OFFICIAL SHOOT CALL SHEET • FRAMIQ*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 *Event:* ${booking.title} (#${booking.bookingNumber})
 ✨ *Function:* ${subEvent.name}

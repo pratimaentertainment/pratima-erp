@@ -5,7 +5,7 @@ import { MasterService } from '@/services/master.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Customers | Pratima ERP',
+  title: 'Customers | FRAMIQ',
   description: 'Manage your enterprise customer database.',
 };
 

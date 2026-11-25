@@ -33,7 +33,7 @@ import {
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
-  title: 'Subscription & Billing - Studio Settings | Pratima ERP',
+  title: 'Subscription & Billing - Studio Settings | FRAMIQ',
   description: 'Manage your studio subscription plans, modular add-on capabilities, and Razorpay billing invoices.',
 };
 

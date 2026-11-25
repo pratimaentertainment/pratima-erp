@@ -52,7 +52,7 @@ export function DealerPortalClient({ data }: { data: DealerPortalData }) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                Official Pratima Partner
+                Official FRAMIQ Partner
               </span>
               <span className="text-xs font-mono text-muted-foreground">
                 Partner ID: #{data.dealer.dealerCode}
@@ -362,7 +362,7 @@ export function DealerPortalClient({ data }: { data: DealerPortalData }) {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Bank Payout History</CardTitle>
               <CardDescription className="text-xs">
-                All commission disbursements transferred to your registered bank account by Pratima Admin.
+                All commission disbursements transferred to your registered bank account by FRAMIQ Finance Desk.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -371,7 +371,7 @@ export function DealerPortalClient({ data }: { data: DealerPortalData }) {
                   <Landmark className="h-10 w-10 mx-auto mb-2 opacity-40" />
                   <p className="text-xs font-medium">No payouts disbursed yet.</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Payouts are processed according to your agreement with Pratima ERP platform administration.
+                    Payouts are processed according to your commercial agreement with Pratima Entertainment &amp; Technology.
                   </p>
                 </div>
               ) : (
@@ -459,11 +459,11 @@ export function DealerPortalClient({ data }: { data: DealerPortalData }) {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground italic">
-                    No bank details specified. Please provide your bank account or UPI ID to Pratima Admin support.
+                    No bank details specified. Please provide your bank account or UPI ID to FRAMIQ Support.
                   </p>
                 )}
                 <p className="text-[11px] text-muted-foreground">
-                  To update your bank details, phone, or commission terms, please contact Pratima ERP Super Admin support.
+                  To update your bank details, phone, or commission terms, please contact FRAMIQ Support at suhaswagire.photo@gmail.com / +91 8087226509.
                 </p>
               </div>
             </CardContent>

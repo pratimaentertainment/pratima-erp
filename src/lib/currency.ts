@@ -1,5 +1,5 @@
 /**
- * Global Currency Formatting Utility for Pratima ERP
+ * Global Currency Formatting Utility for FRAMIQ
  * Defaults to Indian Rupee (INR / ₹) with standard 2 decimal places.
  */
 

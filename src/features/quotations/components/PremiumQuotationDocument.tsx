@@ -155,11 +155,11 @@ export function PremiumQuotationDocument({
   const branch = data.branch || data.lead?.branch;
   const settings = tenant?.settings || {};
 
-  const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Pratima Photography Studio';
-  const studioAddress = settings?.address || tenant?.address || branch?.address || 'Studio Hub, Main Boulevard, India';
-  const studioPhone = settings?.phone || tenant?.phone || branch?.phone || '+91 98765 43210';
-  const studioEmail = settings?.email || tenant?.email || branch?.email || 'contact@pratimastudio.com';
-  const studioWebsite = settings?.website || tenant?.website || 'www.pratimastudio.com';
+  const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Photography Studio';
+  const studioAddress = settings?.address || tenant?.address || branch?.address || 'Near Old Water Tank, Tardal Road, Khotwadi, Dist. Kolhapur, Maharashtra, India';
+  const studioPhone = settings?.phone || tenant?.phone || branch?.phone || '+91 80872 26509';
+  const studioEmail = settings?.email || tenant?.email || branch?.email || 'suhaswagire.photo@gmail.com';
+  const studioWebsite = settings?.website || tenant?.website || 'https://pratima-erp.vercel.app';
   const gstNumber = settings?.gstNumber || tenant?.gstNumber || branch?.gstNumber;
   const logoUrl = settings?.logoUrl || tenant?.logoUrl || branch?.logoUrl;
 

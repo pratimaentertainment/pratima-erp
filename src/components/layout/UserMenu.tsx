@@ -40,7 +40,7 @@ export function UserMenu() {
   };
 
   const userName = currentUser?.name || 'Studio Staff';
-  const userEmail = currentUser?.email || 'staff@pratimaerp.com';
+  const userEmail = currentUser?.email || 'user@framiq.com';
   const userRole = currentUser?.role || 'STAFF';
 
   // Get initials for avatar

@@ -15,7 +15,7 @@ export async function generateMetadata(props: CrewPassPageProps): Promise<Metada
 
   if (!res.success || !res.data) {
     return {
-      title: 'Event Shoot Pass | Pratima ERP',
+      title: 'Event Shoot Pass | FRAMIQ',
       description: 'Official digital crew pass for freelance photographers and field cinematographers.',
     };
   }

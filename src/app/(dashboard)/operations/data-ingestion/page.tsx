@@ -5,7 +5,7 @@ import { getIngestionDeskDataAction } from '@/actions/data-ingestion.actions';
 import { DataIngestionDesk } from '@/components/features/operations/ingestion/data-ingestion-desk';
 
 export const metadata: Metadata = {
-  title: 'Post-Shoot Data Ingestion & Payout Bridge | Pratima ERP',
+  title: 'Post-Shoot Data Ingestion & Payout Bridge | FRAMIQ',
   description:
     'Studio media intake desk, checksum verification queue, and automated freelancer finance liability authorization.',
 };

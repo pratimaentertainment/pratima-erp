@@ -42,7 +42,7 @@ export default async function DealerPortalLayout({
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-sm font-heading tracking-tight text-foreground">
-                      Pratima ERP
+                      FRAMIQ
                     </span>
                     <Badge
                       variant="outline"
@@ -52,7 +52,7 @@ export default async function DealerPortalLayout({
                     </Badge>
                   </div>
                   <span className="text-[11px] text-muted-foreground">
-                    Dealer Commission &amp; Referral Hub
+                    by Pratima Entertainment &amp; Technology
                   </span>
                 </div>
               </Link>
@@ -95,7 +95,7 @@ export default async function DealerPortalLayout({
 
         {/* Footer */}
         <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-          Pratima ERP Partner Network • Secure Commission Ledger &amp; Referral Tracking
+          FRAMIQ Partner Network • by Pratima Entertainment &amp; Technology
         </footer>
       </div>
     </AutoLogoutProvider>

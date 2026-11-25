@@ -10,7 +10,7 @@ import { Film, Layers } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Post-Production & Video Kanban | Pratima ERP',
+  title: 'Post-Production & Video Kanban | FRAMIQ',
   description:
     'Enterprise editing workflow, video deliverable Kanban, external editor Magic Links, and cloud vaults.',
 };

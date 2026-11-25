@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
 export const metadata = {
-  title: 'Cloud Storage (BYOS) | Pratima ERP',
+  title: 'Cloud Storage (BYOS) | FRAMIQ',
   description: 'Connect your own Google Drive, AWS S3, or Cloudflare R2 storage accounts.',
 };
 

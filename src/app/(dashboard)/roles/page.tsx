@@ -4,7 +4,7 @@ import { RoleTable } from '@/components/features/roles/role-table';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Roles | Pratima ERP',
+  title: 'Roles | FRAMIQ',
 };
 
 export default async function RolesPage() {

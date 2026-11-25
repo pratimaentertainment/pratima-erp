@@ -12,7 +12,7 @@ import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
 import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 
 export const metadata = {
-  title: 'Chartered Accountant Financial Reports | Pratima ERP',
+  title: 'Chartered Accountant Financial Reports | FRAMIQ',
   description: '1-Click CA Audit & Tax Financial Statements: Trial Balance, Profit & Loss, and Balance Sheet.',
 };
 

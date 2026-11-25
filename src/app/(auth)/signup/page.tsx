@@ -13,10 +13,12 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { SignupForm } from './signup-form';
+import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = {
-  title: 'Sign Up - Create Your Studio | Pratima ERP',
-  description: "India's Most Advanced Photography ERP. Onboard your studio in seconds.",
+  title: 'Sign Up - Register Your Studio | FRAMIQ by Pratima Entertainment & Technology',
+  description:
+    "India's Most Advanced Photography Studio ERP. Start your 15-day free trial on FRAMIQ by Pratima Entertainment & Technology.",
 };
 
 interface SignupPageProps {
@@ -57,11 +59,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               <Camera className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight font-heading block">
-                Pratima ERP
+              <span className="text-xl font-black tracking-tight font-heading block leading-none">
+                FRAMIQ
               </span>
-              <span className="text-[11px] text-zinc-400 block -mt-1">
-                Studio Management Cloud
+              <span className="text-[10px] text-zinc-400 block mt-0.5">
+                by Pratima Entertainment &amp; Technology
               </span>
             </div>
           </Link>
@@ -74,69 +76,64 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               Pricing
             </Link>
             <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
+              href="/contact"
+              className="text-xs text-zinc-400 hover:text-white transition-colors"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back to Login</span>
+              Support
+            </Link>
+            <Link
+              href="/login"
+              className="text-xs font-medium text-primary hover:text-primary/90 transition-colors"
+            >
+              Log In
             </Link>
           </div>
         </div>
 
-        {/* Center Content: Value Propositions & Highlights */}
-        <div className="relative z-10 my-auto py-10 space-y-8 max-w-lg">
+        {/* Middle Feature Highlights */}
+        <div className="relative z-10 my-auto py-12 max-w-lg space-y-8">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-amber-400 text-xs font-medium shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-semibold">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>India&apos;s #1 Photography Operating System</span>
+              <span>Studio Operating System</span>
             </div>
-            <h1 className="text-3xl xl:text-4xl font-extrabold tracking-tight font-heading leading-tight text-white">
-              Elevate your studio operations from inquiry to album delivery.
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-heading leading-tight">
+              Scale Your Photography Studio with Zero Chaos
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Consolidate customer leads, photographer shoots, photo selections, financial vouchers, and multi-branch teams inside one unified platform.
+              Designed specifically for wedding cinematographers and photography businesses across India.
+              Automate your quotations, crew dispatch sheets, client photo selections, and GST billing.
             </p>
           </div>
 
-          {/* Feature Pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <Layers className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 mt-0.5 text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
               <div>
-                <h4 className="text-xs font-semibold text-zinc-200">Multi-Branch Sync</h4>
-                <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-                  Manage headquarters and satellite branches seamlessly.
-                </p>
+                <p className="text-xs font-semibold text-zinc-200">15-Day Unrestricted Free Trial</p>
+                <p className="text-[11px] text-zinc-400">Full access to test all ERP capabilities with zero upfront credit card required.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <CalendarCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3.5">
+              <div className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 mt-0.5 text-blue-400">
+                <CalendarCheck className="h-4 w-4" />
+              </div>
               <div>
-                <h4 className="text-xs font-semibold text-zinc-200">Shoot &amp; Crew Roster</h4>
-                <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-                  Eliminate double bookings for photographers and equipment.
-                </p>
+                <p className="text-xs font-semibold text-zinc-200">Intelligent Crew &amp; Shoot Logistics</p>
+                <p className="text-[11px] text-zinc-400">Conflict-free crew allocation, automated WhatsApp call sheets, and freelancer TDS tracking.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <Shield className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-semibold text-zinc-200">Anti-Abuse Isolation</h4>
-                <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-                  Dedicated tenant data boundaries with phone &amp; PAN security.
-                </p>
+            <div className="flex items-start gap-3.5">
+              <div className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 mt-0.5 text-purple-400">
+                <Shield className="h-4 w-4" />
               </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <CheckCircle2 className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-semibold text-zinc-200">Client Selection Portal</h4>
-                <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-                  Direct client photo proofing with watermarks and approval locks.
-                </p>
+                <p className="text-xs font-semibold text-zinc-200">Isolated Tenant Cloud &amp; Watermarked Galleries</p>
+                <p className="text-[11px] text-zinc-400">Client proofing galleries protected with server-side watermarks and AES-256 BYOS cloud encryption.</p>
               </div>
             </div>
           </div>
@@ -145,7 +142,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         {/* Bottom Social Proof */}
         <div className="relative z-10 pt-6 border-t border-zinc-800/80">
           <p className="text-xs italic text-zinc-400 leading-relaxed">
-            &ldquo;Pratima ERP transformed our multi-branch wedding studio into an automated powerhouse. Client selection turnaround times dropped by 50%.&rdquo;
+            &ldquo;FRAMIQ transformed our multi-branch wedding studio into an automated powerhouse. Client selection turnaround times dropped by 50%.&rdquo;
           </p>
           <div className="mt-2.5 flex items-center justify-between text-xs">
             <span className="font-semibold text-zinc-300">Rahul Mehta</span>
@@ -162,7 +159,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Camera className="h-4 w-4" />
             </div>
-            <span className="font-bold text-base font-heading">Pratima ERP</span>
+            <div>
+              <span className="font-black text-base font-heading block leading-none">FRAMIQ</span>
+              <span className="text-[9px] text-muted-foreground block">by Pratima Tech</span>
+            </div>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground">
@@ -197,6 +197,20 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             initialCycle={cycle}
             initialRefCode={resolvedSearchParams?.ref}
           />
+
+          {/* Legal Compliance Disclaimer */}
+          <div className="pt-2 text-center text-[11px] text-muted-foreground space-y-1">
+            <p>
+              By registering your studio, you agree to FRAMIQ&apos;s{' '}
+              <Link href="/terms" className="text-primary hover:underline font-medium">Terms of Service</Link>,{' '}
+              <Link href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>, and{' '}
+              <Link href="/refund-policy" className="text-primary hover:underline font-medium">Refund Policy</Link>.
+            </p>
+            <p className="text-[10px] text-muted-foreground/70">
+              Need assistance?{' '}
+              <Link href="/contact" className="hover:underline">Contact Official Support</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

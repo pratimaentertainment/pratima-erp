@@ -139,7 +139,7 @@ export function ReportsClient({
 
       // Build structured CSV / audit schedule
       let content = `========================================================================\n`;
-      content += `PRATIMA ERP - CHARTERED ACCOUNTANT (CA) FINANCIAL AUDIT REPORT\n`;
+      content += `FRAMIQ - CHARTERED ACCOUNTANT (CA) FINANCIAL AUDIT REPORT\n`;
       content += `Generated On: ${nowFormatted}\n`;
       content += `Reporting Basis: Accrual / Double-Entry General Ledger\n`;
       content += `========================================================================\n\n`;

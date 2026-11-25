@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { getClientPortalSession } from '@/actions/portal-auth.actions';
 
 export const metadata: Metadata = {
-  title: 'Client Portal Dashboard | Pratima ERP',
+  title: 'Client Portal Dashboard | FRAMIQ',
   description: 'Track your event journey, curate photo selections, and manage your invoices.',
 };
 

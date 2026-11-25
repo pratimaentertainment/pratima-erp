@@ -10,7 +10,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Client Photo Selections | Pratima ERP',
+  title: 'Client Photo Selections | FRAMIQ',
   description: 'Manage client photo proofing boards, deadline extensions, and editor Lightroom exports.',
 };
 

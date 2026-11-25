@@ -9,7 +9,7 @@ import { AccountingService } from '@/services/accounting.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Accounts Receivable & Invoicing Workbench | Pratima ERP',
+  title: 'Accounts Receivable & Invoicing Workbench | FRAMIQ',
   description: 'Enterprise Invoicing, Accounts Receivable Aging, and Statutory GST Register.',
 };
 

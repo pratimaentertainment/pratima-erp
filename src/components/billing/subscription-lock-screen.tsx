@@ -101,7 +101,7 @@ export async function SubscriptionLockScreen({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold font-heading text-foreground tracking-tight text-base sm:text-lg">
-                Pratima ERP
+                FRAMIQ
               </span>
               <Badge
                 variant="outline"
@@ -140,7 +140,7 @@ export async function SubscriptionLockScreen({
               size="sm"
               type="submit"
               className="text-xs gap-1.5 h-8 border-border/80 hover:bg-muted"
-              title="Sign out of Pratima ERP"
+              title="Sign out of FRAMIQ"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span>Sign Out</span>
@@ -179,7 +179,7 @@ export async function SubscriptionLockScreen({
             </h1>
 
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Your {isTrial ? 'Trial' : 'Subscription'} has expired. To continue using Pratima ERP
+              Your {isTrial ? 'Trial' : 'Subscription'} has expired. To continue using FRAMIQ
               and access your leads, shoot calendar, client proofing galleries, and accounting ledgers,
               please upgrade your plan.
             </p>
@@ -234,7 +234,7 @@ export async function SubscriptionLockScreen({
         <div className="flex items-center gap-4 text-[11px]">
           <span className="flex items-center gap-1">
             <Mail className="h-3.5 w-3.5" />
-            billing@pratimaerp.com
+            suhaswagire.photo@gmail.com
           </span>
           <span className="flex items-center gap-1">
             <Headphones className="h-3.5 w-3.5" />

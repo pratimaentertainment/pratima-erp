@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SetupForm } from './setup-form';
 
 export const metadata = {
-  title: 'Setup - Pratima ERP',
+  title: 'Setup | FRAMIQ by Pratima Entertainment & Technology',
 };
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export default async function SetupPage() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">System Setup</h1>
           <p className="text-muted-foreground mt-2">
-            Welcome to Pratima ERP. Please configure your headquarters and first super admin user.
+            Welcome to FRAMIQ. Please configure your headquarters and first super admin user.
           </p>
         </div>
         <SetupForm />

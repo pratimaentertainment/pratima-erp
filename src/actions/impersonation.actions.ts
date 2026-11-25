@@ -33,7 +33,7 @@ async function requireSuperAdminSession() {
 
   return {
     userId: user.id as string,
-    email: (user.email || 'superadmin@pratimaerp.com') as string,
+    email: (user.email || 'suhaswagire.photo@gmail.com') as string,
     name: (user.name || 'Platform Super Admin') as string,
   };
 }

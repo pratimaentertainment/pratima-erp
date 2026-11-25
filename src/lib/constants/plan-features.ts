@@ -1,5 +1,5 @@
 /**
- * Centralized Enterprise Feature & Add-on Catalog for Pratima ERP
+ * Centralized Enterprise Feature & Add-on Catalog for FRAMIQ
  * Strongly typed registry mapping SaaS subscription features to real ERP modules.
  */
 

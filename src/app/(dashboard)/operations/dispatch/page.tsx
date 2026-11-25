@@ -5,7 +5,7 @@ import { getUpcomingShootsAction } from '@/actions/shoot-logistics.actions';
 import { ShootLogisticsWorkbench } from '@/components/features/operations/logistics/shoot-logistics-workbench';
 
 export const metadata: Metadata = {
-  title: 'Shoot Logistics & Crew Allocation | Pratima ERP',
+  title: 'Shoot Logistics & Crew Allocation | FRAMIQ',
   description:
     'Unified operations command center for shoot crew allocation, equipment conflict checking, and WhatsApp call sheet dispatch.',
 };

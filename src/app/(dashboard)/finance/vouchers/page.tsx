@@ -5,7 +5,7 @@ import { getVouchersAction, getChartOfAccountsAction } from '@/actions/accountin
 import { VouchersClient } from './vouchers-client';
 
 export const metadata = {
-  title: 'Financial Daybook & Vouchers | Pratima ERP',
+  title: 'Financial Daybook & Vouchers | FRAMIQ',
   description: 'Enterprise Double-Entry Voucher System: Payments, Receipts, Contra, and Daily Expenses.',
 };
 

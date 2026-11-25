@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
 export const metadata = {
-  title: 'Omnichannel Lead Integrations | Pratima ERP',
+  title: 'Omnichannel Lead Integrations | FRAMIQ',
   description: 'Connect Facebook Ads, Instagram, Google Ads, Zapier, and custom webhooks to your CRM.',
 };
 

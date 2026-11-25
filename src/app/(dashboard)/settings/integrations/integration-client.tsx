@@ -737,7 +737,7 @@ export function IntegrationClient({
               </DialogTitle>
               <DialogDescription className="text-xs">
                 {sampleModalIntegration.provider === 'FACEBOOK'
-                  ? 'Meta Lead Ads sends real-time notifications with leadgen_id, which Pratima ERP automatically queries via Graph API.'
+                  ? 'Meta Lead Ads sends real-time notifications with leadgen_id, which FRAMIQ automatically queries via Graph API.'
                   : 'Use this sample cURL request or JSON payload to verify your webhook in Postman, Zapier, or Pabbly Connect.'}
               </DialogDescription>
             </DialogHeader>

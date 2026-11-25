@@ -134,7 +134,7 @@ export function SuperAdminSplashScreen({ children }: SuperAdminSplashScreenProps
               >
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
-                    Pratima Cloud
+                    FRAMIQ Cloud
                   </h1>
                   <Badge
                     variant="outline"

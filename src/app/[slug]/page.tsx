@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: StorefrontPageProps): Promise
 
   if (!slug || RESERVED_SLUGS.has(slug.toLowerCase())) {
     return {
-      title: 'Pratima ERP',
+      title: 'FRAMIQ by Pratima Entertainment & Technology',
       description: 'Enterprise Resource Planning for Studio and Photography Businesses.',
     };
   }
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: StorefrontPageProps): Promise
 
   if (!tenant) {
     return {
-      title: 'Studio Storefront | Pratima ERP',
+      title: 'Studio Storefront | FRAMIQ',
       description: 'Photography and Cinema Studio Storefront.',
     };
   }

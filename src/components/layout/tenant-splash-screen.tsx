@@ -36,7 +36,7 @@ export function TenantSplashScreen({ tenant: propTenant, children }: TenantSplas
   }, [tenant?.logoUrl]);
 
   const tenantName = useMemo(() => {
-    return tenant?.tradeName || tenant?.name || 'Pratima Entertainment';
+    return tenant?.tradeName || tenant?.name || 'FRAMIQ Studio';
   }, [tenant]);
 
   // Synchronously evaluate sessionStorage before paint on the client

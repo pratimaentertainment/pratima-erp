@@ -6,7 +6,7 @@ import { DealersClient } from './dealers-client';
 import { getSuperAdminDealersAction } from '@/actions/super-admin-dealer.actions';
 
 export const metadata: Metadata = {
-  title: 'Partner Network & Dealers - Super Admin | Pratima ERP',
+  title: 'Partner Network & Dealers - Super Admin | FRAMIQ by Pratima Entertainment & Technology',
   description: 'Admin-only dealer management, first-payment studio discounts, and automated recurring lifetime commissions.',
 };
 

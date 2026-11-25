@@ -86,7 +86,7 @@ export function RegisterStudioForm({ onSuccess, onCancel }: RegisterStudioFormPr
 
   const handleCopyCredentials = () => {
     if (!registeredData) return;
-    const text = `Pratima ERP Studio Credentials\nStudio: ${registeredData.name}\nSlug: ${registeredData.slug}\nEmail: ${registeredData.ownerEmail}\nTemp Password: ${registeredData.temporaryPassword}`;
+    const text = `FRAMIQ Studio Credentials\nStudio: ${registeredData.name}\nSlug: ${registeredData.slug}\nEmail: ${registeredData.ownerEmail}\nTemp Password: ${registeredData.temporaryPassword}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success('Credentials copied to clipboard');

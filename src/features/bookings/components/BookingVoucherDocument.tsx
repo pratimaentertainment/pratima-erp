@@ -109,11 +109,11 @@ export function BookingVoucherDocument({
   const tenant = booking.tenant;
   const settings = tenant?.settings || {};
 
-  const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Pratima Photography Studio';
-  const studioAddress = settings?.address || tenant?.address || 'Prime Studio Hub, Main Boulevard, India';
-  const studioPhone = settings?.phone || tenant?.phone || '+91 98765 43210';
-  const studioEmail = settings?.email || tenant?.email || 'contact@pratimastudio.com';
-  const studioWebsite = settings?.website || tenant?.website || 'www.pratimastudio.com';
+  const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Photography Studio';
+  const studioAddress = settings?.address || tenant?.address || 'Near Old Water Tank, Tardal Road, Khotwadi, Dist. Kolhapur, Maharashtra, India';
+  const studioPhone = settings?.phone || tenant?.phone || '+91 80872 26509';
+  const studioEmail = settings?.email || tenant?.email || 'suhaswagire.photo@gmail.com';
+  const studioWebsite = settings?.website || tenant?.website || 'https://pratima-erp.vercel.app';
   const gstNumber = settings?.gstNumber || tenant?.gstNumber;
   const logoUrl = tenant?.logoUrl;
 

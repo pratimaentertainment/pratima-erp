@@ -50,7 +50,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   if (!tenant) {
     return {
-      title: 'Studio Guest Portal | Pratima ERP',
+      title: 'Studio Guest Portal | FRAMIQ',
     };
   }
 
@@ -166,7 +166,7 @@ export default async function GuestPortalPage(props: PageProps) {
             </span>
           </div>
           <p className="text-[10px] text-muted-foreground/80">
-            Powered by Pratima ERP &bull; The Enterprise Studio Cloud
+            Powered by FRAMIQ &bull; by Pratima Entertainment & Technology
           </p>
         </div>
       </div>

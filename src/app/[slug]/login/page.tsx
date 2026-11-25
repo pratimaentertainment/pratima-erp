@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: ClientLoginPageProps): Promis
 
   if (!slug || RESERVED_SLUGS.has(slug.toLowerCase())) {
     return {
-      title: 'Client Portal Login | Pratima ERP',
+      title: 'Client Portal Login | FRAMIQ',
       description: 'Secure client portal login.',
     };
   }
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: ClientLoginPageProps): Promis
 
   if (!tenant) {
     return {
-      title: 'Client Portal Login | Pratima ERP',
+      title: 'Client Portal Login | FRAMIQ',
       description: 'Secure client portal login.',
     };
   }

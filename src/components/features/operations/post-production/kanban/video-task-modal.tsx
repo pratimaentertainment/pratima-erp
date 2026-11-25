@@ -480,7 +480,7 @@ export function VideoTaskModal({
                     </SelectContent>
                   </Select>
                   <p className="text-[11px] text-muted-foreground">
-                    In-house editors log in via their standard Pratima ERP user account.
+                    In-house editors log in via their standard FRAMIQ user account.
                   </p>
                 </div>
               ) : (

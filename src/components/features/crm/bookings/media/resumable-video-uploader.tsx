@@ -757,7 +757,7 @@ export function ResumableVideoUploader({
                   <span>Cloud Video Master Assembly Successful!</span>
                 </div>
                 <p className="text-muted-foreground leading-relaxed">
-                  The video has been safely stored in your BYOS vault and registered in Pratima ERP storage records.
+                  The video has been safely stored in your BYOS vault and registered in FRAMIQ storage records.
                   {autoSyncToEditor && bookingId && ' The URL has been automatically mapped to the Video Editing deliverable task.'}
                 </p>
                 <div className="flex items-center gap-2 pt-1">

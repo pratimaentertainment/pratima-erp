@@ -1,13 +1,30 @@
- 
- 
 export const siteConfig = {
-  name: 'Pratima ERP',
-  description: 'Enterprise Resource Planning for Studio and Photography Businesses',
+  name: 'FRAMIQ',
+  fullName: 'FRAMIQ by Pratima Entertainment & Technology',
+  brandName: 'FRAMIQ',
+  subtitle: 'by Pratima Entertainment & Technology',
+  operator: 'Pratima Entertainment & Technology',
+  founder: 'Suhas Wagire',
+  email: 'suhaswagire.photo@gmail.com',
+  phone: '+91 8087226509',
+  phoneFormatted: '+91 80872 26509',
+  whatsappUrl: 'https://wa.me/918087226509',
+  address: 'Near Old Water Tank, Tardal Road, Khotwadi, Dist. Kolhapur, Maharashtra, India',
+  city: 'Kolhapur',
+  state: 'Maharashtra',
+  country: 'India',
+  jurisdiction: 'Kolhapur, Maharashtra, India',
+  supportHours: 'Monday to Saturday, 10:00 AM – 7:00 PM IST',
+  establishedYear: '2008',
+  url: 'https://pratima-erp.vercel.app',
+  description:
+    'FRAMIQ by Pratima Entertainment & Technology — India\'s most advanced all-in-one Photography Studio ERP SaaS. Quotations, automated GST invoicing, team scheduling, CRM, and client proofing portals.',
   links: {
-    github: 'https://github.com/pratima-erp',
+    github: 'https://github.com/pratimaentertainment/pratima-erp',
   },
   roles: {
     SUPER_ADMIN: 'SUPER_ADMIN',
+    DEALER: 'DEALER',
     BRANCH_ADMIN: 'BRANCH_ADMIN',
     SALES_EXEC: 'SALES_EXEC',
     PHOTOGRAPHER: 'PHOTOGRAPHER',

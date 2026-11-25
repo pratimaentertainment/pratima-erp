@@ -20,13 +20,13 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (res.success && res.data) {
     return {
-      title: `${res.data.title} | Digital e-Album Proofing | Pratima ERP`,
+      title: `${res.data.title} | Digital e-Album Proofing | FRAMIQ`,
       description: `Review spreads, drop spatial pin modification notes, and approve digital albums for ${res.data.customer.name}.`,
     };
   }
 
   return {
-    title: 'Digital e-Album Proofing | Pratima ERP',
+    title: 'Digital e-Album Proofing | FRAMIQ',
     description: 'Interactive client album proofing and spatial pin feedback suite.',
   };
 }

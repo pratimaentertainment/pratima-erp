@@ -7,7 +7,7 @@ import { ChevronLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const metadata = {
-  title: 'Sales Follow-up & Task Dashboard | Pratima ERP',
+  title: 'Sales Follow-up & Task Dashboard | FRAMIQ',
   description: 'Centralized queue for sales follow-ups, calls, WhatsApp touches, and scheduled tasks.',
 };
 

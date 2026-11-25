@@ -1,5 +1,5 @@
 /**
- * Edge-Compatible Enterprise In-Memory Rate Limiter for Pratima ERP (Next.js 16)
+ * Edge-Compatible Enterprise In-Memory Rate Limiter for FRAMIQ (Next.js 16)
  *
  * Implements a time-windowed token/request counter per client identifier (IP).
  * Compatible with Edge Runtime (V8 isolate) and Node.js server environments.

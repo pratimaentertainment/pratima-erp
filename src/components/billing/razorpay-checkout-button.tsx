@@ -90,7 +90,7 @@ export function RazorpayCheckoutButton({
         key: orderData.keyId,
         amount: orderData.amount, // in paise
         currency: orderData.currency || 'INR',
-        name: 'Pratima ERP',
+        name: 'FRAMIQ by Pratima Entertainment & Technology',
         description: `${orderData.plan?.name || 'Studio'} Plan (${
           billingCycle === 'ANNUAL' ? 'Annual Billing' : 'Monthly Billing'
         })`,

@@ -5,7 +5,7 @@ import { serializePrisma } from '@/lib/serialize';
 import { AgreementBuilderClient } from './agreement-builder-client';
 
 export const metadata = {
-  title: 'Agreement Templates | Pratima ERP',
+  title: 'Agreement Templates | FRAMIQ',
   description: 'Design and manage legal document templates, freelancer NDAs, and quotation terms.',
 };
 

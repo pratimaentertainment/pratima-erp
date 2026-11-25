@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: GalleryPageProps) {
   }
 
   return {
-    title: 'Photo Selection Gallery | Pratima ERP',
+    title: 'Photo Selection Gallery | FRAMIQ',
     description: 'Secure client photo proofing and selection portal.',
   };
 }

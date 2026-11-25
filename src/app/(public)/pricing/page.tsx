@@ -10,9 +10,9 @@ import {
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
 export const metadata: Metadata = {
-  title: 'Pricing Plans - Pratima ERP | Studio Operating System',
+  title: 'Pricing Plans | FRAMIQ by Pratima Entertainment & Technology',
   description:
-    'Simple, transparent pricing for Indian photography studios. Scale your wedding shoots, crew roster, client proofing, and GST invoicing.',
+    'Simple, transparent pricing for Indian photography studios. Scale your wedding shoots, crew roster, client proofing, and GST invoicing with FRAMIQ by Pratima Entertainment & Technology.',
 };
 
 export const dynamic = 'force-dynamic';

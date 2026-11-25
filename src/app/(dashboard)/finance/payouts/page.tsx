@@ -5,7 +5,7 @@ import { getPendingFreelancerPayoutsAction } from '@/actions/payout.actions';
 import { FreelancerPayoutWorkbench } from '@/components/features/finance/payouts/freelancer-payout-workbench';
 
 export const metadata = {
-  title: 'Freelancer Crew Payouts & TDS | Pratima ERP',
+  title: 'Freelancer Crew Payouts & TDS | FRAMIQ',
   description: 'Multi-mode disbursement workbench for freelance photographers, cinematographers, and crew with statutory TDS withholding.',
 };
 

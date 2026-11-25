@@ -5,7 +5,7 @@ import { getChartOfAccountsAction } from '@/actions/accounting.actions';
 import { LedgersClient } from './ledgers-client';
 
 export const metadata = {
-  title: 'Chart of Accounts (Ledgers) | Pratima ERP',
+  title: 'Chart of Accounts (Ledgers) | FRAMIQ',
   description: 'Enterprise Double-Entry Chart of Accounts, Asset, Liability, Equity, Revenue, and Expense Ledgers.',
 };
 

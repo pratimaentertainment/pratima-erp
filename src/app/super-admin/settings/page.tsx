@@ -13,7 +13,7 @@ import {
 import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
-  title: 'Platform Governance & Audit Desk - Super Admin | Pratima ERP',
+  title: 'Platform Governance & Audit Desk - Super Admin | FRAMIQ by Pratima Entertainment & Technology',
   description: 'Multi-tenant system broadcasts, compliance audit log viewer, and platform governance.',
 };
 

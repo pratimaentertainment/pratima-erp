@@ -19,13 +19,13 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (res.success && res.data) {
     return {
-      title: `${res.data.task.taskType} | Freelancer Design Hub | Pratima ERP`,
+      title: `${res.data.task.taskType} | Freelancer Design Hub | FRAMIQ`,
       description: `Secure zero-login designer workbench for ${res.data.studio.name}.`,
     };
   }
 
   return {
-    title: 'Freelancer Design Hub | Pratima ERP',
+    title: 'Freelancer Design Hub | FRAMIQ',
     description: 'Secure Magic Link portal for external creative editors and album designers.',
   };
 }

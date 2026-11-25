@@ -2,7 +2,7 @@ import { ResetPasswordForm } from './reset-password-form';
 import { Suspense } from 'react';
 
 export const metadata = {
-  title: 'Reset Password - Pratima ERP',
+  title: 'Reset Password | FRAMIQ by Pratima Entertainment & Technology',
 };
 
 export default function ResetPasswordPage() {

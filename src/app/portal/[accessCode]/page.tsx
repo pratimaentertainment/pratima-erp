@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { ClientDashboardClient, ClientDashboardData } from '@/app/(portal)/portal/dashboard/client-dashboard-client';
 
 export const metadata: Metadata = {
-  title: 'Client Portal Dashboard | Pratima ERP',
+  title: 'Client Portal Dashboard | FRAMIQ',
   description: 'Track your event journey, curate photo selections, and manage your invoices.',
 };
 

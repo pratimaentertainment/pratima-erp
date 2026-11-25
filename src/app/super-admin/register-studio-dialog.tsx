@@ -30,7 +30,7 @@ export function RegisterStudioDialog() {
         <DialogHeader>
           <DialogTitle className="text-lg font-bold font-heading">Register New Studio</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Onboard a new photography business into Pratima ERP. Provision tenant isolation, an automated 15-day trial, and tenant owner credentials.
+            Onboard a new photography business into FRAMIQ. Provision tenant isolation, an automated 15-day trial, and tenant owner credentials.
           </DialogDescription>
         </DialogHeader>
         <RegisterStudioForm

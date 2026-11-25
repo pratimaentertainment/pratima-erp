@@ -5,7 +5,7 @@ import { serializePrisma } from '@/lib/serialize';
 import { TeamManagementClient } from './team-management-client';
 
 export const metadata = {
-  title: 'Team & Dynamic Agreements | Pratima ERP',
+  title: 'Team & Dynamic Agreements | FRAMIQ',
   description: 'Manage in-house staff, freelance specialists, skill profiles, and dynamic legal agreements.',
 };
 

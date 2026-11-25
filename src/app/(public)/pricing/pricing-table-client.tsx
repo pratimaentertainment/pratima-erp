@@ -117,7 +117,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
     {
       question: 'How does the 15-day free trial work?',
       answer:
-        'You receive full, unrestricted access to Pratima ERP immediately after registering your studio. No credit card or upfront deposit is required. You can test shoot scheduling, crew dispatch, client proofing, and GST invoicing.',
+        'You receive full, unrestricted access to FRAMIQ immediately after registering your studio. No credit card or upfront deposit is required. You can test shoot scheduling, crew dispatch, client proofing, and GST invoicing.',
     },
     {
       question: 'What is the Base Plan and how do add-ons work?',
@@ -127,7 +127,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
     {
       question: 'Can I provide my GSTIN to claim Input Tax Credit (ITC)?',
       answer:
-        'Yes. Pratima ERP is 100% compliant with Indian GST requirements. You can enter your studio GSTIN during signup or in Studio Settings, and all subscription tax invoices will include valid B2B ITC details.',
+        'Yes. FRAMIQ by Pratima Entertainment & Technology is 100% compliant with Indian GST requirements. You can enter your studio GSTIN during signup or in Studio Settings, and all subscription tax invoices will include valid B2B ITC details.',
     },
     {
       question: 'What happens to my client galleries and data after the trial?',

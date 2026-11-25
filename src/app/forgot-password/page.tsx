@@ -2,7 +2,7 @@ import { ForgotPasswordForm } from './forgot-password-form';
 import { Suspense } from 'react';
 
 export const metadata = {
-  title: 'Forgot Password - Pratima ERP',
+  title: 'Forgot Password | FRAMIQ by Pratima Entertainment & Technology',
 };
 
 export default function ForgotPasswordPage() {

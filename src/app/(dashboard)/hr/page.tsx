@@ -14,7 +14,7 @@ import { getTenantEntitlements } from '@/services/billing/entitlement.service';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'HR & In-House Payroll | Pratima ERP',
+  title: 'HR & In-House Payroll | FRAMIQ',
   description: 'Manage staff attendance, leave desk, and monthly salary disbursement.',
 };
 

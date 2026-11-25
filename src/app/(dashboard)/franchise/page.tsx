@@ -5,7 +5,7 @@ import { FranchisorDashboardClient } from '@/components/features/franchise/Franc
 import { FeatureLockGate } from '@/components/billing/feature-lock-gate';
 
 export const metadata: Metadata = {
-  title: 'Franchise Network & Royalty Desk | Pratima ERP',
+  title: 'Franchise Network & Royalty Desk | FRAMIQ',
   description: 'Manage child franchisee studios, monitor network bookings, and govern auto-accrued royalties.',
 };
 

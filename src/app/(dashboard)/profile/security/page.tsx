@@ -4,7 +4,7 @@ import { AuthRepository } from '@/repositories/auth.repository';
 import { SecuritySettings } from './security-settings';
 
 export const metadata = {
-  title: 'Security Settings - Pratima ERP',
+  title: 'Security Settings | FRAMIQ',
 };
 
 export default async function SecurityPage() {
