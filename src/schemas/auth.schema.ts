@@ -32,6 +32,11 @@ export const publicSignupSchema = z.object({
     .enum(['MONTHLY', 'ANNUAL', 'LIFETIME'])
     .optional()
     .default('MONTHLY'),
+  referralCode: z
+    .string()
+    .trim()
+    .optional()
+    .nullable(),
   termsAccepted: z.literal(true, {
     message: 'You must accept the Terms & Conditions to proceed.',
   }),

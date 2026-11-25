@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -17,6 +18,7 @@ import {
   Loader2,
   ArrowRight,
   Sparkles,
+  Tag,
 } from 'lucide-react';
 import {
   publicSignupSchema,
@@ -39,12 +41,14 @@ interface SignupFormProps {
   initialPlanId?: string;
   initialPlanName?: string;
   initialCycle?: 'MONTHLY' | 'ANNUAL' | 'LIFETIME';
+  initialRefCode?: string;
 }
 
 export function SignupForm({
   initialPlanId,
   initialPlanName,
   initialCycle = 'MONTHLY',
+  initialRefCode,
 }: SignupFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -60,9 +64,26 @@ export function SignupForm({
       password: '',
       planId: initialPlanId || null,
       billingCycle: initialCycle,
+      referralCode: initialRefCode?.toUpperCase() || '',
       termsAccepted: false as unknown as true,
     },
   });
+
+  // Preserve and restore referral code across visits/pages
+  useEffect(() => {
+    try {
+      if (initialRefCode) {
+        const normalized = initialRefCode.trim().toUpperCase();
+        localStorage.setItem('pratima_ref_code', normalized);
+        form.setValue('referralCode', normalized);
+      } else {
+        const stored = localStorage.getItem('pratima_ref_code');
+        if (stored) {
+          form.setValue('referralCode', stored.trim().toUpperCase());
+        }
+      }
+    } catch {}
+  }, [initialRefCode, form]);
 
   const onSubmit = (data: PublicSignupInput) => {
     startTransition(async () => {
@@ -238,6 +259,41 @@ export function SignupForm({
                       <Eye className="h-4 w-4" />
                     )}
                   </button>
+                </div>
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        {/* Partner / Referral Code (Optional) */}
+        <FormField
+          control={form.control}
+          name="referralCode"
+          render={({ field }) => (
+            <FormItem className="space-y-1">
+              <FormLabel className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Partner / Referral Code</span>
+                <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="e.g., DEALER10"
+                    className="pl-9 h-9 text-sm uppercase font-mono tracking-wider"
+                    {...field}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      field.onChange(val);
+                      if (val) {
+                        try {
+                          localStorage.setItem('pratima_ref_code', val);
+                        } catch {}
+                      }
+                    }}
+                  />
                 </div>
               </FormControl>
               <FormMessage className="text-xs" />

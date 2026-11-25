@@ -43,9 +43,16 @@ export const proxy = auth((req) => {
     req.auth?.user?.id || req.auth?.user?.email || (req.auth?.user as any)?.sub
   );
 
-  // 2. Initial Route Protection: root '/' MUST redirect to /login for unauthenticated users, or /dashboard if authenticated
+  const userRole = (req.auth?.user as any)?.role;
+  const isDealer = userRole === 'DEALER';
+  const isSuperAdmin = userRole === 'SUPER_ADMIN';
+
+  // 2. Initial Route Protection: root '/' MUST redirect to /login for unauthenticated users, or /dealer / /dashboard if authenticated
   if (pathname === '/') {
     if (isLoggedIn) {
+      if (isDealer) {
+        return NextResponse.redirect(new URL('/dealer', nextUrl));
+      }
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
     return NextResponse.redirect(new URL('/login', nextUrl));
@@ -53,6 +60,8 @@ export const proxy = auth((req) => {
 
   // 3. Strict protected ERP internal routes list
   const isProtectedPath =
+    pathname === '/dealer' ||
+    pathname.startsWith('/dealer/') ||
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
     pathname === '/admin' ||
@@ -93,9 +102,22 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 5. Authenticated users attempting to visit auth pages (/login, /signup) redirected to /dashboard
+  // 4.1 Role isolation: DEALER cannot access internal ERP dashboard or super-admin
+  if (isLoggedIn && isDealer && !pathname.startsWith('/dealer') && !pathname.startsWith('/api')) {
+    return NextResponse.redirect(new URL('/dealer', nextUrl));
+  }
+
+  // 4.2 Non-dealers (except SUPER_ADMIN) cannot access dealer portal
+  if (isLoggedIn && (pathname === '/dealer' || pathname.startsWith('/dealer/')) && !isDealer && !isSuperAdmin) {
+    return NextResponse.redirect(new URL('/dashboard', nextUrl));
+  }
+
+  // 5. Authenticated users attempting to visit auth pages (/login, /signup) redirected to their portal
   if ((pathname === '/login' || pathname === '/signup') && isLoggedIn) {
     if (!nextUrl.searchParams.has('error')) {
+      if (isDealer) {
+        return NextResponse.redirect(new URL('/dealer', nextUrl));
+      }
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
   }

@@ -50,45 +50,65 @@ export default async function TenantBillingPage() {
   await ensureAddonPriceListInitialized();
 
   // 2. Fetch tenant profile, current subscription, usage quotas, plans, addons, and transactions in parallel
-  const [tenant, tenantSubscription, branchCount, staffCount, allPlans, allAddons, transactions] =
-    await Promise.all([
-      prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: {
-          id: true,
-          name: true,
-          subscriptionStatus: true,
-          trialEndsAt: true,
-          enabledAddons: true,
-          createdAt: true,
+  const [
+    tenant,
+    tenantSubscription,
+    branchCount,
+    staffCount,
+    allPlans,
+    allAddons,
+    transactions,
+    successfulTxCount,
+  ] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        subscriptionStatus: true,
+        trialEndsAt: true,
+        enabledAddons: true,
+        referredByDealerId: true,
+        firstPaymentDiscountUsed: true,
+        referredByDealer: {
+          select: {
+            dealerCode: true,
+            firstPaymentDiscountPercent: true,
+            isActive: true,
+          },
         },
-      }),
-      prisma.tenantSubscription.findUnique({
-        where: { tenantId },
-        include: {
-          plan: true,
-        },
-      }),
-      prisma.branch.count({
-        where: { tenantId },
-      }),
-      prisma.user.count({
-        where: { tenantId },
-      }),
-      prisma.subscriptionPlan.findMany({
-        where: { isActive: true },
-        orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
-      }),
-      prisma.planAddonConfig.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      }),
-      prisma.billingTransaction.findMany({
-        where: { tenantId },
-        orderBy: { transactionDate: 'desc' },
-        take: 10,
-      }),
-    ]);
+        createdAt: true,
+      },
+    }),
+    prisma.tenantSubscription.findUnique({
+      where: { tenantId },
+      include: {
+        plan: true,
+      },
+    }),
+    prisma.branch.count({
+      where: { tenantId },
+    }),
+    prisma.user.count({
+      where: { tenantId },
+    }),
+    prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
+    }),
+    prisma.planAddonConfig.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.billingTransaction.findMany({
+      where: { tenantId },
+      orderBy: { transactionDate: 'desc' },
+      take: 10,
+    }),
+    prisma.billingTransaction.count({
+      where: { tenantId, status: 'SUCCESS' },
+    }),
+  ]);
 
   if (!tenant) {
     redirect('/login');
@@ -136,6 +156,13 @@ export default async function TenantBillingPage() {
   const isTrial = tenant.subscriptionStatus === 'TRIAL';
   const isActive = tenant.subscriptionStatus === 'ACTIVE';
   const isPastDue = tenant.subscriptionStatus === 'PAST_DUE';
+
+  // 5. First-Payment Partner Discount parameters
+  const isFirstPaymentDiscountEligible = !tenant.firstPaymentDiscountUsed && successfulTxCount === 0;
+  const initialDealerCode = tenant.referredByDealer?.dealerCode || null;
+  const defaultDiscountPercent = tenant.referredByDealer?.isActive
+    ? Number(tenant.referredByDealer.firstPaymentDiscountPercent)
+    : 0;
 
   return (
     <div className="flex-1 space-y-8 p-6 sm:p-8 max-w-6xl mx-auto">
@@ -323,6 +350,9 @@ export default async function TenantBillingPage() {
           currentBillingCycle={tenantSubscription?.billingCycle}
           subscriptionStatus={tenant.subscriptionStatus}
           initialEnabledAddons={tenant.enabledAddons || []}
+          initialDealerCode={initialDealerCode}
+          isFirstPaymentDiscountEligible={isFirstPaymentDiscountEligible}
+          defaultDiscountPercent={defaultDiscountPercent}
         />
       </div>
 

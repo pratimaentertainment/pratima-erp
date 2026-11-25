@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { RazorpayService, razorpayService } from '@/services/billing/razorpay.service';
+import { DealerCommissionService } from '@/services/billing/dealer-commission.service';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,7 @@ const verifyPaymentSchema = z.object({
   planId: z.string().optional(),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).optional(),
   addonKeys: z.array(z.string()).optional(),
+  dealerCode: z.string().optional(),
 });
 
 /**
@@ -21,7 +23,8 @@ const verifyPaymentSchema = z.object({
  *
  * Verifies HMAC SHA-256 signature immediately after client checkout callback,
  * atomically updates the database, activates tenant subscription, unlocks
- * purchased add-ons, and breaks the Hard Lock screen without waiting for external webhooks.
+ * purchased add-ons, records lifetime recurring dealer commissions, and breaks
+ * the Hard Lock screen without waiting for external webhooks.
  */
 export async function POST(req: Request) {
   try {
@@ -93,6 +96,9 @@ export async function POST(req: Request) {
       payloadBillingCycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
     let resolvedAmountInRupees = 0;
     let resolvedAddonKeys: string[] = payloadAddonKeys || [];
+    let resolvedDealerId = '';
+    let resolvedDealerCode = '';
+    let resolvedDiscountAmount = 0;
 
     try {
       const client = razorpayService.getClient();
@@ -118,6 +124,15 @@ export async function POST(req: Request) {
         if (parsedKeys.length > 0) {
           resolvedAddonKeys = parsedKeys;
         }
+      }
+      if (rzpOrder?.notes?.dealerId && typeof rzpOrder.notes.dealerId === 'string') {
+        resolvedDealerId = rzpOrder.notes.dealerId;
+      }
+      if (rzpOrder?.notes?.dealerCode && typeof rzpOrder.notes.dealerCode === 'string') {
+        resolvedDealerCode = rzpOrder.notes.dealerCode;
+      }
+      if (rzpOrder?.notes?.discountAmount && typeof rzpOrder.notes.discountAmount === 'string') {
+        resolvedDiscountAmount = parseFloat(rzpOrder.notes.discountAmount) || 0;
       }
     } catch (orderFetchErr) {
       console.warn(
@@ -160,24 +175,32 @@ export async function POST(req: Request) {
 
     // 7. Atomic Database Transaction (Zero inconsistency guarantee)
     let mergedAddons: string[] = [];
+    let recordedTxId = '';
+
     await prisma.$transaction(async (tx) => {
       // a) Update or record BillingTransaction
       const pendingTx = await tx.billingTransaction.findFirst({
         where: { razorpayOrderId: razorpay_order_id },
       });
 
+      const txNotes = resolvedDiscountAmount > 0
+        ? `Partner Discount: ₹${resolvedDiscountAmount} (Code: ${resolvedDealerCode || 'N/A'})`
+        : pendingTx?.notes || undefined;
+
       if (pendingTx) {
-        await tx.billingTransaction.update({
+        const updated = await tx.billingTransaction.update({
           where: { id: pendingTx.id },
           data: {
             status: 'SUCCESS',
             razorpayPaymentId: razorpay_payment_id,
             amount: resolvedAmountInRupees > 0 ? resolvedAmountInRupees : pendingTx.amount,
             transactionDate: new Date(),
+            notes: txNotes,
           },
         });
+        recordedTxId = updated.id;
       } else {
-        await tx.billingTransaction.create({
+        const created = await tx.billingTransaction.create({
           data: {
             tenantId,
             amount: resolvedAmountInRupees,
@@ -186,8 +209,10 @@ export async function POST(req: Request) {
             razorpayOrderId: razorpay_order_id,
             razorpayPaymentId: razorpay_payment_id,
             transactionDate: new Date(),
+            notes: txNotes,
           },
         });
+        recordedTxId = created.id;
       }
 
       // b) Upsert TenantSubscription with verified plan and dates
@@ -211,7 +236,7 @@ export async function POST(req: Request) {
       // c) Merge purchased add-ons and activate Tenant subscription status
       const existingTenant = await tx.tenant.findUnique({
         where: { id: tenantId },
-        select: { enabledAddons: true },
+        select: { enabledAddons: true, referredByDealerId: true },
       });
       const currentAddons = existingTenant?.enabledAddons || [];
       mergedAddons = Array.from(new Set([...currentAddons, ...resolvedAddonKeys]));
@@ -222,9 +247,15 @@ export async function POST(req: Request) {
           subscriptionStatus: 'ACTIVE',
           trialEndsAt: null,
           enabledAddons: mergedAddons,
+          referredByDealerId: existingTenant?.referredByDealerId || (resolvedDealerId || undefined),
         },
       });
     });
+
+    // 8. Automatically record Dealer Lifetime Recurring Commission (Idempotent)
+    if (recordedTxId) {
+      await DealerCommissionService.recordDealerCommissionForTransaction(recordedTxId);
+    }
 
     console.log(
       `[RAZORPAY_VERIFY_SUCCESS] Tenant "${tenantId}" unlocked on plan "${plan.name}" with add-ons [${mergedAddons.join(', ')}] until ${newEndDate.toISOString()}`

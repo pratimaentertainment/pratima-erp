@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { serializePrisma } from '@/lib/serialize';
 import { Prisma, PaymentStatus, BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { z } from 'zod';
+import { DealerCommissionService } from '@/services/billing/dealer-commission.service';
 
 /**
  * Strict Security Guard: Enforces that the caller is an authenticated SUPER_ADMIN.
@@ -433,6 +434,9 @@ export async function recordOfflinePaymentAction(input: z.infer<typeof recordOff
     revalidatePath('/super-admin/revenue');
     revalidatePath('/super-admin');
     revalidatePath('/settings/billing');
+    if (result.billingTx?.id) {
+      await DealerCommissionService.recordDealerCommissionForTransaction(result.billingTx.id);
+    }
 
     return {
       success: true,

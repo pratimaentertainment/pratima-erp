@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { razorpayService } from '@/services/billing/razorpay.service';
+import { DealerCommissionService } from '@/services/billing/dealer-commission.service';
 
 export const runtime = 'nodejs';
 
@@ -10,6 +11,7 @@ const createOrderSchema = z.object({
   planId: z.string().min(1, 'planId is required'),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).default('MONTHLY'),
   addonKeys: z.array(z.string()).default([]),
+  dealerCode: z.string().optional(),
 });
 
 const GST_RATE = 0.18; // 18% GST (9% CGST + 9% SGST or 18% IGST)
@@ -17,7 +19,7 @@ const GST_RATE = 0.18; // 18% GST (9% CGST + 9% SGST or 18% IGST)
 /**
  * POST /api/billing/razorpay/order
  * Authenticated endpoint to initialize a Razorpay checkout order for a SaaS subscription
- * and optional modular add-on capabilities.
+ * and optional modular add-on capabilities with Dealer Referral First-Payment Discount integration.
  */
 export async function POST(req: Request) {
   try {
@@ -55,7 +57,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { planId, billingCycle, addonKeys } = parseResult.data;
+    const { planId, billingCycle, addonKeys, dealerCode } = parseResult.data;
 
     // 3. Verify tenant existence in database
     const tenant = await prisma.tenant.findUnique({
@@ -66,6 +68,7 @@ export async function POST(req: Request) {
         email: true,
         phone: true,
         contactPhone: true,
+        referredByDealerId: true,
       },
     });
 
@@ -106,18 +109,35 @@ export async function POST(req: Request) {
       );
     }
 
-    // 6. Calculate exact pricing and tax amounts
+    // 6. Calculate base amount
     const planAmount =
       billingCycle === 'ANNUAL' ? Number(plan.annualPrice) : Number(plan.monthlyPrice);
-    const baseAmount = planAmount + addonsTotal;
-    const gstAmount = Math.round(baseAmount * GST_RATE * 100) / 100;
-    const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
+    const grossBaseAmount = planAmount + addonsTotal;
+
+    // 7. Check and compute first-payment dealer discount
+    const discountInfo = await DealerCommissionService.calculateFirstPaymentDiscount(
+      tenant.id,
+      dealerCode
+    );
+
+    let discountPercent = 0;
+    let discountAmount = 0;
+    let netBaseAmount = grossBaseAmount;
+
+    if (discountInfo.eligible && discountInfo.discountPercent > 0) {
+      discountPercent = discountInfo.discountPercent;
+      discountAmount = Math.round(((grossBaseAmount * discountPercent) / 100) * 100) / 100;
+      netBaseAmount = Math.max(0, grossBaseAmount - discountAmount);
+    }
+
+    const gstAmount = Math.round(netBaseAmount * GST_RATE * 100) / 100;
+    const totalAmount = Math.round((netBaseAmount + gstAmount) * 100) / 100;
     const amountInPaise = Math.round(totalAmount * 100);
 
-    // 7. Generate a unique internal receipt number (max 40 chars)
+    // 8. Generate a unique internal receipt number (max 40 chars)
     const receiptId = `rcpt_${tenant.id.slice(0, 8)}_${Date.now().toString().slice(-8)}`;
 
-    // 8. Attach structured metadata notes for audit and webhook correlation
+    // 9. Attach structured metadata notes for audit and webhook correlation
     const notes: Record<string, string> = {
       tenantId: tenant.id,
       tenantName: tenant.name.slice(0, 40),
@@ -128,12 +148,17 @@ export async function POST(req: Request) {
       userId,
       addonKeys: (addonKeys || []).join(','),
       addonsTotal: addonsTotal.toFixed(2),
-      baseAmount: baseAmount.toFixed(2),
+      grossBaseAmount: grossBaseAmount.toFixed(2),
+      discountPercent: discountPercent.toString(),
+      discountAmount: discountAmount.toFixed(2),
+      dealerId: discountInfo.dealerId || '',
+      dealerCode: discountInfo.dealerCode || '',
+      netBaseAmount: netBaseAmount.toFixed(2),
       gstAmount: gstAmount.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
     };
 
-    // 9. Generate Order via Razorpay Enterprise Service
+    // 10. Generate Order via Razorpay Enterprise Service
     const order = await razorpayService.createOrder(
       amountInPaise,
       receiptId,
@@ -141,7 +166,7 @@ export async function POST(req: Request) {
       'INR'
     );
 
-    // 10. Persist PENDING transaction in Prisma for immediate audit trail
+    // 11. Persist PENDING transaction in Prisma for immediate audit trail
     await prisma.billingTransaction.create({
       data: {
         tenantId: tenant.id,
@@ -149,16 +174,23 @@ export async function POST(req: Request) {
         currency: 'INR',
         status: 'PENDING',
         razorpayOrderId: order.id,
+        notes: discountAmount > 0
+          ? `Partner Discount: ₹${discountAmount} (${discountPercent}% off via Code ${discountInfo.dealerCode})`
+          : undefined,
       },
     });
 
-    // 11. Return checkout parameters to client
+    // 12. Return checkout parameters to client
     return NextResponse.json({
       success: true,
       orderId: order.id,
       currency: order.currency,
       amount: order.amount, // in paise
-      baseAmount,
+      grossBaseAmount,
+      discountPercent,
+      discountAmount,
+      dealerCode: discountInfo.dealerCode || null,
+      baseAmount: netBaseAmount,
       planAmount,
       addonsTotal,
       gstAmount,

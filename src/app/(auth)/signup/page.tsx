@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 interface SignupPageProps {
-  searchParams?: Promise<{ planId?: string; cycle?: string }>;
+  searchParams?: Promise<{ planId?: string; cycle?: string; ref?: string }>;
 }
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
@@ -195,6 +195,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             initialPlanId={selectedPlan?.id || planId}
             initialPlanName={selectedPlan?.name}
             initialCycle={cycle}
+            initialRefCode={resolvedSearchParams?.ref}
           />
         </div>
       </div>

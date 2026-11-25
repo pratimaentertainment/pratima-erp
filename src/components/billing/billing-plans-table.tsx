@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Check,
   Sparkles,
@@ -12,9 +12,13 @@ import {
   Star,
   PlusCircle,
   IndianRupee,
+  Tag,
+  Gift,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { RazorpayCheckoutButton } from '@/components/billing/razorpay-checkout-button';
 import { cn } from '@/lib/utils';
 import {
@@ -62,6 +66,9 @@ export interface BillingPlansTableProps {
   currentBillingCycle?: string | null;
   subscriptionStatus?: string;
   initialEnabledAddons?: string[];
+  initialDealerCode?: string | null;
+  isFirstPaymentDiscountEligible?: boolean;
+  defaultDiscountPercent?: number;
 }
 
 export function BillingPlansTable({
@@ -71,11 +78,30 @@ export function BillingPlansTable({
   currentBillingCycle,
   subscriptionStatus,
   initialEnabledAddons = [],
+  initialDealerCode = null,
+  isFirstPaymentDiscountEligible = false,
+  defaultDiscountPercent = 0,
 }: BillingPlansTableProps) {
   const [isAnnual, setIsAnnual] = useState(currentBillingCycle === 'ANNUAL');
   const [selectedAddons, setSelectedAddons] = useState<string[]>(initialEnabledAddons);
+  const [dealerCode, setDealerCode] = useState<string>(initialDealerCode || '');
+  const [discountPercent, setDiscountPercent] = useState<number>(defaultDiscountPercent || 0);
 
   const selectedCycle: 'MONTHLY' | 'ANNUAL' = isAnnual ? 'ANNUAL' : 'MONTHLY';
+
+  useEffect(() => {
+    try {
+      if (initialDealerCode) {
+        setDealerCode(initialDealerCode);
+        localStorage.setItem('pratima_ref_code', initialDealerCode);
+      } else if (isFirstPaymentDiscountEligible) {
+        const saved = localStorage.getItem('pratima_ref_code');
+        if (saved && !dealerCode) {
+          setDealerCode(saved);
+        }
+      }
+    } catch {}
+  }, [initialDealerCode, isFirstPaymentDiscountEligible]);
 
   const toggleAddon = (featureKey: string) => {
     setSelectedAddons((prev) =>
@@ -137,61 +163,113 @@ export function BillingPlansTable({
 
   return (
     <div className="space-y-8">
-      {/* Billing Switcher (Monthly vs Annual) */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border bg-card/60 backdrop-blur-xs">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Select Billing Frequency</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Annual billing saves up to 20% on studio subscription plans and add-ons.
-          </p>
-        </div>
+      {/* Top Bar: Billing Switcher & Partner Referral Discount Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Billing Switcher (Monthly vs Annual) */}
+        <div className="flex items-center justify-between p-4 rounded-xl border bg-card/60 backdrop-blur-xs">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Billing Frequency</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Annual billing saves up to 20% on studio plans.
+            </p>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              'text-xs font-medium cursor-pointer transition-colors',
-              !isAnnual ? 'text-foreground font-bold' : 'text-muted-foreground'
-            )}
-            onClick={() => setIsAnnual(false)}
-          >
-            Monthly
-          </span>
-
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isAnnual}
-            aria-label="Toggle annual billing discount"
-            onClick={() => setIsAnnual((prev) => !prev)}
-            className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-              isAnnual ? 'bg-primary' : 'bg-muted'
-            )}
-          >
+          <div className="flex items-center gap-3">
             <span
               className={cn(
-                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out',
-                isAnnual ? 'translate-x-5' : 'translate-x-0'
+                'text-xs font-medium cursor-pointer transition-colors',
+                !isAnnual ? 'text-foreground font-bold' : 'text-muted-foreground'
               )}
-            />
-          </button>
-
-          <span
-            className={cn(
-              'text-xs font-medium cursor-pointer transition-colors flex items-center gap-1.5',
-              isAnnual ? 'text-foreground font-bold' : 'text-muted-foreground'
-            )}
-            onClick={() => setIsAnnual(true)}
-          >
-            Annual
-            <Badge
-              variant="secondary"
-              className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold py-0"
+              onClick={() => setIsAnnual(false)}
             >
-              Save ~17%
-            </Badge>
-          </span>
+              Monthly
+            </span>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isAnnual}
+              aria-label="Toggle annual billing discount"
+              onClick={() => setIsAnnual((prev) => !prev)}
+              className={cn(
+                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                isAnnual ? 'bg-primary' : 'bg-muted'
+              )}
+            >
+              <span
+                className={cn(
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out',
+                  isAnnual ? 'translate-x-5' : 'translate-x-0'
+                )}
+              />
+            </button>
+
+            <span
+              className={cn(
+                'text-xs font-medium cursor-pointer transition-colors flex items-center gap-1.5',
+                isAnnual ? 'text-foreground font-bold' : 'text-muted-foreground'
+              )}
+              onClick={() => setIsAnnual(true)}
+            >
+              Annual
+              <Badge
+                variant="secondary"
+                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold py-0"
+              >
+                Save ~17%
+              </Badge>
+            </span>
+          </div>
         </div>
+
+        {/* Partner Referral Discount Box */}
+        {isFirstPaymentDiscountEligible ? (
+          <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                <Gift className="h-4 w-4" />
+                First-Payment Partner Discount
+              </span>
+              {discountPercent > 0 && (
+                <Badge className="bg-emerald-600 text-white font-mono text-[10px]">
+                  {discountPercent}% OFF APPLIED
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Tag className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Enter Partner Code (e.g. DEALER10)"
+                  value={dealerCode}
+                  onChange={(e) => {
+                    const code = e.target.value.toUpperCase();
+                    setDealerCode(code);
+                    try {
+                      localStorage.setItem('pratima_ref_code', code);
+                    } catch {}
+                  }}
+                  className="h-8 pl-8 text-xs uppercase font-mono tracking-wider"
+                />
+              </div>
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                Valid on first checkout
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl border bg-card/60 flex items-center justify-between">
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                Enterprise Billing Protection
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                All subscriptions are billed securely via Razorpay with 100% compliant Indian GST invoices.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Plans Grid */}
@@ -214,11 +292,26 @@ export function BillingPlansTable({
               ? Math.round(((effectiveOriginalMonthly - effectiveMonthly) / effectiveOriginalMonthly) * 100)
               : 0;
 
-          // Compute plan + addon total preview
+          // Compute plan + addon total preview with Partner Discount
           const planBaseRate = isAnnual ? plan.annualPrice : plan.monthlyPrice;
           const planPlusAddonsSubtotal = planBaseRate + addonsTotalRate;
-          const gstAmount = Math.round(planPlusAddonsSubtotal * 0.18 * 100) / 100;
-          const grandTotal = Math.round((planPlusAddonsSubtotal + gstAmount) * 100) / 100;
+
+          // Calculate partner first payment discount if applicable
+          const activeDiscountRate =
+            isFirstPaymentDiscountEligible && (discountPercent > 0 || dealerCode)
+              ? discountPercent > 0
+                ? discountPercent
+                : 10
+              : 0;
+
+          const partnerDiscountAmount =
+            activeDiscountRate > 0
+              ? Math.round(((planPlusAddonsSubtotal * activeDiscountRate) / 100) * 100) / 100
+              : 0;
+
+          const discountedSubtotal = Math.max(0, planPlusAddonsSubtotal - partnerDiscountAmount);
+          const gstAmount = Math.round(discountedSubtotal * 0.18 * 100) / 100;
+          const grandTotal = Math.round((discountedSubtotal + gstAmount) * 100) / 100;
 
           return (
             <div
@@ -325,8 +418,8 @@ export function BillingPlansTable({
                   </ul>
                 </div>
 
-                {/* Live Checkout Total Preview if Addons Selected */}
-                {selectedAddons.length > 0 && (
+                {/* Live Checkout Total Preview */}
+                {(selectedAddons.length > 0 || partnerDiscountAmount > 0) && (
                   <div className="p-2.5 rounded-lg border border-primary/20 bg-primary/5 space-y-1 text-[11px]">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Plan + {selectedAddons.length} Add-ons:</span>
@@ -334,6 +427,14 @@ export function BillingPlansTable({
                         ₹{planPlusAddonsSubtotal.toLocaleString('en-IN')}
                       </span>
                     </div>
+
+                    {partnerDiscountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span>Partner Discount (-{activeDiscountRate}%):</span>
+                        <span className="font-mono">-₹{partnerDiscountAmount.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-muted-foreground">
                       <span>+ 18% GST:</span>
                       <span className="font-mono">₹{gstAmount.toLocaleString('en-IN')}</span>
@@ -356,6 +457,7 @@ export function BillingPlansTable({
                       planId={plan.id}
                       billingCycle={selectedCycle}
                       addonKeys={selectedAddons}
+                      dealerCode={dealerCode || undefined}
                       buttonText="Renew / Extend Subscription"
                       variant="outline"
                       className="w-full text-xs"
@@ -369,6 +471,7 @@ export function BillingPlansTable({
                     planId={plan.id}
                     billingCycle={selectedCycle}
                     addonKeys={selectedAddons}
+                    dealerCode={dealerCode || undefined}
                     buttonText={
                       subscriptionStatus === 'TRIAL'
                         ? selectedAddons.length > 0

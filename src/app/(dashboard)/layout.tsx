@@ -27,6 +27,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
+  if ((session.user as any)?.role === 'DEALER') {
+    redirect('/dealer');
+  }
+
   let context = null;
   try {
     context = await getActiveContext();

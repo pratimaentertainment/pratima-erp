@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, CreditCard, ShieldCheck, IndianRupee } from 'lucide-react';
+import { Building2, CreditCard, ShieldCheck, IndianRupee, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function SuperAdminNav() {
@@ -27,6 +27,12 @@ export function SuperAdminNav() {
       href: '/super-admin/revenue',
       icon: IndianRupee,
       isActive: pathname.startsWith('/super-admin/revenue'),
+    },
+    {
+      name: 'Dealers & Payouts',
+      href: '/super-admin/dealers',
+      icon: Users,
+      isActive: pathname.startsWith('/super-admin/dealers'),
     },
     {
       name: 'Governance & Audit',

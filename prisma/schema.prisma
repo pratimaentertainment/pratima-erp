@@ -63,6 +63,7 @@ enum Role {
   SUPER_ADMIN
   TENANT_OWNER
   STAFF
+  DEALER
 
   @@map("UserSystemRole")
 }
@@ -484,6 +485,12 @@ model Tenant {
   franchisorRoyalties    FranchiseRoyaltyLedger[] @relation("FranchisorRoyalties")
   franchiseeRoyalties    FranchiseRoyaltyLedger[] @relation("FranchiseeRoyalties")
   enabledAddons            String[]                 @default([])
+  referredByDealerId         String?
+  referredByDealer           DealerProfile?           @relation(fields: [referredByDealerId], references: [id], onDelete: SetNull)
+  firstPaymentDiscountUsed   Boolean                  @default(false)
+  dealerCommissions          DealerCommissionLedger[]
+
+  @@index([referredByDealerId])
 
   @@index([slug])
   @@index([contactPhone])
@@ -586,11 +593,81 @@ model BillingTransaction {
   receiptUrl        String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  dealerCommission  DealerCommissionLedger?
 
   @@index([tenantId])
   @@index([planId])
   @@index([status])
 }
+
+enum DealerCommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model DealerProfile {
+  id                          String                   @id @default(cuid())
+  userId                      String                   @unique @db.Uuid
+  user                        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealerCode                  String                   @unique
+  businessName                String
+  contactPerson               String
+  phone                       String
+  city                        String?
+  commissionPercent           Decimal                  @default(20) @db.Decimal(5, 2)
+  firstPaymentDiscountPercent Decimal                  @default(10) @db.Decimal(5, 2)
+  bankDetails                 String?
+  isActive                    Boolean                  @default(true)
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+
+  referredTenants             Tenant[]
+  commissions                 DealerCommissionLedger[]
+  payouts                     DealerPayout[]
+
+  @@index([isActive])
+}
+
+model DealerCommissionLedger {
+  id                   String                 @id @default(cuid())
+  dealerId             String
+  dealer               DealerProfile          @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  tenantId             String                 @db.Uuid
+  tenant               Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  billingTransactionId String                 @unique
+  billingTransaction   BillingTransaction     @relation(fields: [billingTransactionId], references: [id], onDelete: Cascade)
+  paymentCycleNumber   Int                    @default(1)
+  grossPlanAmount      Decimal                @db.Decimal(10, 2)
+  discountApplied      Decimal                @default(0) @db.Decimal(10, 2)
+  netPaidAmount        Decimal                @db.Decimal(10, 2)
+  commissionPercent    Decimal                @db.Decimal(5, 2)
+  commissionAmount     Decimal                @db.Decimal(10, 2)
+  status               DealerCommissionStatus @default(PENDING)
+  payoutId             String?
+  payout               DealerPayout?          @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  createdAt            DateTime               @default(now())
+
+  @@index([dealerId, status])
+  @@index([tenantId])
+}
+
+model DealerPayout {
+  id             String                   @id @default(cuid())
+  dealerId       String
+  dealer         DealerProfile            @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  amount         Decimal                  @db.Decimal(10, 2)
+  paymentMode    String
+  transactionRef String
+  notes          String?
+  paidAt         DateTime                 @default(now())
+  createdAt      DateTime                 @default(now())
+
+  commissions    DealerCommissionLedger[]
+
+  @@index([dealerId, paidAt])
+}
+
 
 model Branch {
   id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -701,6 +778,7 @@ model User {
   bankBranch        String?
   accountHolderName String?
   upiId             String?
+  dealerProfile     DealerProfile?
 
   branches        UserBranch[]
   roles           UserRole[]

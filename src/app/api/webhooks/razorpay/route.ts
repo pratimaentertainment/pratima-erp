@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { razorpayService } from '@/services/billing/razorpay.service';
+import { DealerCommissionService } from '@/services/billing/dealer-commission.service';
 
 export const runtime = 'nodejs';
 
@@ -8,6 +9,7 @@ export const runtime = 'nodejs';
  * POST /api/webhooks/razorpay
  * Listens for Razorpay webhook notifications (payment.captured, order.paid, payment.failed).
  * Strictly verifies the HMAC SHA256 signature to prevent forged requests.
+ * Records lifetime recurring dealer commissions automatically.
  */
 export async function POST(req: Request) {
   try {
@@ -58,6 +60,9 @@ export async function POST(req: Request) {
       const webhookAddonKeys = notes.addonKeys
         ? notes.addonKeys.split(',').map((k: string) => k.trim()).filter(Boolean)
         : [];
+      const dealerId = notes.dealerId;
+      const dealerCode = notes.dealerCode;
+      const discountAmount = parseFloat(notes.discountAmount || '0') || 0;
 
       // Idempotency Gate: Check if payment was already processed
       if (razorpayPaymentId) {
@@ -74,6 +79,8 @@ export async function POST(req: Request) {
           console.log(
             `[RAZORPAY_WEBHOOK_IDEMPOTENT] Payment ${razorpayPaymentId} / Order ${razorpayOrderId} already fulfilled.`
           );
+          // Still ensure commission is logged if missing
+          await DealerCommissionService.recordDealerCommissionForTransaction(existingTx.id);
           return NextResponse.json({ status: 'ok', message: 'Transaction already completed.' });
         }
       }
@@ -89,7 +96,7 @@ export async function POST(req: Request) {
       }
 
       if (!tenantId) {
-        console.error('[RAZORPAY_WEBHOOK_ERROR] Cannot resolve tenantId for payment:', {
+        console.error('[RAZORPAY_WEBHOOK_ERROR] Cannot correlate payment to an existing tenant:', {
           razorpayPaymentId,
           razorpayOrderId,
         });
@@ -142,6 +149,7 @@ export async function POST(req: Request) {
       const newEndDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
       // Execute Atomic Database Transaction
+      let recordedTxId = '';
       await prisma.$transaction(async (tx) => {
         // 1. Update or Create BillingTransaction
         const pendingTx = razorpayOrderId
@@ -150,8 +158,12 @@ export async function POST(req: Request) {
             })
           : null;
 
+        const txNotes = discountAmount > 0
+          ? `Partner Discount: ₹${discountAmount} (Code: ${dealerCode || 'N/A'})`
+          : pendingTx?.notes || undefined;
+
         if (pendingTx) {
-          await tx.billingTransaction.update({
+          const updated = await tx.billingTransaction.update({
             where: { id: pendingTx.id },
             data: {
               status: 'SUCCESS',
@@ -159,10 +171,12 @@ export async function POST(req: Request) {
               amount: amountInRupees > 0 ? amountInRupees : pendingTx.amount,
               currency,
               transactionDate: new Date(),
+              notes: txNotes,
             },
           });
+          recordedTxId = updated.id;
         } else {
-          await tx.billingTransaction.create({
+          const created = await tx.billingTransaction.create({
             data: {
               tenantId: tenant.id,
               amount: amountInRupees,
@@ -171,8 +185,10 @@ export async function POST(req: Request) {
               razorpayPaymentId,
               razorpayOrderId,
               transactionDate: new Date(),
+              notes: txNotes,
             },
           });
+          recordedTxId = created.id;
         }
 
         // 2. Upsert TenantSubscription with activated dates
@@ -203,9 +219,15 @@ export async function POST(req: Request) {
             subscriptionStatus: 'ACTIVE',
             trialEndsAt: null,
             enabledAddons: mergedAddons,
+            referredByDealerId: tenant.referredByDealerId || (dealerId || undefined),
           },
         });
       });
+
+      // 4. Automatically record Dealer Lifetime Recurring Commission (Idempotent)
+      if (recordedTxId) {
+        await DealerCommissionService.recordDealerCommissionForTransaction(recordedTxId);
+      }
 
       console.log(
         `[RAZORPAY_WEBHOOK_SUCCESS] Studio "${tenant.name}" (${tenant.id}) activated on plan "${plan.name}" until ${newEndDate.toISOString()}`

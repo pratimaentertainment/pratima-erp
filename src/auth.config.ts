@@ -65,10 +65,15 @@ export const authConfig = {
       // Initial route protection: root '/' MUST redirect to login for unauthenticated users
       if (pathname === '/') {
         if (!isLoggedIn) return false;
+        const role = (auth?.user as any)?.role;
+        if (role === 'DEALER') {
+          return Response.redirect(new URL('/dealer', request.nextUrl));
+        }
         return Response.redirect(new URL('/dashboard', request.nextUrl));
       }
 
       const isProtectedPath = pathname.startsWith('/dashboard') || 
+                              pathname.startsWith('/dealer') ||
                               pathname.startsWith('/admin') ||
                               pathname.startsWith('/super-admin') ||
                               pathname.startsWith('/settings') ||
@@ -86,11 +91,24 @@ export const authConfig = {
                               pathname.startsWith('/masters');
 
       if (isProtectedPath) {
-        if (isLoggedIn) return true;
+        if (isLoggedIn) {
+          const role = (auth?.user as any)?.role;
+          if (pathname.startsWith('/dealer') && role !== 'DEALER' && role !== 'SUPER_ADMIN') {
+            return Response.redirect(new URL('/dashboard', request.nextUrl));
+          }
+          if (role === 'DEALER' && !pathname.startsWith('/dealer') && !pathname.startsWith('/api')) {
+            return Response.redirect(new URL('/dealer', request.nextUrl));
+          }
+          return true;
+        }
         return false; // Redirect unauthenticated users to login page
       }
 
       if (pathname === '/login' && isLoggedIn && !request.nextUrl.searchParams.has('error')) {
+        const role = (auth?.user as any)?.role;
+        if (role === 'DEALER') {
+          return Response.redirect(new URL('/dealer', request.nextUrl));
+        }
         return Response.redirect(new URL('/dashboard', request.nextUrl));
       }
 

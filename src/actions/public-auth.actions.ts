@@ -8,6 +8,7 @@ import {
   publicSignupSchema,
   type PublicSignupInput,
 } from '@/schemas/auth.schema';
+import { DealerCommissionService } from '@/services/billing/dealer-commission.service';
 
 /**
  * Generates a URL-safe unique slug for a newly registered public studio
@@ -44,6 +45,7 @@ async function generateUniqueSlug(name: string): Promise<string> {
 
 /**
  * Public Signup: Register a new studio tenant and owner user atomically
+ * with automatic dealer referral attribution.
  */
 export async function registerPublicStudioAction(input: PublicSignupInput) {
   try {
@@ -94,7 +96,7 @@ export async function registerPublicStudioAction(input: PublicSignupInput) {
     // 5. Compute 15-day trial period expiration
     const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
 
-    // 6. Find selected plan or fallback to the lowest active starter plan
+    // 6. Find selected plan or fallback to lowest active starter plan
     let targetPlan = null;
     if (validated.planId) {
       targetPlan = await prisma.subscriptionPlan.findFirst({
@@ -109,9 +111,20 @@ export async function registerPublicStudioAction(input: PublicSignupInput) {
       });
     }
 
-    // 7. Atomic Prisma Transaction
+    // 7. Resolve dealer referral code if provided
+    let referredByDealerId: string | null = null;
+    if (validated.referralCode && validated.referralCode.trim()) {
+      const activeDealer = await DealerCommissionService.resolveActiveDealerByCode(
+        validated.referralCode.trim()
+      );
+      if (activeDealer) {
+        referredByDealerId = activeDealer.id;
+      }
+    }
+
+    // 8. Atomic Prisma Transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create Tenant with TRIAL subscription status
+      // Create Tenant with TRIAL subscription status & optional dealer referral
       const tenant = await tx.tenant.create({
         data: {
           name: validated.studioName.trim(),
@@ -121,6 +134,7 @@ export async function registerPublicStudioAction(input: PublicSignupInput) {
           email: normalizedEmail,
           subscriptionStatus: 'TRIAL',
           trialEndsAt,
+          referredByDealerId,
         },
       });
 
