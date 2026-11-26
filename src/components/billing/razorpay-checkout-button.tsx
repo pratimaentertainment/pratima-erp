@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils';
 
 export interface RazorpayCheckoutButtonProps {
   planId?: string;
-  purchaseType?: 'SUBSCRIPTION' | 'PER_EVENT_AI' | 'AI_CREDIT_PACK';
+  purchaseType?: 'SUBSCRIPTION' | 'PER_EVENT_AI' | 'AI_CREDIT_PACK' | 'STACKABLE_ADDON';
+  units?: number;
   eventBookingId?: string;
   addonFeatureKey?: string;
   billingCycle?: 'MONTHLY' | 'ANNUAL';
@@ -41,6 +42,7 @@ export function RazorpayCheckoutButton({
   purchaseType = 'SUBSCRIPTION',
   eventBookingId,
   addonFeatureKey,
+  units = 1,
   billingCycle = 'MONTHLY',
   addonKeys,
   dealerCode,
@@ -72,6 +74,7 @@ export function RazorpayCheckoutButton({
           planId,
           eventBookingId,
           addonFeatureKey,
+          units: units || 1,
           billingCycle,
           addonKeys,
           dealerCode,
@@ -141,6 +144,7 @@ export function RazorpayCheckoutButton({
                   planId,
                   eventBookingId,
                   addonFeatureKey,
+                  units: units || 1,
                   billingCycle,
                   addonKeys,
                   dealerCode,

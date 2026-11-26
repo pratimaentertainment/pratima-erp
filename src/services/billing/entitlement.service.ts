@@ -14,13 +14,19 @@ export interface TenantEntitlements {
   planName: string;
   planSlug: string;
   maxBranches: number;
+  extraBranchUnits: number;
+  totalAllowedBranches: number;
   maxStaff: number;
+  extraStaffUnits: number;
+  totalAllowedLoginStaff: number;
+  freelancersAllowed: 'UNLIMITED';
   features: PlanFeatureKey[];
   activeFeatures: Set<PlanFeatureKey>;
   enabledAddons: string[];
   franchiseEnabled?: boolean;
   includedAddons: string[];
   effectiveMaxBranches: number;
+  effectiveMaxStaff: number;
   aiEventCredits: number;
   isTrial: boolean;
   isActive: boolean;
@@ -93,7 +99,13 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       franchiseEnabled: false,
       includedAddons: [],
       effectiveMaxBranches: 1,
-      aiEventCredits: 0,
+            aiEventCredits: 0,
+      extraBranchUnits: 0,
+      totalAllowedBranches: 1,
+      extraStaffUnits: 0,
+      totalAllowedLoginStaff: 3,
+      freelancersAllowed: 'UNLIMITED',
+      effectiveMaxStaff: 3,
     };
   }
 
@@ -108,6 +120,8 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       isFranchisor: true,
       enabledAddons: true,
       aiEventCredits: true,
+      extraBranchUnits: true,
+      extraStaffUnits: true,
       subscription: {
         include: {
           plan: true,
@@ -144,7 +158,13 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       franchiseEnabled: false,
       includedAddons: [],
       effectiveMaxBranches: 1,
-      aiEventCredits: 0,
+            aiEventCredits: 0,
+      extraBranchUnits: 0,
+      totalAllowedBranches: 1,
+      extraStaffUnits: 0,
+      totalAllowedLoginStaff: 3,
+      freelancersAllowed: 'UNLIMITED',
+      effectiveMaxStaff: 3,
     };
   }
 
@@ -162,6 +182,17 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
   const maxBranches = activePlan?.maxBranches ?? 1;
   const maxStaff = activePlan?.maxStaff ?? 3;
 
+    const baseBranches = activePlan?.maxBranches ?? 1;
+  const baseStaff = activePlan?.maxStaff ?? 3;
+  const extraBranchUnits = tenant.extraBranchUnits || 0;
+  const extraStaffUnits = tenant.extraStaffUnits || 0;
+
+  const totalAllowedBranches = baseBranches + extraBranchUnits;
+  const totalAllowedLoginStaff = baseStaff + (extraStaffUnits * 5);
+
+  const franchiseEnabled = Boolean(activePlan?.franchiseEnabled || activePlan?.allowFranchises);
+  const includedAddons = activePlan?.includedAddons || [];
+
   // Resolve plan features + merge individual tenant add-ons
   const basePlanFeatures = resolvePlanFeatures(planSlug, activePlan?.features || []);
   const tenantAddons = (tenant.enabledAddons || []).filter((k): k is PlanFeatureKey =>
@@ -176,19 +207,25 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
     planId: activePlan?.id || null,
     planName,
     planSlug,
-    maxBranches,
-    maxStaff,
+    maxBranches: baseBranches,
+    extraBranchUnits,
+    totalAllowedBranches,
+    maxStaff: baseStaff,
+    extraStaffUnits,
+    totalAllowedLoginStaff,
+    freelancersAllowed: 'UNLIMITED',
     features: combinedFeatures,
     activeFeatures: activeFeaturesSet,
     enabledAddons: tenant.enabledAddons || [],
+    franchiseEnabled,
+    includedAddons,
+    effectiveMaxBranches: totalAllowedBranches,
+    effectiveMaxStaff: totalAllowedLoginStaff,
+    aiEventCredits: tenant.aiEventCredits ?? 0,
     isTrial: tenant.subscriptionStatus === 'TRIAL',
     isActive: tenant.subscriptionStatus === 'ACTIVE',
     isLocked: lockStatus.isLocked,
     lockReason: lockStatus.reason,
-    franchiseEnabled: activePlan?.franchiseEnabled ?? false,
-    includedAddons: activePlan?.includedAddons ?? [],
-    effectiveMaxBranches: (activePlan?.franchiseEnabled || maxBranches >= 999) ? 999999 : maxBranches,
-    aiEventCredits: tenant.aiEventCredits ?? 0,
   };
 }
 
@@ -236,26 +273,20 @@ export async function assertBranchQuota(tenantId: string): Promise<void> {
 
   if (entitlements.isLocked) {
     throw new EntitlementError(
-      'Your studio workspace is currently locked. Please renew your subscription to manage branches.',
+      `Access suspended: ${entitlements.lockReason}`,
       'TENANT_LOCKED'
     );
   }
 
-  const activeBranchCount = await prisma.branch.count({
-    where: {
-      tenantId,
-      deletedAt: null,
-      isActive: true,
-    },
+  const branchCount = await prisma.branch.count({
+    where: { tenantId, deletedAt: null },
   });
 
-  if (activeBranchCount >= entitlements.maxBranches) {
+  if (branchCount >= entitlements.totalAllowedBranches) {
     throw new EntitlementError(
-      `Branch quota exceeded. Your current plan (${entitlements.planName}) allows up to ${entitlements.maxBranches} active ${
-        entitlements.maxBranches === 1 ? 'branch' : 'branches'
-      }. You currently have ${activeBranchCount}. Please upgrade your subscription tier to open additional branches.`,
+      `Branch limit reached (${branchCount}/${entitlements.totalAllowedBranches}). Your plan includes ${entitlements.maxBranches} base branch${entitlements.maxBranches > 1 ? 'es' : ''} + ${entitlements.extraBranchUnits} extra add-on branch${entitlements.extraBranchUnits !== 1 ? 'es' : ''}. You can add another branch for ₹299/mo in Studio Settings.`,
       'PLAN_LIMIT_EXCEEDED',
-      { limit: entitlements.maxBranches, currentUsage: activeBranchCount }
+      { limit: entitlements.totalAllowedBranches, currentUsage: branchCount }
     );
   }
 }
@@ -268,26 +299,20 @@ export async function assertStaffQuota(tenantId: string): Promise<void> {
 
   if (entitlements.isLocked) {
     throw new EntitlementError(
-      'Your studio workspace is currently locked. Please renew your subscription to manage staff accounts.',
+      `Access suspended: ${entitlements.lockReason}`,
       'TENANT_LOCKED'
     );
   }
 
-  const activeStaffCount = await prisma.user.count({
-    where: {
-      tenantId,
-      deletedAt: null,
-      isActive: true,
-    },
+  const staffCount = await prisma.user.count({
+    where: { tenantId, deletedAt: null },
   });
 
-  if (activeStaffCount >= entitlements.maxStaff) {
+  if (staffCount >= entitlements.totalAllowedLoginStaff) {
     throw new EntitlementError(
-      `Staff account quota exceeded. Your current plan (${entitlements.planName}) allows up to ${entitlements.maxStaff} staff ${
-        entitlements.maxStaff === 1 ? 'account' : 'accounts'
-      }. You currently have ${activeStaffCount}. Please upgrade your subscription tier to onboard more team members.`,
+      `Login staff quota reached (${staffCount}/${entitlements.totalAllowedLoginStaff}). Your plan includes ${entitlements.maxStaff} base staff logins + ${entitlements.extraStaffUnits * 5} extra seats (${entitlements.extraStaffUnits} packs). You can add 5 more staff logins for ₹199/mo in Studio Settings. (Freelancers without logins are unlimited).`,
       'PLAN_LIMIT_EXCEEDED',
-      { limit: entitlements.maxStaff, currentUsage: activeStaffCount }
+      { limit: entitlements.totalAllowedLoginStaff, currentUsage: staffCount }
     );
   }
 }
@@ -306,9 +331,13 @@ export async function hasTenantAddon(
   addonKey: string
 ): Promise<boolean> {
   const entitlements = await getTenantEntitlements(tenantId);
+  if (entitlements.includedAddons.includes(addonKey)) return true;
+  if (addonKey === 'AI_FACE_RECOGNITION' && entitlements.includedAddons.includes('AI_FACE_RECOGNITION_SINGLE')) return true;
+  if (addonKey === 'AI_FACE_RECOGNITION_SINGLE' && entitlements.includedAddons.includes('AI_FACE_RECOGNITION')) return true;
+  if (addonKey === 'EXTRA_BRANCH' && entitlements.extraBranchUnits > 0) return true;
+  if (addonKey === 'EXTRA_STAFF_5' && entitlements.extraStaffUnits > 0) return true;
   return (
     entitlements.enabledAddons.includes(addonKey) ||
-    entitlements.includedAddons.includes(addonKey) ||
     entitlements.activeFeatures.has(addonKey as PlanFeatureKey)
   );
 }

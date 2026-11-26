@@ -46,6 +46,8 @@ export interface SerializedPlan {
   smsCredits?: number;
   whatsappCredits?: number;
   isActive: boolean;
+  franchiseEnabled?: boolean;
+  includedAddons?: string[];
 }
 
 export interface SerializedPlanAddonItem {
@@ -70,6 +72,10 @@ export interface BillingPlansTableProps {
   isFirstPaymentDiscountEligible?: boolean;
   defaultDiscountPercent?: number;
   aiEventCredits?: number;
+  extraBranchUnits?: number;
+  extraStaffUnits?: number;
+  branchCount?: number;
+  staffCount?: number;
 }
 
 export function BillingPlansTable({
@@ -112,45 +118,35 @@ export function BillingPlansTable({
   };
 
   const getPlanMetadata = (plan: SerializedPlan) => {
-    const isPro = plan.slug.includes('pro') || plan.name.toLowerCase().includes('pro');
-    const isEnterprise = plan.slug.includes('enterprise') || plan.name.toLowerCase().includes('enterprise');
+    const isMulti = plan.slug.includes('multi') || plan.name.toLowerCase().includes('multi');
+    const isHigher = plan.slug.includes('higher') || plan.slug.includes('franchise') || plan.name.toLowerCase().includes('higher');
 
     let badge: string | null = plan.offerBadgeText || null;
     let isRecommended = false;
-    let tagline = 'Ideal for independent photographers and single-studio teams.';
+    let tagline = 'Ideal for independent studios and boutique setups.';
 
-    if (isPro) {
-      if (!badge) badge = 'Recommended';
+    if (isMulti) {
+      if (!badge) badge = 'Most Popular';
       isRecommended = true;
-      tagline = 'For growing wedding and commercial studios managing multi-crew shoots.';
-    } else if (isEnterprise) {
-      if (!badge) badge = 'Enterprise';
-      tagline = 'For large production houses, studio franchises, and high-volume media teams.';
+      tagline = 'For established wedding & event studios managing up to 3 branches.';
+    } else if (isHigher) {
+      if (!badge) badge = 'All Features Inbuilt';
+      tagline = 'For production houses and franchise networks with up to 5 locations.';
     } else if (plan.isBasePlan && !badge) {
       badge = 'Base Plan';
     }
 
-    const resolvedFeatureKeys =
-      plan.features && plan.features.length > 0
-        ? plan.features
-        : isEnterprise
-        ? ENTERPRISE_DEFAULT_FEATURES
-        : isPro
-        ? PRO_DEFAULT_FEATURES
-        : STARTER_DEFAULT_FEATURES;
-
     const featureList: string[] = [
-      plan.maxBranches === 1 ? '1 Studio Headquarters' : `Up to ${plan.maxBranches} Studio Branches`,
-      `Up to ${plan.maxStaff} Staff & Crew Accounts`,
-      'GST Compliant Quotations & Tax Invoices',
-      'Shoot Calendar & Crew Rostering',
+      'Full CRM + ERP (Leads, Bookings, Crew, GST Invoices, Expenses)',
+      `${plan.maxBranches} Studio Branch${plan.maxBranches > 1 ? 'es' : ''} (Strict Limit)`,
+      `${plan.maxStaff} In-House Login Staff (Strict Limit)`,
+      'Unlimited Non-Login Freelancers (External Crew)',
+      'Client Selection & Proofing Portal',
     ];
 
-    for (const key of resolvedFeatureKeys) {
-      const def = getFeatureDefinition(key);
-      if (def && !featureList.includes(def.label)) {
-        featureList.push(def.label);
-      }
+    if (isHigher || (plan.includedAddons && plan.includedAddons.includes('AI_FACE_RECOGNITION'))) {
+      featureList.push('✨ AI Face Recognition for All Events (Inbuilt ₹0)');
+      featureList.push('✨ Customer Database Broadcast Messaging (Inbuilt ₹0)');
     }
 
     return { badge, isRecommended, tagline, featureList };

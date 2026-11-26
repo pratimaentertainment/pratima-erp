@@ -178,7 +178,7 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Configure standalone MRP vs Offer pricing for all 9 ERP capabilities. Studios can subscribe to these individually on top of any base plan or via Super Admin studio assignment.
+              Configure standalone MRP vs Offer pricing for modular add-ons and pay-as-you-need studio extensions.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

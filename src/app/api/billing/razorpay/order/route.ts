@@ -8,12 +8,14 @@ import { DealerCommissionService } from '@/services/billing/dealer-commission.se
 export const runtime = 'nodejs';
 
 const createOrderSchema = z.object({
-  purchaseType: z.enum(['SUBSCRIPTION', 'PER_EVENT_AI', 'AI_CREDIT_PACK']).default('SUBSCRIPTION'),
+  purchaseType: z.enum(['SUBSCRIPTION', 'PER_EVENT_AI', 'AI_CREDIT_PACK', 'STACKABLE_ADDON']).default('SUBSCRIPTION'),
+  units: z.coerce.number().int().min(1).default(1),
   planId: z.string().optional(),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).default('MONTHLY'),
   addonKeys: z.array(z.string()).default([]),
   dealerCode: z.string().optional(),
   eventId: z.string().optional(),
+  eventBookingId: z.string().optional(),
   addonFeatureKey: z.string().optional(),
 });
 
@@ -90,6 +92,78 @@ export async function POST(req: Request) {
         { success: false, error: 'Tenant record not found in system.' },
         { status: 404 }
       );
+    }
+
+
+    // =========================================================================
+    // BRANCH C: STACKABLE ADD-ON UNITS (EXTRA_BRANCH or EXTRA_STAFF_5)
+    // =========================================================================
+    if (purchaseType === 'STACKABLE_ADDON') {
+      const targetKey = addonFeatureKey || 'EXTRA_BRANCH';
+      const unitsCount = Math.max(1, parseResult.data.units || 1);
+      const addonConfig = await prisma.planAddonConfig.findUnique({
+        where: { featureKey: targetKey },
+      });
+
+      const monthlyPrice = addonConfig ? Number(addonConfig.monthlyPrice) : (targetKey === 'EXTRA_BRANCH' ? 299 : 199);
+      const annualPrice = addonConfig ? Number(addonConfig.annualPrice) : (targetKey === 'EXTRA_BRANCH' ? 2990 : 1990);
+      const unitRate = billingCycle === 'ANNUAL' ? annualPrice : monthlyPrice;
+      const netBaseAmount = unitRate * unitsCount;
+      const gstAmount = Math.round(netBaseAmount * GST_RATE * 100) / 100;
+      const totalAmount = Math.round((netBaseAmount + gstAmount) * 100) / 100;
+      const amountInPaise = Math.round(totalAmount * 100);
+
+      const receiptId = `stk_${tenant.id.slice(0, 5)}_${Date.now().toString().slice(-8)}`;
+      const description = targetKey === 'EXTRA_BRANCH'
+        ? `${unitsCount}x Extra Studio Branch (${billingCycle === 'ANNUAL' ? 'Annual' : 'Monthly'})`
+        : `${unitsCount}x (+5) Extra In-House Login Staff (${billingCycle === 'ANNUAL' ? 'Annual' : 'Monthly'})`;
+
+      const notes: Record<string, string> = {
+        tenantId: tenant.id,
+        tenantName: tenant.name.slice(0, 40),
+        purchaseType: 'STACKABLE_ADDON',
+        addonFeatureKey: targetKey,
+        units: String(unitsCount),
+        billingCycle,
+        userId,
+        netBaseAmount: netBaseAmount.toFixed(2),
+        gstAmount: gstAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      };
+
+      const order = await razorpayService.createOrder(amountInPaise, receiptId, notes, 'INR');
+
+      await prisma.billingTransaction.create({
+        data: {
+          tenantId: tenant.id,
+          amount: totalAmount,
+          currency: 'INR',
+          status: 'PENDING',
+          purchaseType: 'STACKABLE_ADDON',
+          addonFeatureKey: targetKey,
+          unitsPurchased: unitsCount,
+          razorpayOrderId: order.id,
+          notes: description,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        purchaseType: 'STACKABLE_ADDON',
+        orderId: order.id,
+        currency: order.currency,
+        amount: order.amount,
+        baseAmount: netBaseAmount,
+        gstAmount,
+        totalAmount,
+        description,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        customer: {
+          name: tenant.name,
+          email: tenant.email || user.email || '',
+          contact: tenant.contactPhone || tenant.phone || '',
+        },
+      });
     }
 
     // =========================================================================

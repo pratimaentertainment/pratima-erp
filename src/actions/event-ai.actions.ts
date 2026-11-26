@@ -32,6 +32,9 @@ export async function getEventAiStatusAction(eventId: string) {
         select: {
           id: true,
           aiEventCredits: true,
+          subscription: {
+            include: { plan: true },
+          },
         },
       }),
     ]);
@@ -40,6 +43,11 @@ export async function getEventAiStatusAction(eventId: string) {
       return { success: false, error: 'Event booking not found.' };
     }
 
+    const isPlanInbuilt = Boolean(
+      tenant?.subscription?.plan?.includedAddons?.includes('AI_FACE_RECOGNITION') ||
+      tenant?.subscription?.plan?.includedAddons?.includes('AI_FACE_RECOGNITION_SINGLE')
+    );
+
     return {
       success: true,
       data: {
@@ -47,10 +55,11 @@ export async function getEventAiStatusAction(eventId: string) {
           id: booking.id,
           title: booking.title,
           bookingNumber: booking.bookingNumber,
-          aiFaceRecognitionUnlocked: booking.aiFaceRecognitionUnlocked,
+          aiFaceRecognitionUnlocked: isPlanInbuilt || booking.aiFaceRecognitionUnlocked,
           aiUnlockedAt: booking.aiUnlockedAt ? booking.aiUnlockedAt.toISOString() : null,
         },
         aiEventCredits: tenant?.aiEventCredits ?? 0,
+        isPlanInbuilt,
       },
     };
   } catch (error: any) {

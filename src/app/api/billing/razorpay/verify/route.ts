@@ -11,7 +11,8 @@ const verifyPaymentSchema = z.object({
   razorpay_order_id: z.string().min(1, 'razorpay_order_id is required'),
   razorpay_payment_id: z.string().min(1, 'razorpay_payment_id is required'),
   razorpay_signature: z.string().min(1, 'razorpay_signature is required'),
-  purchaseType: z.enum(['SUBSCRIPTION', 'PER_EVENT_AI', 'AI_CREDIT_PACK']).optional(),
+  purchaseType: z.enum(['SUBSCRIPTION', 'PER_EVENT_AI', 'AI_CREDIT_PACK', 'STACKABLE_ADDON']).optional(),
+  units: z.coerce.number().int().min(1).optional(),
   eventId: z.string().optional(),
   eventBookingId: z.string().optional(),
   addonFeatureKey: z.string().optional(),
@@ -95,11 +96,15 @@ export async function POST(req: Request) {
     }
 
     // 4. Fetch order details from Razorpay to retrieve authentic notes metadata
-    let resolvedPurchaseType: 'SUBSCRIPTION' | 'PER_EVENT_AI' | 'AI_CREDIT_PACK' =
-      parseResult.data.purchaseType || 'SUBSCRIPTION';
+    let resolvedPurchaseType:
+      | 'SUBSCRIPTION'
+      | 'PER_EVENT_AI'
+      | 'AI_CREDIT_PACK'
+      | 'STACKABLE_ADDON' = parseResult.data.purchaseType || 'SUBSCRIPTION';
     let resolvedEventId = parseResult.data.eventId || '';
     let resolvedAddonFeatureKey = parseResult.data.addonFeatureKey || '';
     let resolvedCreditsIncluded = 0;
+    let resolvedUnits = 1;
     let resolvedPlanId = payloadPlanId;
     let resolvedBillingCycle: 'MONTHLY' | 'ANNUAL' =
       payloadBillingCycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
@@ -124,6 +129,9 @@ export async function POST(req: Request) {
       }
       if (rzpOrder?.notes?.creditsIncluded && typeof rzpOrder.notes.creditsIncluded === 'string') {
         resolvedCreditsIncluded = parseInt(rzpOrder.notes.creditsIncluded, 10) || 0;
+      }
+      if (rzpOrder?.notes?.units && typeof rzpOrder.notes.units === 'string') {
+        resolvedUnits = parseInt(rzpOrder.notes.units, 10) || 1;
       }
       if (rzpOrder?.notes?.planId && typeof rzpOrder.notes.planId === 'string') {
         resolvedPlanId = rzpOrder.notes.planId;
@@ -162,6 +170,91 @@ export async function POST(req: Request) {
       );
     }
 
+
+
+    // =========================================================================
+    // BRANCH C: STACKABLE ADD-ON PURCHASE (EXTRA_BRANCH or EXTRA_STAFF_5)
+    // =========================================================================
+    if (resolvedPurchaseType === 'STACKABLE_ADDON') {
+      const addonKey = resolvedAddonFeatureKey || parseResult.data.addonFeatureKey || 'EXTRA_BRANCH';
+      const unitsPurchased = resolvedUnits > 0 ? resolvedUnits : (parseResult.data.units || 1);
+
+      let recordedTxId = '';
+      await prisma.$transaction(async (tx) => {
+        const tenantRecord = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { enabledAddons: true, extraBranchUnits: true, extraStaffUnits: true },
+        });
+
+        const currentAddons = tenantRecord?.enabledAddons || [];
+        const mergedAddons = Array.from(new Set([...currentAddons, addonKey]));
+
+        if (addonKey === 'EXTRA_BRANCH') {
+          await tx.tenant.update({
+            where: { id: tenantId },
+            data: {
+              extraBranchUnits: { increment: unitsPurchased },
+              enabledAddons: mergedAddons,
+            },
+          });
+        } else if (addonKey === 'EXTRA_STAFF_5') {
+          await tx.tenant.update({
+            where: { id: tenantId },
+            data: {
+              extraStaffUnits: { increment: unitsPurchased },
+              enabledAddons: mergedAddons,
+            },
+          });
+        }
+
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx) {
+          const updated = await tx.billingTransaction.update({
+            where: { id: pendingTx.id },
+            data: {
+              status: 'SUCCESS',
+              razorpayPaymentId: razorpay_payment_id,
+              purchaseType: 'STACKABLE_ADDON',
+              addonFeatureKey: addonKey,
+              unitsPurchased: unitsPurchased,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = updated.id;
+        } else {
+          const created = await tx.billingTransaction.create({
+            data: {
+              tenantId,
+              amount: resolvedAmountInRupees,
+              currency: 'INR',
+              status: 'SUCCESS',
+              purchaseType: 'STACKABLE_ADDON',
+              addonFeatureKey: addonKey,
+              unitsPurchased: unitsPurchased,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = created.id;
+        }
+      });
+
+      if (recordedTxId) {
+        await DealerCommissionService.recordDealerCommissionForTransaction(recordedTxId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        purchaseType: 'STACKABLE_ADDON',
+        addonKey,
+        unitsPurchased,
+        message: `Successfully added ${unitsPurchased} ${addonKey === 'EXTRA_BRANCH' ? 'extra branch(es)' : 'extra staff pack(s)'}!`,
+      });
+    }
 
     // =========================================================================
     // BRANCH A: PAY-PER-EVENT AI FACE RECOGNITION UNLOCK

@@ -471,15 +471,15 @@ export function EditPlanDialog({ plan }: EditPlanDialogProps) {
           </div>
 
           
-          {/* Franchise Scaling & Unlimited Branches Toggle */}
+          {/* Franchise Network License Toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-card">
             <div className="space-y-0.5">
               <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Network className="h-3.5 w-3.5 text-primary" />
-                <span>Unlimited Franchise Scaling Tier</span>
+                <span>Franchise Network License &amp; Tools</span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Exempts studios from branch quota enforcement and enables multi-franchise network tools.
+                Enables multi-franchise network provisioning and child studio management.
               </p>
             </div>
             <Switch
@@ -501,9 +501,8 @@ export function EditPlanDialog({ plan }: EditPlanDialogProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20">
               {[
-                { key: 'BROADCAST_MESSAGING', label: 'Broadcast Messaging (Inbuilt in Franchise)' },
-                { key: 'CUSTOM_DOMAIN', label: 'Custom Domain White-label' },
-                { key: 'EXTRA_STORAGE', label: 'Extra Cloud Storage (500GB)' },
+                { key: 'AI_FACE_RECOGNITION', label: 'AI Face Recognition (Inbuilt in Higher Plan)' },
+                { key: 'BROADCAST_MESSAGING', label: 'Customer Broadcast Messaging (Inbuilt in Higher Plan)' },
               ].map((addon) => {
                 const current = watch('includedAddons') || [];
                 const isIncluded = current.includes(addon.key);

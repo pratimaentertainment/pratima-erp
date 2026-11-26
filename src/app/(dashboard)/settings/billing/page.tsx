@@ -68,6 +68,8 @@ export default async function TenantBillingPage() {
         name: true,
         subscriptionStatus: true,
         aiEventCredits: true,
+        extraBranchUnits: true,
+        extraStaffUnits: true,
         trialEndsAt: true,
         enabledAddons: true,
         referredByDealerId: true,
@@ -257,7 +259,7 @@ export default async function TenantBillingPage() {
 
       {/* Resource Utilization & Current Quota Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Branch Limit */}
+                {/* Branch Quota Card */}
         <Card className="shadow-xs">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-muted-foreground">
@@ -269,22 +271,20 @@ export default async function TenantBillingPage() {
             <div className="text-2xl font-bold font-heading text-foreground">
               {branchCount}{' '}
               <span className="text-xs font-normal text-muted-foreground">
-                / {currentPlan ? currentPlan.maxBranches : 1}
+                / {currentPlan ? currentPlan.maxBranches + (tenant.extraBranchUnits || 0) : 1}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {currentPlan && branchCount >= currentPlan.maxBranches
-                ? 'Branch allocation limit reached'
-                : 'Active location capacity'}
+              {currentPlan?.maxBranches || 1} base + {tenant.extraBranchUnits || 0} extra add-on
             </p>
           </CardContent>
         </Card>
 
-        {/* Staff Limit */}
+        {/* Staff Quota Card */}
         <Card className="shadow-xs">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-semibold uppercase tracking-wider">Staff &amp; Crew</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Login Staff</span>
               <Users className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
@@ -292,13 +292,11 @@ export default async function TenantBillingPage() {
             <div className="text-2xl font-bold font-heading text-foreground">
               {staffCount}{' '}
               <span className="text-xs font-normal text-muted-foreground">
-                / {currentPlan ? currentPlan.maxStaff : 3}
+                / {currentPlan ? currentPlan.maxStaff + ((tenant.extraStaffUnits || 0) * 5) : 3}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {currentPlan && staffCount >= currentPlan.maxStaff
-                ? 'Staff quota reached'
-                : 'Team logins allowed'}
+              {currentPlan?.maxStaff || 3} base + {(tenant.extraStaffUnits || 0) * 5} extra seats (Freelancers: Unlimited)
             </p>
           </CardContent>
         </Card>
@@ -375,6 +373,10 @@ export default async function TenantBillingPage() {
           isFirstPaymentDiscountEligible={isFirstPaymentDiscountEligible}
           defaultDiscountPercent={defaultDiscountPercent}
           aiEventCredits={tenant.aiEventCredits || 0}
+          extraBranchUnits={tenant.extraBranchUnits || 0}
+          extraStaffUnits={tenant.extraStaffUnits || 0}
+          branchCount={branchCount}
+          staffCount={staffCount}
         />
       </div>
 

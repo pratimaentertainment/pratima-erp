@@ -69,64 +69,35 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
 
   // Helper to determine plan metadata and feature checklist
   const getPlanDetails = (plan: SerializedSubscriptionPlan) => {
-    const isPro = plan.slug.includes('pro') || plan.name.toLowerCase().includes('pro');
-    const isEnterprise = plan.slug.includes('enterprise') || plan.name.toLowerCase().includes('enterprise');
+    const isMulti = plan.slug.includes('multi') || plan.name.toLowerCase().includes('multi');
+    const isHigher = plan.slug.includes('higher') || plan.slug.includes('franchise') || plan.name.toLowerCase().includes('higher');
 
     let badge: string | null = plan.offerBadgeText || null;
     let isRecommended = false;
     let tagline = 'Ideal for independent photographers and boutique single-shooter setups.';
 
-    if (isPro) {
+    if (isMulti) {
       if (!badge) badge = 'Most Popular';
       isRecommended = true;
-      tagline = 'For established wedding & event studios managing multiple teams and shoots.';
-    } else if (isEnterprise) {
-      if (!badge) badge = 'Enterprise Grade';
-      tagline = 'For high-end production houses, franchises, and large cinema studios.';
+      tagline = 'For established wedding & event studios managing up to 3 branches.';
+    } else if (isHigher) {
+      if (!badge) badge = 'All Features Inbuilt';
+      tagline = 'For production houses and franchise networks with up to 5 locations.';
     } else if (plan.isBasePlan && !badge) {
       badge = 'Base Plan';
     }
 
-    const resolvedFeatureKeys =
-      plan.features && plan.features.length > 0
-        ? plan.features
-        : isEnterprise
-        ? ENTERPRISE_DEFAULT_FEATURES
-        : isPro
-        ? PRO_DEFAULT_FEATURES
-        : STARTER_DEFAULT_FEATURES;
-
-    const isUnlimitedBranches = plan.franchiseEnabled || plan.maxBranches >= 999;
-    const branchLabel = isUnlimitedBranches
-      ? 'Unlimited Branches & Franchise Network'
-      : plan.maxBranches === 1
-      ? '1 Studio Headquarters'
-      : `Up to ${plan.maxBranches} Studio Branches`;
-
-    const staffLabel = plan.maxStaff >= 999
-      ? 'Unlimited Staff & Crew Accounts'
-      : `Up to ${plan.maxStaff} Staff & Crew Accounts`;
-
     const featureItems: string[] = [
       'Full Core CRM & ERP (Leads, Bookings, Crew, GST Invoices, Expenses)',
-      branchLabel,
-      staffLabel,
+      `${plan.maxBranches} Studio Branch${plan.maxBranches > 1 ? 'es' : ''} (Strict Limit)`,
+      `${plan.maxStaff} In-House Login Staff (Strict Limit)`,
+      'Unlimited Non-Login Freelancers (External Crew)',
       'Client Proofing & Selection Portal',
     ];
 
-    if (plan.includedAddons && plan.includedAddons.includes('BROADCAST_MESSAGING')) {
+    if (isHigher || (plan.includedAddons && plan.includedAddons.includes('AI_FACE_RECOGNITION'))) {
+      featureItems.push('✨ AI Face Recognition for All Events (Inbuilt ₹0)');
       featureItems.push('✨ Customer Database Broadcast Messaging (Inbuilt ₹0)');
-    }
-
-    for (const key of resolvedFeatureKeys) {
-      const def = getFeatureDefinition(key);
-      if (def && !featureItems.includes(def.label)) {
-        featureItems.push(def.label);
-      }
-    }
-
-    if (plan.allowFranchises) {
-      featureItems.push(`Franchise Scaling Network (+₹${plan.perFranchiseMonthlyPrice || 999}/mo per franchise)`);
     }
 
     return { badge, isRecommended, tagline, features: featureItems };

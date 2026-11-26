@@ -486,6 +486,8 @@ model Tenant {
   franchiseeRoyalties    FranchiseRoyaltyLedger[] @relation("FranchiseeRoyalties")
   enabledAddons            String[]                 @default([])
   aiEventCredits           Int                      @default(0)
+  extraBranchUnits         Int                      @default(0)
+  extraStaffUnits          Int                      @default(0)
   referredByDealerId         String?
   referredByDealer           DealerProfile?           @relation(fields: [referredByDealerId], references: [id], onDelete: SetNull)
   firstPaymentDiscountUsed   Boolean                  @default(false)
@@ -596,6 +598,7 @@ model BillingTransaction {
   eventBookingId    String?           @db.Uuid
   addonFeatureKey   String?
   creditsPurchased  Int?              @default(0)
+  unitsPurchased    Int?              @default(1)
   transactionDate   DateTime          @default(now())
   razorpayPaymentId String?           @unique
   razorpayOrderId   String?           @unique
