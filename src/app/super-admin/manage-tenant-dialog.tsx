@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   extendTenantTrialAction,
+  revokeTenantTrialAction,
   updateTenantStatusAction,
   resetTenantOwnerPasswordAction,
   updateTenantFranchiseConfigAction,
@@ -53,6 +54,8 @@ export interface AvailablePlanItem {
   id: string;
   name: string;
   slug: string;
+    city?: string | null;
+    isSuspectedDuplicate?: boolean;
   monthlyPrice: number;
   annualPrice: number;
   isBasePlan?: boolean;

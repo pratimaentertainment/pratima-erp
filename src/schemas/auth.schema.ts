@@ -6,6 +6,11 @@ export const publicSignupSchema = z.object({
     .trim()
     .min(3, 'Studio name must be at least 3 characters')
     .max(100, 'Studio name must not exceed 100 characters'),
+  city: z
+    .string()
+    .trim()
+    .min(2, 'City / Town must be at least 2 characters (e.g. Kolhapur, Pune)')
+    .max(80, 'City / Town must not exceed 80 characters'),
   ownerName: z
     .string()
     .trim()
@@ -42,4 +47,13 @@ export const publicSignupSchema = z.object({
   }),
 });
 
+export const publicSignupVerifySchema = publicSignupSchema.extend({
+  otp: z
+    .string()
+    .length(6, 'Please enter the 6-digit verification code')
+    .regex(/^\d{6}$/, 'Verification code must be numbers only'),
+  deviceSeed: z.string().optional(),
+});
+
 export type PublicSignupInput = z.infer<typeof publicSignupSchema>;
+export type PublicSignupVerifyInput = z.infer<typeof publicSignupVerifySchema>;

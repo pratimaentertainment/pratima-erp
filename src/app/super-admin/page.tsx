@@ -216,9 +216,21 @@ export default async function SuperAdminPage() {
                         {/* Studio Name & Slug */}
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-sm text-foreground">
-                              {studio.name}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-sm text-foreground">
+                                {studio.name}
+                              </span>
+                              {studio.city && (
+                                <Badge variant="secondary" className="text-[10px] font-semibold px-1.5 py-0 bg-primary/10 text-primary border-primary/20">
+                                  {studio.city}
+                                </Badge>
+                              )}
+                              {studio.isSuspectedDuplicate && (
+                                <Badge variant="destructive" className="text-[9px] font-bold px-1.5 py-0 uppercase tracking-wider bg-destructive/15 text-destructive border-destructive/30">
+                                  Suspected Duplicate
+                                </Badge>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1 mt-0.5">
                               <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.2 rounded">
                                 /{studio.slug}

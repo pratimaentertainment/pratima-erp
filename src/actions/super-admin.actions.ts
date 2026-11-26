@@ -1,5 +1,7 @@
 'use server';
 
+import { canonicalizeEmail } from '@/utils/anti-abuse.utils';
+
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -203,6 +205,7 @@ export async function registerStudioAction(input: RegisterStudioInput) {
         data: {
           tenantId: tenant.id,
           email: normalizedEmail,
+          canonicalEmail: canonicalizeEmail(normalizedEmail),
           name: `${validated.name.trim()} Owner`,
           passwordHash: hashedPassword,
           role: 'TENANT_OWNER',
@@ -263,6 +266,10 @@ export async function getStudiosAction() {
         id: true,
         name: true,
         slug: true,
+        city: true,
+        signupIp: true,
+        deviceFingerprint: true,
+        isSuspectedDuplicate: true,
         contactPhone: true,
         email: true,
         panNumber: true,
@@ -734,6 +741,57 @@ export async function activateTenantPlanAndAddonsAction(params: {
     return {
       success: false,
       error: error.message || 'Failed to activate plan and add-ons.',
+    };
+  }
+}
+
+/**
+ * Super Admin: Immediately revoke a free-trial and hard-lock the studio workspace.
+ * Used for anti-abuse enforcement on abusive/duplicate trial accounts.
+ */
+export async function revokeTenantTrialAction(tenantId: string) {
+  try {
+    await requireSuperAdmin();
+    if (!tenantId) {
+      return { success: false, error: 'A valid Tenant ID is required.' };
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, city: true },
+    });
+
+    if (!tenant) {
+      return { success: false, error: 'Studio tenant not found.' };
+    }
+
+    const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        trialEndsAt: pastDate,
+        subscriptionStatus: 'CANCELLED',
+      },
+    });
+
+    await prisma.tenantSubscription.updateMany({
+      where: { tenantId },
+      data: {
+        endDate: pastDate,
+      },
+    });
+
+    revalidatePath('/super-admin');
+
+    return {
+      success: true,
+      message: `Free trial for "${tenant.name}" (${tenant.city || 'Headquarters'}) has been immediately revoked and locked.`,
+    };
+  } catch (error: any) {
+    console.error('[revokeTenantTrialAction] Error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to revoke tenant trial.',
     };
   }
 }

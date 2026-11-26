@@ -4,7 +4,7 @@ export interface SendSecurityOtpOptions {
   to: string;
   userName?: string;
   otp: string;
-  purpose: 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+  purpose: 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD' | 'SIGNUP_VERIFICATION';
 }
 
 /**
@@ -81,12 +81,14 @@ function generateOtpEmailHtml({
 }: {
   userName?: string;
   otp: string;
-  purpose: 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+  purpose: 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD' | 'SIGNUP_VERIFICATION';
 }): string {
   const greeting = userName ? `Hello ${userName},` : 'Hello,';
   const actionText =
     purpose === 'FORGOT_PASSWORD'
       ? 'We received a request to reset the login password for your FRAMIQ account.'
+      : purpose === 'SIGNUP_VERIFICATION'
+      ? 'Welcome to FRAMIQ! Please verify your email address to activate your 15-day full-access studio trial.'
       : 'We received a request to change the login password for your FRAMIQ account.';
 
   return `<!DOCTYPE html>
@@ -263,6 +265,8 @@ export async function sendSecurityOtpEmail(options: SendSecurityOtpOptions): Pro
   const subject =
     purpose === 'FORGOT_PASSWORD'
       ? `FRAMIQ Password Reset Code: ${otp}`
+      : purpose === 'SIGNUP_VERIFICATION'
+      ? `FRAMIQ Studio Free Trial Verification Code: ${otp}`
       : `FRAMIQ Security Verification Code: ${otp}`;
 
   const html = generateOtpEmailHtml({ userName, otp, purpose });

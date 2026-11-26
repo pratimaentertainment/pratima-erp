@@ -397,6 +397,10 @@ model Tenant {
   country                    String             @default("US")
   state                      String?
   city                       String?
+  signupIp                   String?
+  signupUserAgent            String?
+  deviceFingerprint          String?
+  isSuspectedDuplicate       Boolean            @default(false)
   address                    String?
   postalCode                 String?
   timezone                   String             @default("UTC")
@@ -499,6 +503,9 @@ model Tenant {
   @@index([contactPhone])
   @@index([panNumber])
   @@index([parentTenantId])
+  @@index([signupIp])
+  @@index([deviceFingerprint])
+  @@index([city])
 }
 
 model Subscription {
@@ -743,8 +750,9 @@ model User {
   tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   role     Role    @default(STAFF)
 
-  email        String
-  passwordHash String?
+  email          String
+  canonicalEmail String?
+  passwordHash   String?
   name         String
 
   canLogin           Boolean        @default(true)
@@ -865,6 +873,7 @@ model User {
 
   @@unique([tenantId, email])
   @@index([tenantId])
+  @@index([canonicalEmail])
 }
 
 model UserBranch {
@@ -984,6 +993,21 @@ model Token {
   attempts  Int       @default(0)
 
   createdAt DateTime @default(now())
+}
+
+model SignupVerification {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String
+  canonicalEmail String
+  phone          String
+  hashedOtp      String
+  attempts       Int       @default(0)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([email])
+  @@index([canonicalEmail])
 }
 
 model Vendor {
