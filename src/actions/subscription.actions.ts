@@ -19,6 +19,7 @@ import { DEFAULT_ADDON_CONFIGS, DEFAULT_PACKAGING_PLANS } from '@/lib/constants/
  */
 export async function ensureAddonPriceListInitialized() {
   try {
+    // 1. Upsert default add-ons
     for (const addon of DEFAULT_ADDON_CONFIGS) {
       await prisma.planAddonConfig.upsert({
         where: { featureKey: addon.featureKey },
@@ -36,6 +37,89 @@ export async function ensureAddonPriceListInitialized() {
           sortOrder: addon.sortOrder,
           isActive: true,
         },
+      });
+    }
+
+    // 2. Purge legacy add-ons not in the 5 canonical items
+    await prisma.planAddonConfig.deleteMany({
+      where: {
+        featureKey: {
+          notIn: [
+            'EXTRA_BRANCH',
+            'EXTRA_STAFF_5',
+            'AI_FACE_RECOGNITION_SINGLE',
+            'AI_FACE_RECOGNITION_PACK_10',
+            'BROADCAST_MESSAGING',
+          ],
+        },
+      },
+    });
+
+    // 3. Ensure canonical 3 base plans exist in database
+    for (const plan of DEFAULT_PACKAGING_PLANS) {
+      await prisma.subscriptionPlan.upsert({
+        where: { slug: plan.slug },
+        update: {
+          name: plan.name,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
+          monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
+          annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
+          maxBranches: plan.maxBranches,
+          maxStaff: plan.maxStaff,
+          allowFranchises: plan.allowFranchises,
+          franchiseEnabled: plan.franchiseEnabled,
+          includedAddons: plan.includedAddons,
+          features: plan.features,
+          isActive: true,
+        },
+        create: {
+          slug: plan.slug,
+          name: plan.name,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
+          monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
+          annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
+          maxBranches: plan.maxBranches,
+          maxStaff: plan.maxStaff,
+          allowFranchises: plan.allowFranchises,
+          franchiseEnabled: plan.franchiseEnabled,
+          includedAddons: plan.includedAddons,
+          features: plan.features,
+          isActive: true,
+        },
+      });
+    }
+
+    // 4. Re-point legacy subscriptions and purge legacy plans
+    const starter = await prisma.subscriptionPlan.findUnique({ where: { slug: 'starter-studio' } });
+    const multi = await prisma.subscriptionPlan.findUnique({ where: { slug: 'multi-branch-pro' } });
+    const higher = await prisma.subscriptionPlan.findUnique({ where: { slug: 'franchise-higher' } });
+
+    if (starter && multi && higher) {
+      const legacyPlans = await prisma.subscriptionPlan.findMany({
+        where: { slug: { notIn: ['starter-studio', 'multi-branch-pro', 'franchise-higher'] } },
+      });
+
+      for (const lp of legacyPlans) {
+        let targetPlanId = starter.id;
+        if (lp.slug.includes('pro')) targetPlanId = multi.id;
+        else if (lp.slug.includes('enterprise') || lp.slug.includes('franchise')) targetPlanId = higher.id;
+
+        await prisma.tenantSubscription.updateMany({
+          where: { planId: lp.id },
+          data: { planId: targetPlanId },
+        });
+      }
+
+      await prisma.subscriptionPlan.deleteMany({
+        where: { slug: { notIn: ['starter-studio', 'multi-branch-pro', 'franchise-higher'] } },
       });
     }
   } catch (err) {
@@ -515,6 +599,46 @@ export async function syncDefaultPackagingAction() {
         },
       });
     }
+
+    // 3. Purge legacy plans and legacy add-ons
+    const starter = await prisma.subscriptionPlan.findUnique({ where: { slug: 'starter-studio' } });
+    const multi = await prisma.subscriptionPlan.findUnique({ where: { slug: 'multi-branch-pro' } });
+    const higher = await prisma.subscriptionPlan.findUnique({ where: { slug: 'franchise-higher' } });
+
+    if (starter && multi && higher) {
+      const legacyPlans = await prisma.subscriptionPlan.findMany({
+        where: { slug: { notIn: ['starter-studio', 'multi-branch-pro', 'franchise-higher'] } },
+      });
+
+      for (const lp of legacyPlans) {
+        let targetPlanId = starter.id;
+        if (lp.slug.includes('pro')) targetPlanId = multi.id;
+        else if (lp.slug.includes('enterprise') || lp.slug.includes('franchise')) targetPlanId = higher.id;
+
+        await prisma.tenantSubscription.updateMany({
+          where: { planId: lp.id },
+          data: { planId: targetPlanId },
+        });
+      }
+
+      await prisma.subscriptionPlan.deleteMany({
+        where: { slug: { notIn: ['starter-studio', 'multi-branch-pro', 'franchise-higher'] } },
+      });
+    }
+
+    await prisma.planAddonConfig.deleteMany({
+      where: {
+        featureKey: {
+          notIn: [
+            'EXTRA_BRANCH',
+            'EXTRA_STAFF_5',
+            'AI_FACE_RECOGNITION_SINGLE',
+            'AI_FACE_RECOGNITION_PACK_10',
+            'BROADCAST_MESSAGING',
+          ],
+        },
+      },
+    });
 
     revalidatePath('/super-admin/subscriptions');
     revalidatePath('/pricing');

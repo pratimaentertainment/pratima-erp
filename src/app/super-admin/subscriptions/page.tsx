@@ -8,20 +8,15 @@ import {
   Sparkles,
   GitBranch,
   Users,
-  IndianRupee,
   ShieldCheck,
-  CheckCircle2,
   Building2,
-  Calendar,
   Layers,
-  Check,
   Star,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -30,12 +25,9 @@ import { PlanActions } from './plan-actions';
 import { AddonPriceListManager } from './addon-price-list-manager';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 import {
-  PLAN_FEATURES_CATALOG,
-  getFeatureDefinition,
-  STARTER_DEFAULT_FEATURES,
-  PRO_DEFAULT_FEATURES,
-  ENTERPRISE_DEFAULT_FEATURES,
-} from '@/lib/constants/plan-features';
+  CANONICAL_PLAN_SLUGS,
+  CANONICAL_ADDON_KEYS,
+} from '@/services/catalog-cache.service';
 
 export const metadata: Metadata = {
   title: 'Subscription Plans & Add-on Catalog - Super Admin | FRAMIQ by Pratima Entertainment & Technology',
@@ -51,12 +43,15 @@ export default async function SuperAdminSubscriptionsPage() {
     redirect('/login');
   }
 
-  // 2. Ensure addon price catalog is initialized with defaults
+  // 2. Ensure canonical plan & addon catalog is initialized and purged of legacy entries
   await ensureAddonPriceListInitialized();
 
-  // 3. Fetch Subscription Plans, Addons, and stats directly via Prisma
-  const [plans, addons, totalSubscriptionsCount, totalTenantsCount] = await Promise.all([
+  // 3. Fetch canonical Subscription Plans, Addons, and stats directly via Prisma
+  const [plans, addons, totalSubscriptionsCount] = await Promise.all([
     prisma.subscriptionPlan.findMany({
+      where: {
+        slug: { in: [...CANONICAL_PLAN_SLUGS] },
+      },
       orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
       include: {
         _count: {
@@ -65,10 +60,12 @@ export default async function SuperAdminSubscriptionsPage() {
       },
     }),
     prisma.planAddonConfig.findMany({
+      where: {
+        featureKey: { in: [...CANONICAL_ADDON_KEYS] },
+      },
       orderBy: { sortOrder: 'asc' },
     }),
     prisma.tenantSubscription.count(),
-    prisma.tenant.count(),
   ]);
 
   const activePlansCount = plans.filter((p) => p.isActive).length;
@@ -219,15 +216,6 @@ export default async function SuperAdminSubscriptionsPage() {
                   ? Math.round(((monthlyNum * 12 - annualNum) / (monthlyNum * 12)) * 100)
                   : 0;
 
-              const planFeatures =
-                plan.features && plan.features.length > 0
-                  ? plan.features
-                  : plan.slug.includes('enterprise')
-                  ? ENTERPRISE_DEFAULT_FEATURES
-                  : plan.slug.includes('pro')
-                  ? PRO_DEFAULT_FEATURES
-                  : STARTER_DEFAULT_FEATURES;
-
               return (
                 <Card
                   key={plan.id}
@@ -311,14 +299,6 @@ export default async function SuperAdminSubscriptionsPage() {
                             Save {annualSavingsPercentage}% on Annual
                           </Badge>
                         )}
-                        {plan.allowFranchises && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[9px] px-1.5 py-0 font-semibold bg-primary/10 text-primary border-primary/20"
-                          >
-                            Franchise Ready (+₹{Number(plan.perFranchiseMonthlyPrice || 0)}/mo)
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -347,28 +327,50 @@ export default async function SuperAdminSubscriptionsPage() {
                       </div>
                     </div>
 
-                    {/* Features Matrix Badge List */}
+                    {/* Clean Plain-Language Quota & Inbuilt Feature Pills */}
                     <div className="pt-3 border-t border-border/50 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-foreground flex items-center gap-1.5">
                           <Sparkles className="h-3.5 w-3.5 text-primary" />
-                          <span>Included Modules ({planFeatures.length})</span>
+                          <span>Core Quotas &amp; Inbuilt Features</span>
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1">
-                        {planFeatures.map((fk) => {
-                          const def = getFeatureDefinition(fk);
-                          return (
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] font-semibold py-0.5 px-2 bg-primary/10 text-primary border border-primary/20"
+                        >
+                          {plan.maxBranches} Branch{plan.maxBranches > 1 ? 'es' : ''}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] font-semibold py-0.5 px-2 bg-primary/10 text-primary border border-primary/20"
+                        >
+                          {plan.maxStaff} Login Staff
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] font-medium py-0.5 px-2 bg-muted/60 text-foreground border border-border/40"
+                        >
+                          Unlimited Freelancers
+                        </Badge>
+                        {(plan.slug === 'franchise-higher' || (plan.includedAddons && plan.includedAddons.includes('AI_FACE_RECOGNITION'))) && (
+                          <>
                             <Badge
-                              key={fk}
                               variant="secondary"
-                              className="text-[10px] font-medium py-0 px-1.5 bg-muted/60 text-foreground"
+                              className="text-[10px] font-semibold py-0.5 px-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                             >
-                              {def?.label || fk}
+                              AI Face Recognition Inbuilt
                             </Badge>
-                          );
-                        })}
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] font-semibold py-0.5 px-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            >
+                              Broadcast Messaging Inbuilt
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     </div>
 

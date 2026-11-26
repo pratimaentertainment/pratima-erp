@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import { Sparkles } from 'lucide-react';
 import {
   PricingTableClient,
@@ -8,7 +7,12 @@ import {
   type SerializedPlanAddon,
 } from './pricing-table-client';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
-import { getCachedSubscriptionPlans, getCachedPlanAddons } from '@/services/catalog-cache.service';
+import {
+  getCachedSubscriptionPlans,
+  getCachedPlanAddons,
+  CANONICAL_PLAN_SLUGS,
+  CANONICAL_ADDON_KEYS,
+} from '@/services/catalog-cache.service';
 
 export const metadata: Metadata = {
   title: 'Pricing Plans | FRAMIQ by Pratima Entertainment & Technology',
@@ -31,8 +35,16 @@ export default async function PricingPage() {
       getCachedPlanAddons(),
     ]);
 
-    // 2. Serialize Decimal fields for React Server Component -> Client Component boundary
-    serializedPlans = dbPlans.map((plan) => ({
+    // 2. Double-guarantee canonical filtering
+    const filteredPlans = dbPlans.filter((p) =>
+      (CANONICAL_PLAN_SLUGS as readonly string[]).includes(p.slug)
+    );
+    const filteredAddons = dbAddons.filter((a) =>
+      (CANONICAL_ADDON_KEYS as readonly string[]).includes(a.featureKey)
+    );
+
+    // 3. Serialize Decimal fields for React Server Component -> Client Component boundary
+    serializedPlans = filteredPlans.map((plan) => ({
       id: plan.id,
       name: plan.name,
       slug: plan.slug,
@@ -53,7 +65,7 @@ export default async function PricingPage() {
       includedAddons: plan.includedAddons,
     }));
 
-    serializedAddons = dbAddons.map((addon) => ({
+    serializedAddons = filteredAddons.map((addon) => ({
       id: addon.id,
       featureKey: addon.featureKey,
       name: addon.name,
