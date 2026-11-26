@@ -69,6 +69,7 @@ export interface BillingPlansTableProps {
   initialDealerCode?: string | null;
   isFirstPaymentDiscountEligible?: boolean;
   defaultDiscountPercent?: number;
+  aiEventCredits?: number;
 }
 
 export function BillingPlansTable({
@@ -81,6 +82,7 @@ export function BillingPlansTable({
   initialDealerCode = null,
   isFirstPaymentDiscountEligible = false,
   defaultDiscountPercent = 0,
+  aiEventCredits = 0,
 }: BillingPlansTableProps) {
   const [isAnnual, setIsAnnual] = useState(currentBillingCycle === 'ANNUAL');
   const [selectedAddons, setSelectedAddons] = useState<string[]>(initialEnabledAddons);
@@ -489,6 +491,58 @@ export function BillingPlansTable({
             </div>
           );
         })}
+      </div>
+
+            {/* AI Face Recognition Event Credits & Pay-Per-Event Wallet Card */}
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h3 className="text-base sm:text-lg font-bold font-heading text-foreground">
+                AI Face Recognition &amp; Smart Photo Delivery
+              </h3>
+              <Badge variant="outline" className="text-[10px] font-mono border-primary/30 bg-primary/10 text-primary">
+                Pay-Per-Event
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+              No mandatory monthly fees. Only unlock AI face matching when you have active wedding or event shoots. 
+              Guests take a quick selfie on their phone and instantly view all their photos. 1 credit unlocks 1 full shoot.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 bg-background/80 border border-border/80 px-4 py-3 rounded-xl shrink-0">
+            <div className="space-y-0.5">
+              <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                Wallet Balance
+              </span>
+              <div className="text-xl font-black font-heading text-primary">
+                {aiEventCredits} <span className="text-xs font-normal text-muted-foreground">Credits</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/40">
+          <RazorpayCheckoutButton
+            purchaseType="PER_EVENT_AI"
+            buttonText="Buy Single Event Credit (₹149 + GST)"
+            variant="outline"
+            size="sm"
+            className="text-xs border-primary/30 text-foreground hover:bg-primary/5"
+          />
+          <RazorpayCheckoutButton
+            purchaseType="AI_CREDIT_PACK"
+            addonFeatureKey="AI_FACE_RECOGNITION_PACK_10"
+            buttonText="Buy 10-Event Pack (₹1,199 + GST — Save 20%)"
+            size="sm"
+            className="text-xs font-bold"
+          />
+          <span className="text-[11px] text-muted-foreground">
+            • Credits never expire • Instant wallet activation via Razorpay
+          </span>
+        </div>
       </div>
 
       {/* Modular Optional Add-ons Customizer Table */}

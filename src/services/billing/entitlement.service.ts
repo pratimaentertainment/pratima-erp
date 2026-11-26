@@ -18,6 +18,10 @@ export interface TenantEntitlements {
   features: PlanFeatureKey[];
   activeFeatures: Set<PlanFeatureKey>;
   enabledAddons: string[];
+  franchiseEnabled?: boolean;
+  includedAddons: string[];
+  effectiveMaxBranches: number;
+  aiEventCredits: number;
   isTrial: boolean;
   isActive: boolean;
   isLocked: boolean;
@@ -86,6 +90,10 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       isActive: false,
       isLocked: true,
       lockReason: 'NO_TENANT',
+      franchiseEnabled: false,
+      includedAddons: [],
+      effectiveMaxBranches: 1,
+      aiEventCredits: 0,
     };
   }
 
@@ -99,6 +107,7 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       parentTenantId: true,
       isFranchisor: true,
       enabledAddons: true,
+      aiEventCredits: true,
       subscription: {
         include: {
           plan: true,
@@ -132,6 +141,10 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
       isActive: false,
       isLocked: true,
       lockReason: 'TENANT_NOT_FOUND',
+      franchiseEnabled: false,
+      includedAddons: [],
+      effectiveMaxBranches: 1,
+      aiEventCredits: 0,
     };
   }
 
@@ -172,6 +185,10 @@ export async function getTenantEntitlements(tenantId: string): Promise<TenantEnt
     isActive: tenant.subscriptionStatus === 'ACTIVE',
     isLocked: lockStatus.isLocked,
     lockReason: lockStatus.reason,
+    franchiseEnabled: activePlan?.franchiseEnabled ?? false,
+    includedAddons: activePlan?.includedAddons ?? [],
+    effectiveMaxBranches: (activePlan?.franchiseEnabled || maxBranches >= 999) ? 999999 : maxBranches,
+    aiEventCredits: tenant.aiEventCredits ?? 0,
   };
 }
 
@@ -281,4 +298,17 @@ export class EntitlementService {
   public static assertFeatureAccess = assertFeatureAccess;
   public static assertBranchQuota = assertBranchQuota;
   public static assertStaffQuota = assertStaffQuota;
+}
+
+
+export async function hasTenantAddon(
+  tenantId: string,
+  addonKey: string
+): Promise<boolean> {
+  const entitlements = await getTenantEntitlements(tenantId);
+  return (
+    entitlements.enabledAddons.includes(addonKey) ||
+    entitlements.includedAddons.includes(addonKey) ||
+    entitlements.activeFeatures.has(addonKey as PlanFeatureKey)
+  );
 }

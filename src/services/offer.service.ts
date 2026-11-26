@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, DiscountType } from '@prisma/client';
 import { formatDate } from '@/lib/date';
+import { hasTenantAddon } from '@/services/billing/entitlement.service';
 
 export interface CreatePromotionalOfferInput {
   title: string;
@@ -134,6 +135,12 @@ export class OfferService {
    * Broadcast promotional offer to all confirmed customers via WhatsApp
    */
   static async broadcastOfferToCustomers(tenantId: string, offerId: string) {
+    const hasBroadcast = await hasTenantAddon(tenantId, 'BROADCAST_MESSAGING');
+    if (!hasBroadcast) {
+      throw new Error(
+        'Broadcast Messaging is a premium feature (inbuilt in Franchise Enterprise). Please activate the Broadcast Messaging add-on in Settings > Billing or upgrade your plan to send bulk campaigns.'
+      );
+    }
     const offer = await prisma.promotionalOffer.findFirst({
       where: { id: offerId, tenantId, deletedAt: null },
     });

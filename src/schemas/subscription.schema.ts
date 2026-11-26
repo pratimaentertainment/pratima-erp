@@ -56,6 +56,8 @@ export const createPlanSchema = z.object({
     .min(0, 'WhatsApp credits cannot be negative')
     .default(0),
   allowFranchises: z.boolean().default(false),
+  franchiseEnabled: z.boolean().default(false),
+  includedAddons: z.array(z.string()).default([]),
   perFranchiseMonthlyPrice: z.coerce
     .number()
     .min(0, 'Per-franchise monthly price must be 0 or greater')
@@ -119,6 +121,8 @@ export const updatePlanSchema = z.object({
     .min(0, 'WhatsApp credits cannot be negative')
     .optional(),
   allowFranchises: z.boolean().optional(),
+  franchiseEnabled: z.boolean().optional(),
+  includedAddons: z.array(z.string()).optional(),
   perFranchiseMonthlyPrice: z.coerce
     .number()
     .min(0, 'Per-franchise monthly price must be 0 or greater')
@@ -140,6 +144,8 @@ export const upsertAddonPriceSchema = z.object({
   monthlyPrice: z.coerce.number().min(0, 'Monthly price must be 0 or greater').default(0),
   originalAnnualPrice: z.coerce.number().min(0).nullable().optional(),
   annualPrice: z.coerce.number().min(0, 'Annual price must be 0 or greater').default(0),
+  billingType: z.enum(['RECURRING', 'PER_EVENT', 'CREDIT_PACK']).default('RECURRING'),
+  creditsIncluded: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 });

@@ -485,6 +485,7 @@ model Tenant {
   franchisorRoyalties    FranchiseRoyaltyLedger[] @relation("FranchisorRoyalties")
   franchiseeRoyalties    FranchiseRoyaltyLedger[] @relation("FranchiseeRoyalties")
   enabledAddons            String[]                 @default([])
+  aiEventCredits           Int                      @default(0)
   referredByDealerId         String?
   referredByDealer           DealerProfile?           @relation(fields: [referredByDealerId], references: [id], onDelete: SetNull)
   firstPaymentDiscountUsed   Boolean                  @default(false)
@@ -530,6 +531,8 @@ model SubscriptionPlan {
   smsCredits               Int      @default(0)
   whatsappCredits          Int      @default(0)
   allowFranchises          Boolean  @default(false)
+  franchiseEnabled         Boolean  @default(false)
+  includedAddons           String[] @default([])
   features                 String[] @default([])
   perFranchiseMonthlyPrice Decimal? @default(0) @db.Decimal(10, 2)
   perFranchiseAnnualPrice  Decimal? @default(0) @db.Decimal(10, 2)
@@ -550,6 +553,8 @@ model PlanAddonConfig {
   monthlyPrice         Decimal  @default(0) @db.Decimal(10, 2)
   originalAnnualPrice  Decimal? @db.Decimal(10, 2)
   annualPrice          Decimal  @default(0) @db.Decimal(10, 2)
+  billingType          String   @default("RECURRING")
+  creditsIncluded      Int      @default(0)
   isActive             Boolean  @default(true)
   sortOrder            Int      @default(0)
   createdAt            DateTime @default(now())
@@ -587,6 +592,10 @@ model BillingTransaction {
   paymentMode       String?           @default("RAZORPAY")
   transactionRef    String?
   notes             String?
+  purchaseType      String?           @default("SUBSCRIPTION")
+  eventBookingId    String?           @db.Uuid
+  addonFeatureKey   String?
+  creditsPurchased  Int?              @default(0)
   transactionDate   DateTime          @default(now())
   razorpayPaymentId String?           @unique
   razorpayOrderId   String?           @unique
@@ -1783,6 +1792,8 @@ model EventBooking {
 
   notes    String?
   location String?
+  aiFaceRecognitionUnlocked Boolean   @default(false)
+  aiUnlockedAt              DateTime?
 
   createdById String? @db.Uuid
   createdBy   User?   @relation("EventBookingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)

@@ -65,6 +65,8 @@ interface EditPlanDialogProps {
     allowFranchises?: boolean;
     perFranchiseMonthlyPrice?: number | string | null;
     perFranchiseAnnualPrice?: number | string | null;
+    franchiseEnabled?: boolean;
+    includedAddons?: string[];
     isActive: boolean;
   };
 }
@@ -109,6 +111,8 @@ export function EditPlanDialog({ plan }: EditPlanDialogProps) {
       allowFranchises: plan.allowFranchises ?? false,
       perFranchiseMonthlyPrice: Number(plan.perFranchiseMonthlyPrice || 0),
       perFranchiseAnnualPrice: Number(plan.perFranchiseAnnualPrice || 0),
+      franchiseEnabled: plan.franchiseEnabled ?? false,
+      includedAddons: plan.includedAddons || [],
       isActive: plan.isActive,
     },
   });
@@ -460,6 +464,74 @@ export function EditPlanDialog({ plan }: EditPlanDialogProps) {
                         {f.shortDescription}
                       </div>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          
+          {/* Franchise Scaling & Unlimited Branches Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-card">
+            <div className="space-y-0.5">
+              <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Network className="h-3.5 w-3.5 text-primary" />
+                <span>Unlimited Franchise Scaling Tier</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Exempts studios from branch quota enforcement and enables multi-franchise network tools.
+              </p>
+            </div>
+            <Switch
+              checked={watch('franchiseEnabled')}
+              onCheckedChange={(checked) => setValue('franchiseEnabled', checked)}
+            />
+          </div>
+
+          {/* Bundled Add-ons Checklist */}
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-primary" />
+                <span>Inbuilt Add-ons (Bundled at ₹0)</span>
+              </Label>
+              <span className="text-[10px] text-muted-foreground">
+                Included free in this plan tier
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20">
+              {[
+                { key: 'BROADCAST_MESSAGING', label: 'Broadcast Messaging (Inbuilt in Franchise)' },
+                { key: 'CUSTOM_DOMAIN', label: 'Custom Domain White-label' },
+                { key: 'EXTRA_STORAGE', label: 'Extra Cloud Storage (500GB)' },
+              ].map((addon) => {
+                const current = watch('includedAddons') || [];
+                const isIncluded = current.includes(addon.key);
+                return (
+                  <div
+                    key={addon.key}
+                    onClick={() => {
+                      const updated = isIncluded
+                        ? current.filter((k) => k !== addon.key)
+                        : [...current, addon.key];
+                      setValue('includedAddons', updated);
+                    }}
+                    className={`flex items-center gap-2 p-2 rounded-lg border text-left cursor-pointer transition-all ${
+                      isIncluded
+                        ? 'bg-primary/10 border-primary/40 text-foreground'
+                        : 'bg-card/40 border-border/50 text-muted-foreground'
+                    }`}
+                  >
+                    <div
+                      className={`h-4 w-4 rounded flex items-center justify-center border ${
+                        isIncluded
+                          ? 'bg-primary border-primary text-primary-foreground'
+                          : 'border-muted-foreground/40'
+                      }`}
+                    >
+                      {isIncluded && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                    <span className="text-xs font-semibold">{addon.label}</span>
                   </div>
                 );
               })}

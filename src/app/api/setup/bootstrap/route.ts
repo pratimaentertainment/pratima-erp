@@ -6,6 +6,7 @@ import {
   STARTER_DEFAULT_FEATURES,
   PRO_DEFAULT_FEATURES,
   ENTERPRISE_DEFAULT_FEATURES,
+  DEFAULT_PACKAGING_PLANS,
 } from '@/lib/constants/plan-features';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
 
@@ -33,68 +34,7 @@ interface SubscriptionPlanSeedData {
   features: string[];
 }
 
-const DEFAULT_PLANS: SubscriptionPlanSeedData[] = [
-  {
-    slug: 'starter-studio',
-    name: 'Starter Studio',
-    originalMonthlyPrice: 1499,
-    monthlyPrice: 999,
-    originalAnnualPrice: 14990,
-    annualPrice: 9990,
-    offerBadgeText: 'Base Plan',
-    isBasePlan: true,
-    sortOrder: 1,
-    maxBranches: 1,
-    maxStaff: 3,
-    smsCredits: 100,
-    whatsappCredits: 500,
-    allowFranchises: false,
-    perFranchiseMonthlyPrice: 0,
-    perFranchiseAnnualPrice: 0,
-    isActive: true,
-    features: [...STARTER_DEFAULT_FEATURES],
-  },
-  {
-    slug: 'pro-studio',
-    name: 'Pro Studio',
-    originalMonthlyPrice: 3499,
-    monthlyPrice: 2499,
-    originalAnnualPrice: 34990,
-    annualPrice: 24990,
-    offerBadgeText: 'Most Popular',
-    isBasePlan: false,
-    sortOrder: 2,
-    maxBranches: 3,
-    maxStaff: 10,
-    smsCredits: 500,
-    whatsappCredits: 2500,
-    allowFranchises: false,
-    perFranchiseMonthlyPrice: 0,
-    perFranchiseAnnualPrice: 0,
-    isActive: true,
-    features: [...PRO_DEFAULT_FEATURES],
-  },
-  {
-    slug: 'enterprise-franchise',
-    name: 'Enterprise Franchise',
-    originalMonthlyPrice: 6999,
-    monthlyPrice: 4999,
-    originalAnnualPrice: 69990,
-    annualPrice: 49990,
-    offerBadgeText: 'Franchise Ready',
-    isBasePlan: false,
-    sortOrder: 3,
-    maxBranches: 10,
-    maxStaff: 50,
-    smsCredits: 2000,
-    whatsappCredits: 10000,
-    allowFranchises: true,
-    perFranchiseMonthlyPrice: 999,
-    perFranchiseAnnualPrice: 9990,
-    isActive: true,
-    features: [...ENTERPRISE_DEFAULT_FEATURES],
-  },
-];
+const DEFAULT_PLANS = DEFAULT_PACKAGING_PLANS;
 
 /**
  * GET /api/setup/bootstrap?secret=...
@@ -209,12 +149,14 @@ export async function GET(req: Request) {
           sortOrder: plan.sortOrder,
           maxBranches: plan.maxBranches,
           maxStaff: plan.maxStaff,
-          smsCredits: plan.smsCredits,
-          whatsappCredits: plan.whatsappCredits,
+          smsCredits: plan.smsCredits ?? 0,
+          whatsappCredits: plan.whatsappCredits ?? 0,
           allowFranchises: plan.allowFranchises,
-          perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
-          perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
-          isActive: plan.isActive,
+          franchiseEnabled: plan.franchiseEnabled ?? plan.allowFranchises,
+          includedAddons: plan.includedAddons ?? [],
+          perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ?? 0,
+          perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ?? 0,
+          isActive: plan.isActive ?? true,
           features: plan.features,
         },
         create: {
@@ -229,12 +171,14 @@ export async function GET(req: Request) {
           sortOrder: plan.sortOrder,
           maxBranches: plan.maxBranches,
           maxStaff: plan.maxStaff,
-          smsCredits: plan.smsCredits,
-          whatsappCredits: plan.whatsappCredits,
+          smsCredits: plan.smsCredits ?? 0,
+          whatsappCredits: plan.whatsappCredits ?? 0,
           allowFranchises: plan.allowFranchises,
-          perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice,
-          perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice,
-          isActive: plan.isActive,
+          franchiseEnabled: plan.franchiseEnabled ?? plan.allowFranchises,
+          includedAddons: plan.includedAddons ?? [],
+          perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ?? 0,
+          perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ?? 0,
+          isActive: plan.isActive ?? true,
           features: plan.features,
         },
         select: {
@@ -257,6 +201,9 @@ export async function GET(req: Request) {
       });
       seededPlans.push(upsertedPlan);
     }
+
+    // Ensure cost-recovery & scale add-ons are initialized
+    await ensureAddonPriceListInitialized();
 
     // 3. Ensure Modular Add-on Capabilities Price Catalog is Initialized
     await ensureAddonPriceListInitialized();

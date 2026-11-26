@@ -67,6 +67,7 @@ export default async function TenantBillingPage() {
         id: true,
         name: true,
         subscriptionStatus: true,
+        aiEventCredits: true,
         trialEndsAt: true,
         enabledAddons: true,
         referredByDealerId: true,
@@ -126,6 +127,8 @@ export default async function TenantBillingPage() {
     features: p.features || [],
     smsCredits: p.smsCredits,
     whatsappCredits: p.whatsappCredits,
+    franchiseEnabled: p.franchiseEnabled,
+    includedAddons: p.includedAddons,
     isActive: p.isActive,
   }));
 
@@ -138,6 +141,8 @@ export default async function TenantBillingPage() {
     monthlyPrice: Number(a.monthlyPrice),
     originalAnnualPrice: a.originalAnnualPrice ? Number(a.originalAnnualPrice) : null,
     annualPrice: Number(a.annualPrice),
+    billingType: a.billingType,
+    creditsIncluded: a.creditsIncluded,
   }));
 
   // 4. Compute status metrics and trial countdown
@@ -298,6 +303,27 @@ export default async function TenantBillingPage() {
           </CardContent>
         </Card>
 
+                {/* AI Event Credits Wallet */}
+        <Card className="shadow-xs border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">AI Event Credits</span>
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-2xl font-bold font-heading text-foreground">
+              {tenant.aiEventCredits || 0}{' '}
+              <span className="text-xs font-normal text-muted-foreground">
+                unlocked credits
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Face match &amp; photo delivery wallet
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Enabled Add-ons Count */}
         <Card className="shadow-xs">
           <CardHeader className="pb-2">
@@ -348,6 +374,7 @@ export default async function TenantBillingPage() {
           initialDealerCode={initialDealerCode}
           isFirstPaymentDiscountEligible={isFirstPaymentDiscountEligible}
           defaultDiscountPercent={defaultDiscountPercent}
+          aiEventCredits={tenant.aiEventCredits || 0}
         />
       </div>
 

@@ -41,6 +41,8 @@ export interface SerializedSubscriptionPlan {
   allowFranchises?: boolean;
   perFranchiseMonthlyPrice?: number;
   perFranchiseAnnualPrice?: number;
+  franchiseEnabled?: boolean;
+  includedAddons?: string[];
 }
 
 export interface SerializedPlanAddon {
@@ -52,6 +54,8 @@ export interface SerializedPlanAddon {
   monthlyPrice: number;
   originalAnnualPrice?: number | null;
   annualPrice: number;
+  billingType?: string | null;
+  creditsIncluded?: number | null;
 }
 
 interface PricingTableClientProps {
@@ -92,12 +96,27 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
         ? PRO_DEFAULT_FEATURES
         : STARTER_DEFAULT_FEATURES;
 
+    const isUnlimitedBranches = plan.franchiseEnabled || plan.maxBranches >= 999;
+    const branchLabel = isUnlimitedBranches
+      ? 'Unlimited Branches & Franchise Network'
+      : plan.maxBranches === 1
+      ? '1 Studio Headquarters'
+      : `Up to ${plan.maxBranches} Studio Branches`;
+
+    const staffLabel = plan.maxStaff >= 999
+      ? 'Unlimited Staff & Crew Accounts'
+      : `Up to ${plan.maxStaff} Staff & Crew Accounts`;
+
     const featureItems: string[] = [
-      plan.maxBranches === 1 ? '1 Studio Headquarters' : `Up to ${plan.maxBranches} Studio Branches`,
-      `Up to ${plan.maxStaff} Staff & Crew Accounts`,
-      'GST Quotations, Invoices & Digital Receipts',
-      'Event Shoot Calendar & Crew Rostering',
+      'Full Core CRM & ERP (Leads, Bookings, Crew, GST Invoices, Expenses)',
+      branchLabel,
+      staffLabel,
+      'Client Proofing & Selection Portal',
     ];
+
+    if (plan.includedAddons && plan.includedAddons.includes('BROADCAST_MESSAGING')) {
+      featureItems.push('✨ Customer Database Broadcast Messaging (Inbuilt ₹0)');
+    }
 
     for (const key of resolvedFeatureKeys) {
       const def = getFeatureDefinition(key);
@@ -148,6 +167,17 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
 
   return (
     <div className="space-y-16">
+            {/* Full Core CRM & ERP Guaranteed Value Banner */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 text-center space-y-1.5 shadow-xs max-w-4xl mx-auto">
+        <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm sm:text-base">
+          <Sparkles className="h-4 w-4" />
+          <span>Full Core CRM &amp; ERP Included in Every Plan</span>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
+          No feature locks on essential daily workflows. Complete Leads, Quotations, Bookings, Crew &amp; Gear Dispatch, Invoicing, Expenses, and Basic Client Portals are standard across all tiers. You only pay for branch scale and variable-cost capabilities.
+        </p>
+      </div>
+
       {/* Billing Switcher (Monthly vs Annual) */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
@@ -386,8 +416,8 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                   <tr>
                     <th className="py-3.5 px-4 sm:px-6">Capability Module</th>
                     <th className="py-3.5 px-4 hidden md:table-cell">What It Unlocks</th>
-                    <th className="py-3.5 px-4 text-right">Monthly (MRP / Offer)</th>
-                    <th className="py-3.5 px-4 sm:px-6 text-right">Annual (MRP / Offer)</th>
+                    <th className="py-3.5 px-4 text-center">Billing Model</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-right">Pricing (MRP / Offer)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -411,29 +441,51 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                         <td className="py-3.5 px-4 hidden md:table-cell text-muted-foreground">
                           {addon.description || 'Enterprise modular add-on capability.'}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-mono">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {origM && origM > curM && (
-                              <span className="text-muted-foreground line-through text-[11px]">
-                                ₹{origM.toLocaleString('en-IN')}
-                              </span>
-                            )}
-                            <span className="font-bold text-foreground">
-                              ₹{curM.toLocaleString('en-IN')}/mo
-                            </span>
-                          </div>
+                        <td className="py-3.5 px-4 text-center">
+                          {addon.billingType === 'PER_EVENT' ? (
+                            <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px]">
+                              Pay-Per-Event (1 Credit)
+                            </Badge>
+                          ) : addon.billingType === 'CREDIT_PACK' ? (
+                            <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px]">
+                              Prepaid Pack ({addon.creditsIncluded || 10} Credits)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                              Monthly / Annual Add-on
+                            </Badge>
+                          )}
                         </td>
                         <td className="py-3.5 px-4 sm:px-6 text-right font-mono">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {origA && origA > curA && (
-                              <span className="text-muted-foreground line-through text-[11px]">
-                                ₹{origA.toLocaleString('en-IN')}
+                          {addon.billingType === 'PER_EVENT' || addon.billingType === 'CREDIT_PACK' ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              {origM && origM > curM && (
+                                <span className="text-muted-foreground line-through text-[11px]">
+                                  ₹{origM.toLocaleString('en-IN')}
+                                </span>
+                              )}
+                              <span className="font-bold text-foreground text-sm">
+                                ₹{curM.toLocaleString('en-IN')}
                               </span>
-                            )}
-                            <span className="font-bold text-foreground">
-                              ₹{curA.toLocaleString('en-IN')}/yr
-                            </span>
-                          </div>
+                              <span className="text-[10px] text-muted-foreground">one-time</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex items-center gap-1.5">
+                                {origM && origM > curM && (
+                                  <span className="text-muted-foreground line-through text-[11px]">
+                                    ₹{origM.toLocaleString('en-IN')}
+                                  </span>
+                                )}
+                                <span className="font-bold text-foreground">
+                                  ₹{curM.toLocaleString('en-IN')}/mo
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground">
+                                or ₹{curA.toLocaleString('en-IN')}/yr
+                              </span>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

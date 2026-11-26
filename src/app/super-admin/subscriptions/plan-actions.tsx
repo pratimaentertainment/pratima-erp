@@ -29,6 +29,8 @@ interface PlanActionsProps {
     allowFranchises?: boolean;
     perFranchiseMonthlyPrice?: number | string | null;
     perFranchiseAnnualPrice?: number | string | null;
+    franchiseEnabled?: boolean;
+    includedAddons?: string[];
     isActive: boolean;
   };
 }

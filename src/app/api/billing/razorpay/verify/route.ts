@@ -11,6 +11,10 @@ const verifyPaymentSchema = z.object({
   razorpay_order_id: z.string().min(1, 'razorpay_order_id is required'),
   razorpay_payment_id: z.string().min(1, 'razorpay_payment_id is required'),
   razorpay_signature: z.string().min(1, 'razorpay_signature is required'),
+  purchaseType: z.enum(['SUBSCRIPTION', 'PER_EVENT_AI', 'AI_CREDIT_PACK']).optional(),
+  eventId: z.string().optional(),
+  eventBookingId: z.string().optional(),
+  addonFeatureKey: z.string().optional(),
   planId: z.string().optional(),
   billingCycle: z.enum(['MONTHLY', 'ANNUAL']).optional(),
   addonKeys: z.array(z.string()).optional(),
@@ -91,6 +95,11 @@ export async function POST(req: Request) {
     }
 
     // 4. Fetch order details from Razorpay to retrieve authentic notes metadata
+    let resolvedPurchaseType: 'SUBSCRIPTION' | 'PER_EVENT_AI' | 'AI_CREDIT_PACK' =
+      parseResult.data.purchaseType || 'SUBSCRIPTION';
+    let resolvedEventId = parseResult.data.eventId || '';
+    let resolvedAddonFeatureKey = parseResult.data.addonFeatureKey || '';
+    let resolvedCreditsIncluded = 0;
     let resolvedPlanId = payloadPlanId;
     let resolvedBillingCycle: 'MONTHLY' | 'ANNUAL' =
       payloadBillingCycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
@@ -104,6 +113,18 @@ export async function POST(req: Request) {
       const client = razorpayService.getClient();
       const rzpOrder = await client.orders.fetch(razorpay_order_id);
 
+      if (rzpOrder?.notes?.purchaseType && typeof rzpOrder.notes.purchaseType === 'string') {
+        resolvedPurchaseType = rzpOrder.notes.purchaseType as any;
+      }
+      if (rzpOrder?.notes?.eventId && typeof rzpOrder.notes.eventId === 'string') {
+        resolvedEventId = rzpOrder.notes.eventId;
+      }
+      if (rzpOrder?.notes?.addonFeatureKey && typeof rzpOrder.notes.addonFeatureKey === 'string') {
+        resolvedAddonFeatureKey = rzpOrder.notes.addonFeatureKey;
+      }
+      if (rzpOrder?.notes?.creditsIncluded && typeof rzpOrder.notes.creditsIncluded === 'string') {
+        resolvedCreditsIncluded = parseInt(rzpOrder.notes.creditsIncluded, 10) || 0;
+      }
       if (rzpOrder?.notes?.planId && typeof rzpOrder.notes.planId === 'string') {
         resolvedPlanId = rzpOrder.notes.planId;
       }
@@ -141,6 +162,142 @@ export async function POST(req: Request) {
       );
     }
 
+
+    // =========================================================================
+    // BRANCH A: PAY-PER-EVENT AI FACE RECOGNITION UNLOCK
+    // =========================================================================
+    if (resolvedPurchaseType === 'PER_EVENT_AI') {
+      const eventId = resolvedEventId || parseResult.data.eventId;
+      if (!eventId) {
+        return NextResponse.json(
+          { success: false, error: 'eventId is missing for per-event unlock.' },
+          { status: 400 }
+        );
+      }
+
+      let recordedTxId = '';
+      await prisma.$transaction(async (tx) => {
+        await tx.eventBooking.update({
+          where: { id: eventId },
+          data: {
+            aiFaceRecognitionUnlocked: true,
+            aiUnlockedAt: new Date(),
+          },
+        });
+
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx) {
+          const updated = await tx.billingTransaction.update({
+            where: { id: pendingTx.id },
+            data: {
+              status: 'SUCCESS',
+              razorpayPaymentId: razorpay_payment_id,
+              purchaseType: 'PER_EVENT_AI',
+              eventBookingId: eventId,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = updated.id;
+        } else {
+          const created = await tx.billingTransaction.create({
+            data: {
+              tenantId,
+              amount: resolvedAmountInRupees,
+              currency: 'INR',
+              status: 'SUCCESS',
+              purchaseType: 'PER_EVENT_AI',
+              eventBookingId: eventId,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = created.id;
+        }
+      });
+
+      if (recordedTxId) {
+        await DealerCommissionService.recordDealerCommissionForTransaction(recordedTxId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        purchaseType: 'PER_EVENT_AI',
+        eventId,
+        message: 'AI Face Recognition unlocked successfully for this event!',
+      });
+    }
+
+    // =========================================================================
+    // BRANCH B: PREPAID AI EVENT CREDIT PACK PURCHASE
+    // =========================================================================
+    if (resolvedPurchaseType === 'AI_CREDIT_PACK') {
+      const addonKey = resolvedAddonFeatureKey || parseResult.data.addonFeatureKey || 'AI_FACE_RECOGNITION_PACK_10';
+      const creditsIncluded = resolvedCreditsIncluded > 0 ? resolvedCreditsIncluded : 10;
+
+      let recordedTxId = '';
+      await prisma.$transaction(async (tx) => {
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            aiEventCredits: { increment: creditsIncluded },
+          },
+        });
+
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx) {
+          const updated = await tx.billingTransaction.update({
+            where: { id: pendingTx.id },
+            data: {
+              status: 'SUCCESS',
+              razorpayPaymentId: razorpay_payment_id,
+              purchaseType: 'AI_CREDIT_PACK',
+              addonFeatureKey: addonKey,
+              creditsPurchased: creditsIncluded,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = updated.id;
+        } else {
+          const created = await tx.billingTransaction.create({
+            data: {
+              tenantId,
+              amount: resolvedAmountInRupees,
+              currency: 'INR',
+              status: 'SUCCESS',
+              purchaseType: 'AI_CREDIT_PACK',
+              addonFeatureKey: addonKey,
+              creditsPurchased: creditsIncluded,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              transactionDate: new Date(),
+            },
+          });
+          recordedTxId = created.id;
+        }
+      });
+
+      if (recordedTxId) {
+        await DealerCommissionService.recordDealerCommissionForTransaction(recordedTxId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        purchaseType: 'AI_CREDIT_PACK',
+        creditsAdded: creditsIncluded,
+        message: `${creditsIncluded} AI Event Credits added to your studio wallet!`,
+      });
+    }
+
+    // =========================================================================
+    // BRANCH C: SAAS SUBSCRIPTION PLAN & RECURRING ADD-ONS
+    // =========================================================================
     // 5. Resolve active SubscriptionPlan
     let plan = resolvedPlanId
       ? await prisma.subscriptionPlan.findUnique({ where: { id: resolvedPlanId } })

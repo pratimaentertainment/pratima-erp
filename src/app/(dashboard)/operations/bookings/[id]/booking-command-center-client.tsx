@@ -53,6 +53,15 @@ import {
   removeVehicleFromSubEventAction,
 } from '@/actions/vehicle.actions';
 import { createSubEventAction } from '@/actions/event.actions';
+import { redeemAiEventCreditAction } from '@/actions/event-ai.actions';
+import { RazorpayCheckoutButton } from '@/components/billing/razorpay-checkout-button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { BookingVoucherDocument, type BookingVoucherData } from '@/features/bookings/components/BookingVoucherDocument';
 import { JourneyTracker } from '@/components/portal/journey-tracker';
 
@@ -147,6 +156,8 @@ export function BookingCommandCenterClient({ initialData }: BookingCommandCenter
   const [newSubEventEndTime, setNewSubEventEndTime] = React.useState('14:00');
   const [newSubEventVenue, setNewSubEventVenue] = React.useState(booking.location || '');
   const [isCreatingSubEvent, setIsCreatingSubEvent] = React.useState(false);
+  const [showAiUnlockDialog, setShowAiUnlockDialog] = React.useState(false);
+  const [isRedeemingCredit, setIsRedeemingCredit] = React.useState(false);
 
   const customer = booking.customer || {};
   const customerName =
@@ -969,9 +980,95 @@ _Please report 30 minutes prior to call time in official studio attire._`;
                                       )}
                                     </Button>
                                   </div>
-                                </div>
-                              );
-                            })}
+                            
+      {/* AI Face Recognition Unlock Dialog */}
+      <Dialog open={showAiUnlockDialog} onOpenChange={setShowAiUnlockDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <DialogTitle className="text-base font-bold font-heading">
+                Unlock AI Face Recognition for #{booking.bookingNumber}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs">
+              Enable automated guest selfie matching and instant photo delivery for this event shoot.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-1.5">
+              <div className="font-semibold text-foreground flex items-center justify-between">
+                <span>Studio Credit Balance</span>
+                <span className="font-mono font-bold text-primary">
+                  {booking.tenant?.aiEventCredits ?? 0} Credits
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                1 Credit unlocks this entire shoot permanently for guest selfie recognition.
+              </p>
+            </div>
+
+            {(booking.tenant?.aiEventCredits ?? 0) > 0 ? (
+              <Button
+                onClick={async () => {
+                  setIsRedeemingCredit(true);
+                  try {
+                    const res = await redeemAiEventCreditAction(booking.id);
+                    if (res.success) {
+                      toast.success(res.message);
+                      setShowAiUnlockDialog(false);
+                      router.refresh();
+                    } else {
+                      toast.error(res.error || 'Failed to redeem credit');
+                    }
+                  } catch (err: any) {
+                    toast.error(err.message || 'Error unlocking event AI');
+                  } finally {
+                    setIsRedeemingCredit(false);
+                  }
+                }}
+                disabled={isRedeemingCredit}
+                className="w-full font-bold gap-2"
+              >
+                {isRedeemingCredit && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>Redeem 1 Credit to Unlock</span>
+              </Button>
+            ) : (
+              <div className="space-y-2.5">
+                <p className="text-[11px] text-muted-foreground">
+                  You currently have 0 AI Event Credits. Unlock this event instantly or purchase a discounted credit pack:
+                </p>
+                <RazorpayCheckoutButton
+                  purchaseType="PER_EVENT_AI"
+                  eventBookingId={booking.id}
+                  buttonText="Unlock this Event for ₹149 + GST"
+                  className="w-full text-xs font-bold"
+                  onSuccess={() => {
+                    setShowAiUnlockDialog(false);
+                    router.refresh();
+                  }}
+                />
+                <RazorpayCheckoutButton
+                  purchaseType="AI_CREDIT_PACK"
+                  addonFeatureKey="AI_FACE_RECOGNITION_PACK_10"
+                  buttonText="Get 10-Event Pack (₹1,199 + GST — Save 20%)"
+                  variant="outline"
+                  className="w-full text-xs"
+                  onSuccess={() => {
+                    setShowAiUnlockDialog(false);
+                    router.refresh();
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
+})}
                           </div>
                         )}
                       </CardContent>

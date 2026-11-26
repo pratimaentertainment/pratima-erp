@@ -11,7 +11,7 @@ import {
   type UpdatePlanInput,
   type UpsertAddonPriceInput,
 } from '@/schemas/subscription.schema';
-import { DEFAULT_ADDON_CONFIGS } from '@/lib/constants/plan-features';
+import { DEFAULT_ADDON_CONFIGS, DEFAULT_PACKAGING_PLANS } from '@/lib/constants/plan-features';
 
 /**
  * Idempotently ensures all default add-ons exist in PlanAddonConfig.
@@ -31,6 +31,8 @@ export async function ensureAddonPriceListInitialized() {
           monthlyPrice: addon.monthlyPrice,
           originalAnnualPrice: addon.originalAnnualPrice,
           annualPrice: addon.annualPrice,
+          billingType: addon.billingType || 'RECURRING',
+          creditsIncluded: addon.creditsIncluded || 0,
           sortOrder: addon.sortOrder,
           isActive: true,
         },
@@ -62,6 +64,8 @@ export async function getAddonPriceListAction() {
         monthlyPrice: Number(a.monthlyPrice),
         originalAnnualPrice: a.originalAnnualPrice ? Number(a.originalAnnualPrice) : null,
         annualPrice: Number(a.annualPrice),
+        billingType: a.billingType || 'RECURRING',
+        creditsIncluded: a.creditsIncluded ?? 0,
         isActive: a.isActive,
         sortOrder: a.sortOrder,
       })),
@@ -108,6 +112,8 @@ export async function upsertAddonPriceAction(payload: UpsertAddonPriceInput) {
             ? validated.originalAnnualPrice
             : null,
         annualPrice: validated.annualPrice,
+        billingType: validated.billingType || 'RECURRING',
+        creditsIncluded: validated.creditsIncluded ?? 0,
         isActive: validated.isActive,
         sortOrder: validated.sortOrder,
       },
@@ -125,6 +131,8 @@ export async function upsertAddonPriceAction(payload: UpsertAddonPriceInput) {
             ? validated.originalAnnualPrice
             : null,
         annualPrice: validated.annualPrice,
+        billingType: validated.billingType || 'RECURRING',
+        creditsIncluded: validated.creditsIncluded ?? 0,
         isActive: validated.isActive,
         sortOrder: validated.sortOrder,
       },
@@ -223,7 +231,9 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
         features: validated.features ?? [],
         smsCredits: validated.smsCredits ?? 0,
         whatsappCredits: validated.whatsappCredits ?? 0,
-        allowFranchises,
+        allowFranchises: validated.allowFranchises ?? validated.franchiseEnabled ?? false,
+        franchiseEnabled: validated.franchiseEnabled ?? validated.allowFranchises ?? false,
+        includedAddons: validated.includedAddons ?? [],
         perFranchiseMonthlyPrice: validated.perFranchiseMonthlyPrice ?? 0,
         perFranchiseAnnualPrice: validated.perFranchiseAnnualPrice ?? 0,
         isActive: validated.isActive ?? true,
@@ -369,6 +379,8 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
           ? { whatsappCredits: validated.whatsappCredits }
           : {}),
         ...(allowFranchises !== undefined ? { allowFranchises } : {}),
+        ...(validated.franchiseEnabled !== undefined ? { franchiseEnabled: validated.franchiseEnabled } : {}),
+        ...(validated.includedAddons !== undefined ? { includedAddons: validated.includedAddons } : {}),
         ...(validated.perFranchiseMonthlyPrice !== undefined
           ? { perFranchiseMonthlyPrice: validated.perFranchiseMonthlyPrice }
           : {}),
@@ -410,6 +422,115 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
     return {
       success: false,
       error: error.message || 'An unexpected error occurred while updating the subscription plan.',
+    };
+  }
+}
+
+
+/**
+ * Super Admin: Sync all standard base plans and modular cost-recovery add-ons into the database.
+ * Completely idempotent: updates existing plans/addons without deleting tenant data.
+ */
+export async function syncDefaultPackagingAction() {
+  try {
+    const session = await auth();
+    const userRole = (session?.user as { role?: string })?.role;
+    if (!session?.user || userRole !== 'SUPER_ADMIN') {
+      return {
+        success: false,
+        error: 'Unauthorized: Only platform Super Admins can configure subscription packaging.',
+      };
+    }
+
+    // 1. Sync standard base plans
+    for (const plan of DEFAULT_PACKAGING_PLANS) {
+      await prisma.subscriptionPlan.upsert({
+        where: { slug: plan.slug },
+        update: {
+          name: plan.name,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
+          monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
+          annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
+          maxBranches: plan.maxBranches,
+          maxStaff: plan.maxStaff,
+          allowFranchises: plan.allowFranchises,
+          franchiseEnabled: plan.franchiseEnabled,
+          includedAddons: plan.includedAddons,
+          features: plan.features,
+          isActive: true,
+        },
+        create: {
+          slug: plan.slug,
+          name: plan.name,
+          originalMonthlyPrice: plan.originalMonthlyPrice,
+          monthlyPrice: plan.monthlyPrice,
+          originalAnnualPrice: plan.originalAnnualPrice,
+          annualPrice: plan.annualPrice,
+          offerBadgeText: plan.offerBadgeText,
+          isBasePlan: plan.isBasePlan,
+          sortOrder: plan.sortOrder,
+          maxBranches: plan.maxBranches,
+          maxStaff: plan.maxStaff,
+          allowFranchises: plan.allowFranchises,
+          franchiseEnabled: plan.franchiseEnabled,
+          includedAddons: plan.includedAddons,
+          features: plan.features,
+          isActive: true,
+        },
+      });
+    }
+
+    // 2. Sync standard cost-recovery & scale add-ons
+    for (const addon of DEFAULT_ADDON_CONFIGS) {
+      await prisma.planAddonConfig.upsert({
+        where: { featureKey: addon.featureKey },
+        update: {
+          name: addon.name,
+          description: addon.description,
+          originalMonthlyPrice: addon.originalMonthlyPrice,
+          monthlyPrice: addon.monthlyPrice,
+          originalAnnualPrice: addon.originalAnnualPrice,
+          annualPrice: addon.annualPrice,
+          billingType: addon.billingType || 'RECURRING',
+          creditsIncluded: addon.creditsIncluded ?? 0,
+          sortOrder: addon.sortOrder,
+          isActive: true,
+        },
+        create: {
+          featureKey: addon.featureKey,
+          name: addon.name,
+          description: addon.description,
+          originalMonthlyPrice: addon.originalMonthlyPrice,
+          monthlyPrice: addon.monthlyPrice,
+          originalAnnualPrice: addon.originalAnnualPrice,
+          annualPrice: addon.annualPrice,
+          billingType: addon.billingType || 'RECURRING',
+          creditsIncluded: addon.creditsIncluded ?? 0,
+          sortOrder: addon.sortOrder,
+          isActive: true,
+        },
+      });
+    }
+
+    revalidatePath('/super-admin/subscriptions');
+    revalidatePath('/pricing');
+    revalidatePath('/settings/billing');
+    updateTag('subscription-plans');
+    updateTag('plan-addons');
+
+    return {
+      success: true,
+      message: 'Default SaaS base plans and modular add-on catalog synchronized successfully.',
+    };
+  } catch (error: any) {
+    console.error('[syncDefaultPackagingAction] Error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to synchronize packaging catalog.',
     };
   }
 }

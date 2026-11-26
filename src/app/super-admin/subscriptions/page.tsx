@@ -404,6 +404,8 @@ export default async function SuperAdminSubscriptionsPage() {
                         allowFranchises: plan.allowFranchises,
                         perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ? Number(plan.perFranchiseMonthlyPrice) : 0,
                         perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ? Number(plan.perFranchiseAnnualPrice) : 0,
+                        franchiseEnabled: plan.franchiseEnabled,
+                        includedAddons: plan.includedAddons,
                         isActive: plan.isActive,
                       }}
                     />
@@ -429,6 +431,8 @@ export default async function SuperAdminSubscriptionsPage() {
             annualPrice: Number(a.annualPrice),
             isActive: a.isActive,
             sortOrder: a.sortOrder,
+            billingType: a.billingType,
+            creditsIncluded: a.creditsIncluded,
           }))}
         />
       </div>

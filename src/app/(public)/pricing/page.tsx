@@ -49,6 +49,8 @@ export default async function PricingPage() {
       allowFranchises: plan.allowFranchises,
       perFranchiseMonthlyPrice: plan.perFranchiseMonthlyPrice ? Number(plan.perFranchiseMonthlyPrice) : 0,
       perFranchiseAnnualPrice: plan.perFranchiseAnnualPrice ? Number(plan.perFranchiseAnnualPrice) : 0,
+      franchiseEnabled: plan.franchiseEnabled,
+      includedAddons: plan.includedAddons,
     }));
 
     serializedAddons = dbAddons.map((addon) => ({
@@ -60,6 +62,8 @@ export default async function PricingPage() {
       monthlyPrice: Number(addon.monthlyPrice),
       originalAnnualPrice: addon.originalAnnualPrice ? Number(addon.originalAnnualPrice) : null,
       annualPrice: Number(addon.annualPrice),
+      billingType: addon.billingType,
+      creditsIncluded: addon.creditsIncluded,
     }));
   } catch (error) {
     console.error('[/pricing] Error fetching subscription plans from database:', error);

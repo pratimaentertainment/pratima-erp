@@ -32,8 +32,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Pencil, Loader2, IndianRupee, Layers } from 'lucide-react';
-import { upsertAddonPriceAction } from '@/actions/subscription.actions';
+import { Sparkles, Pencil, Loader2, IndianRupee, Layers, RefreshCw } from 'lucide-react';
+import { upsertAddonPriceAction, syncDefaultPackagingAction } from '@/actions/subscription.actions';
 import { toast } from 'sonner';
 
 export interface PlanAddonConfigItem {
@@ -47,6 +47,8 @@ export interface PlanAddonConfigItem {
   annualPrice: number | string;
   isActive: boolean;
   sortOrder: number;
+  billingType?: string | null;
+  creditsIncluded?: number | null;
 }
 
 interface AddonPriceListManagerProps {
@@ -68,6 +70,8 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
   const [annualPrice, setAnnualPrice] = useState<string>('0');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [sortOrder, setSortOrder] = useState<string>('0');
+  const [billingType, setBillingType] = useState<string>('RECURRING');
+  const [creditsIncluded, setCreditsIncluded] = useState<string>('0');
 
   const openEditModal = (addon: PlanAddonConfigItem) => {
     setEditingAddon(addon);
@@ -79,6 +83,8 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
     setAnnualPrice(String(Number(addon.annualPrice || 0)));
     setIsActive(addon.isActive);
     setSortOrder(String(addon.sortOrder || 0));
+    setBillingType(addon.billingType || 'RECURRING');
+    setCreditsIncluded(String(addon.creditsIncluded || 0));
     setIsOpen(true);
   };
 
@@ -97,6 +103,8 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
           annualPrice: Number(annualPrice) || 0,
           isActive,
           sortOrder: Number(sortOrder) || 0,
+          billingType: (billingType as any) || 'RECURRING',
+          creditsIncluded: Number(creditsIncluded) || 0,
         });
 
         if (res.success) {
@@ -109,6 +117,22 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
         }
       } catch (err: any) {
         toast.error(err.message || 'An error occurred while saving.');
+      }
+    });
+  };
+
+    const handleSyncDefaults = () => {
+    startTransition(async () => {
+      try {
+        const res = await syncDefaultPackagingAction();
+        if (res.success) {
+          toast.success(res.message);
+          router.refresh();
+        } else {
+          toast.error(res.error || 'Failed to sync default packaging');
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'An error occurred while syncing.');
       }
     });
   };
@@ -126,6 +150,8 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
           annualPrice: Number(addon.annualPrice),
           isActive: checked,
           sortOrder: addon.sortOrder,
+          billingType: (addon.billingType as any) || 'RECURRING',
+          creditsIncluded: addon.creditsIncluded || 0,
         });
 
         if (res.success) {
@@ -155,9 +181,21 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
               Configure standalone MRP vs Offer pricing for all 9 ERP capabilities. Studios can subscribe to these individually on top of any base plan or via Super Admin studio assignment.
             </CardDescription>
           </div>
-          <Badge variant="outline" className="text-xs font-mono w-fit">
-            Automatic Catalog Sync Active
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncDefaults}
+              disabled={isPending}
+              className="h-8 text-xs font-semibold gap-1.5"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isPending ? 'animate-spin' : ''}`} />
+              <span>Sync Default Packaging</span>
+            </Button>
+            <Badge variant="outline" className="text-xs font-mono w-fit">
+              Catalog Active
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -167,6 +205,7 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
               <TableRow>
                 <TableHead className="w-[180px] font-semibold text-xs">Capability</TableHead>
                 <TableHead className="w-[200px] font-semibold text-xs">Description</TableHead>
+                <TableHead className="font-semibold text-xs text-center w-[130px]">Billing Model</TableHead>
                 <TableHead className="font-semibold text-xs text-right">Monthly (MRP / Offer)</TableHead>
                 <TableHead className="font-semibold text-xs text-right">Annual (MRP / Offer)</TableHead>
                 <TableHead className="font-semibold text-xs text-center w-[100px]">Order</TableHead>
@@ -195,6 +234,21 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
                       {addon.description || 'Standard ERP modular capability.'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {addon.billingType === 'PER_EVENT' ? (
+                        <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px]">
+                          Pay Per Event
+                        </Badge>
+                      ) : addon.billingType === 'CREDIT_PACK' ? (
+                        <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px]">
+                          Pack ({addon.creditsIncluded || 10} Credits)
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                          Recurring
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
@@ -296,6 +350,38 @@ export function AddonPriceListManager({ addons }: AddonPriceListManagerProps) {
               />
             </div>
 
+                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/50">
+              <div className="space-y-1.5">
+                <Label htmlFor="addon-billing-type" className="text-xs font-semibold">
+                  Billing Model
+                </Label>
+                <select
+                  id="addon-billing-type"
+                  value={billingType}
+                  onChange={(e) => setBillingType(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="RECURRING">Recurring (Monthly / Annual)</option>
+                  <option value="PER_EVENT">Pay Per Event (1-Time Unlock)</option>
+                  <option value="CREDIT_PACK">Prepaid Credit Pack</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="addon-credits" className="text-xs font-semibold">
+                  Credits Included
+                </Label>
+                <Input
+                  id="addon-credits"
+                  type="number"
+                  min="0"
+                  value={creditsIncluded}
+                  onChange={(e) => setCreditsIncluded(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="h-9 text-xs font-mono"
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/50">
               <div className="space-y-1.5">
                 <Label htmlFor="addon-orig-monthly" className="text-xs text-muted-foreground">

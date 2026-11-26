@@ -13,6 +13,12 @@ export const PLAN_FEATURE_KEYS = [
   'FRANCHISE_NETWORK',
   'FLEET_DISPATCH',
   'HR_PAYROLL',
+  'AI_FACE_RECOGNITION_SINGLE',
+  'AI_FACE_RECOGNITION_PACK_10',
+  'BROADCAST_MESSAGING',
+  'EXTRA_BRANCH',
+  'EXTRA_STORAGE',
+  'CUSTOM_DOMAIN',
 ] as const;
 
 export type PlanFeatureKey = (typeof PLAN_FEATURE_KEYS)[number];
@@ -205,17 +211,91 @@ export function getFeaturesByCategory(): Record<FeatureCategory, PlanFeatureDefi
 
 
 export interface DefaultAddonConfigItem {
-  featureKey: PlanFeatureKey;
+  featureKey: string;
   name: string;
   description: string;
   originalMonthlyPrice: number;
   monthlyPrice: number;
   originalAnnualPrice: number;
   annualPrice: number;
+  billingType?: 'RECURRING' | 'PER_EVENT' | 'CREDIT_PACK';
+  creditsIncluded?: number;
   sortOrder: number;
 }
 
 export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
+  {
+    featureKey: 'AI_FACE_RECOGNITION_SINGLE',
+    name: 'AI Face Recognition & Smart Photo Delivery (Single Event)',
+    description: 'Unlock AI-powered face indexing, guest selfie matching, and automated private photo delivery for 1 wedding or corporate event.',
+    originalMonthlyPrice: 299,
+    monthlyPrice: 149,
+    originalAnnualPrice: 299,
+    annualPrice: 149,
+    billingType: 'PER_EVENT',
+    creditsIncluded: 1,
+    sortOrder: 1,
+  },
+  {
+    featureKey: 'AI_FACE_RECOGNITION_PACK_10',
+    name: 'AI Face Recognition Event Pack (10 Events Bundle)',
+    description: 'Prepaid credit bundle to unlock AI Face Recognition on 10 client events at just ₹119/event with zero expiry.',
+    originalMonthlyPrice: 1490,
+    monthlyPrice: 1199,
+    originalAnnualPrice: 1490,
+    annualPrice: 1199,
+    billingType: 'CREDIT_PACK',
+    creditsIncluded: 10,
+    sortOrder: 2,
+  },
+  {
+    featureKey: 'BROADCAST_MESSAGING',
+    name: 'Customer Database Broadcast Messaging',
+    description: 'Send bulk promotional WhatsApp & SMS campaigns, festive greetings, and anniversary offers across your entire studio client database.',
+    originalMonthlyPrice: 599,
+    monthlyPrice: 399,
+    originalAnnualPrice: 5990,
+    annualPrice: 3990,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 3,
+  },
+  {
+    featureKey: 'EXTRA_BRANCH',
+    name: 'Extra Studio Branch Pack',
+    description: 'Add 1 additional studio branch location with independent inventory, crew roster, and regional invoicing.',
+    originalMonthlyPrice: 499,
+    monthlyPrice: 299,
+    originalAnnualPrice: 4990,
+    annualPrice: 2990,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 4,
+  },
+  {
+    featureKey: 'EXTRA_STORAGE',
+    name: 'Extra High-Speed Cloud Storage (500GB)',
+    description: '500GB additional cloud storage capacity for raw photos, video deliveries, and client proofing galleries.',
+    originalMonthlyPrice: 699,
+    monthlyPrice: 499,
+    originalAnnualPrice: 6990,
+    annualPrice: 4990,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 5,
+  },
+  {
+    featureKey: 'CUSTOM_DOMAIN',
+    name: 'Custom White-Label Studio Domain',
+    description: 'Deliver client galleries and quotes on your own domain (e.g., gallery.yourstudio.com) with automated SSL certification.',
+    originalMonthlyPrice: 399,
+    monthlyPrice: 249,
+    originalAnnualPrice: 3990,
+    annualPrice: 2490,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 6,
+  },
   {
     featureKey: 'CLIENT_PROOFING',
     name: 'Client Proofing & Photo Selection Portal',
@@ -224,7 +304,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 299,
     originalAnnualPrice: 4990,
     annualPrice: 2990,
-    sortOrder: 1,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 7,
   },
   {
     featureKey: 'CUSTOM_BRANDING',
@@ -234,7 +316,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 199,
     originalAnnualPrice: 3990,
     annualPrice: 1990,
-    sortOrder: 2,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 8,
   },
   {
     featureKey: 'CLOUD_STORAGE_BYOS',
@@ -244,7 +328,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 499,
     originalAnnualPrice: 6990,
     annualPrice: 4990,
-    sortOrder: 3,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 9,
   },
   {
     featureKey: 'META_LEADS',
@@ -254,7 +340,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 499,
     originalAnnualPrice: 7990,
     annualPrice: 4990,
-    sortOrder: 4,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 10,
   },
   {
     featureKey: 'GOOGLE_BUSINESS',
@@ -264,7 +352,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 299,
     originalAnnualPrice: 4990,
     annualPrice: 2990,
-    sortOrder: 5,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 11,
   },
   {
     featureKey: 'FLEET_DISPATCH',
@@ -274,7 +364,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 399,
     originalAnnualPrice: 5990,
     annualPrice: 3990,
-    sortOrder: 6,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 12,
   },
   {
     featureKey: 'HR_PAYROLL',
@@ -284,7 +376,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 599,
     originalAnnualPrice: 8990,
     annualPrice: 5990,
-    sortOrder: 7,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 13,
   },
   {
     featureKey: 'ADVANCED_ANALYTICS',
@@ -294,7 +388,9 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 699,
     originalAnnualPrice: 9990,
     annualPrice: 6990,
-    sortOrder: 8,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 14,
   },
   {
     featureKey: 'FRANCHISE_NETWORK',
@@ -304,6 +400,104 @@ export const DEFAULT_ADDON_CONFIGS: DefaultAddonConfigItem[] = [
     monthlyPrice: 999,
     originalAnnualPrice: 14990,
     annualPrice: 9990,
-    sortOrder: 9,
+    billingType: 'RECURRING',
+    creditsIncluded: 0,
+    sortOrder: 15,
+  },
+];
+
+export interface DefaultPackagingPlanItem {
+  slug: string;
+  name: string;
+  originalMonthlyPrice: number;
+  monthlyPrice: number;
+  originalAnnualPrice: number;
+  annualPrice: number;
+  offerBadgeText: string;
+  isBasePlan: boolean;
+  sortOrder: number;
+  maxBranches: number;
+  maxStaff: number;
+  allowFranchises: boolean;
+  franchiseEnabled: boolean;
+  includedAddons: string[];
+  features: string[];
+  smsCredits?: number;
+  whatsappCredits?: number;
+  perFranchiseMonthlyPrice?: number;
+  perFranchiseAnnualPrice?: number;
+  isActive?: boolean;
+}
+
+export const DEFAULT_PACKAGING_PLANS: DefaultPackagingPlanItem[] = [
+  {
+    slug: 'starter-studio',
+    name: 'Starter Studio',
+    originalMonthlyPrice: 999,
+    monthlyPrice: 499,
+    originalAnnualPrice: 9990,
+    annualPrice: 4999,
+    offerBadgeText: 'Entry Full CRM+ERP',
+    isBasePlan: true,
+    sortOrder: 1,
+    maxBranches: 1,
+    maxStaff: 5,
+    allowFranchises: false,
+    franchiseEnabled: false,
+    includedAddons: [],
+    features: ['CLIENT_PROOFING', 'CUSTOM_BRANDING'],
+  },
+  {
+    slug: 'pro-studio',
+    name: 'Multi-Branch Pro',
+    originalMonthlyPrice: 1999,
+    monthlyPrice: 1299,
+    originalAnnualPrice: 19990,
+    annualPrice: 12999,
+    offerBadgeText: 'Best for Growing Studios (5 Branches)',
+    isBasePlan: false,
+    sortOrder: 2,
+    maxBranches: 5,
+    maxStaff: 20,
+    allowFranchises: false,
+    franchiseEnabled: false,
+    includedAddons: [],
+    features: [
+      'CLIENT_PROOFING',
+      'CUSTOM_BRANDING',
+      'CLOUD_STORAGE_BYOS',
+      'META_LEADS',
+      'GOOGLE_BUSINESS',
+      'FLEET_DISPATCH',
+      'HR_PAYROLL',
+    ],
+  },
+  {
+    slug: 'enterprise-franchise',
+    name: 'Franchise Enterprise',
+    originalMonthlyPrice: 4999,
+    monthlyPrice: 2999,
+    originalAnnualPrice: 49990,
+    annualPrice: 29999,
+    offerBadgeText: 'Unlimited Branches + Broadcast Inbuilt',
+    isBasePlan: false,
+    sortOrder: 3,
+    maxBranches: 9999,
+    maxStaff: 9999,
+    allowFranchises: true,
+    franchiseEnabled: true,
+    includedAddons: ['BROADCAST_MESSAGING'],
+    features: [
+      'CLIENT_PROOFING',
+      'CUSTOM_BRANDING',
+      'CLOUD_STORAGE_BYOS',
+      'META_LEADS',
+      'GOOGLE_BUSINESS',
+      'FLEET_DISPATCH',
+      'HR_PAYROLL',
+      'ADVANCED_ANALYTICS',
+      'FRANCHISE_NETWORK',
+      'BROADCAST_MESSAGING',
+    ],
   },
 ];

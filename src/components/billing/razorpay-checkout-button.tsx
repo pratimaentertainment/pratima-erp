@@ -14,7 +14,10 @@ import type {
 import { cn } from '@/lib/utils';
 
 export interface RazorpayCheckoutButtonProps {
-  planId: string;
+  planId?: string;
+  purchaseType?: 'SUBSCRIPTION' | 'PER_EVENT_AI' | 'AI_CREDIT_PACK';
+  eventBookingId?: string;
+  addonFeatureKey?: string;
   billingCycle?: 'MONTHLY' | 'ANNUAL';
   addonKeys?: string[];
   dealerCode?: string;
@@ -29,12 +32,15 @@ export interface RazorpayCheckoutButtonProps {
 }
 
 /**
- * Enterprise Client Component for Razorpay SaaS Subscription Checkout.
+ * Enterprise Client Component for Razorpay SaaS Subscription & On-Demand Add-on Checkout.
  * Initiates server-side order generation, loads client SDK, and handles modal lifecycle.
- * Supports modular add-on capabilities and partner first-payment discount attribution.
+ * Supports subscriptions, pay-per-event AI unlocks, and prepaid credit packs.
  */
 export function RazorpayCheckoutButton({
   planId,
+  purchaseType = 'SUBSCRIPTION',
+  eventBookingId,
+  addonFeatureKey,
   billingCycle = 'MONTHLY',
   addonKeys,
   dealerCode,
@@ -57,12 +63,15 @@ export function RazorpayCheckoutButton({
     setIsLoading(true);
 
     try {
-      // 1. Request signed order from server with optional add-on keys and dealer code
+      // 1. Request signed order from server
       const orderResponse = await fetch('/api/billing/razorpay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          purchaseType,
           planId,
+          eventBookingId,
+          addonFeatureKey,
           billingCycle,
           addonKeys,
           dealerCode,
@@ -91,9 +100,11 @@ export function RazorpayCheckoutButton({
         amount: orderData.amount, // in paise
         currency: orderData.currency || 'INR',
         name: 'FRAMIQ by Pratima Entertainment & Technology',
-        description: `${orderData.plan?.name || 'Studio'} Plan (${
-          billingCycle === 'ANNUAL' ? 'Annual Billing' : 'Monthly Billing'
-        })`,
+        description:
+          orderData.description ||
+          `${orderData.plan?.name || 'Studio'} Plan (${
+            billingCycle === 'ANNUAL' ? 'Annual Billing' : 'Monthly Billing'
+          })`,
         image: '/icon.png',
         order_id: orderData.orderId,
         prefill: {
@@ -126,7 +137,10 @@ export function RazorpayCheckoutButton({
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
+                  purchaseType,
                   planId,
+                  eventBookingId,
+                  addonFeatureKey,
                   billingCycle,
                   addonKeys,
                   dealerCode,
@@ -139,7 +153,7 @@ export function RazorpayCheckoutButton({
                 throw new Error(verifyData.error || 'Payment signature verification failed.');
               }
 
-              toast.success('Payment verified! Your studio subscription has been activated.', {
+              toast.success('Payment verified! Entitlements activated successfully.', {
                 id: 'razorpay-verify',
               });
 
