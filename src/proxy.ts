@@ -117,6 +117,11 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(new URL('/dashboard', nextUrl));
   }
 
+  // 4.3 Non-super-admins cannot access super-admin portal
+  if (isLoggedIn && (pathname === '/super-admin' || pathname.startsWith('/super-admin/')) && !isSuperAdmin) {
+    return NextResponse.redirect(new URL('/dashboard', nextUrl));
+  }
+
   // 5. Authenticated users attempting to visit auth pages (/login, /signup) redirected to their portal
   if ((pathname === '/login' || pathname === '/signup') && isLoggedIn) {
     if (!nextUrl.searchParams.has('error')) {

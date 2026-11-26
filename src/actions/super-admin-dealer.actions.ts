@@ -223,6 +223,34 @@ export async function recordDealerPayoutAction(input: RecordDealerPayoutInput) {
 
     const payoutAmount = validated.amount;
 
+    // Anti-Fraud & Ledger Integrity Guard: Verify payout does not exceed verified pending commission
+    const pendingCommissions = await prisma.dealerCommissionLedger.findMany({
+      where: {
+        dealerId: dealer.id,
+        status: 'PENDING',
+      },
+      select: { id: true, commissionAmount: true },
+    });
+
+    const totalPendingCommission = pendingCommissions.reduce(
+      (sum, c) => sum + Number(c.commissionAmount),
+      0
+    );
+
+    if (totalPendingCommission <= 0) {
+      return {
+        success: false,
+        error: `Dealer "${dealer.businessName}" has zero pending commission balance (₹0.00).`,
+      };
+    }
+
+    if (payoutAmount > totalPendingCommission) {
+      return {
+        success: false,
+        error: `Payout amount (₹${payoutAmount.toLocaleString('en-IN')}) exceeds total pending commission balance of ₹${totalPendingCommission.toLocaleString('en-IN')}.`,
+      };
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create DealerPayout record
       const payout = await tx.dealerPayout.create({

@@ -21,6 +21,56 @@ export interface FirstPaymentDiscountResult {
 
 export class DealerCommissionService {
   /**
+   * Evaluates whether a dealer and tenant share identical identity markers (userId, email, canonicalEmail, phone),
+   * which constitutes prohibited self-referral / self-attribution abuse.
+   */
+  static isSelfReferral(
+    dealer: {
+      userId: string;
+      phone: string;
+      user?: { email: string | null; canonicalEmail?: string | null } | null;
+    },
+    tenant: {
+      email?: string | null;
+      phone?: string | null;
+      contactPhone?: string | null;
+      users?: Array<{ id: string; email: string | null; canonicalEmail?: string | null; phone?: string | null }>;
+    }
+  ): boolean {
+    if (!dealer || !tenant) return false;
+
+    const normalizePhone = (p?: string | null) => (p || '').replace(/\D/g, '').slice(-10);
+    const normalizeEmail = (e?: string | null) => (e || '').trim().toLowerCase();
+
+    const dealerUserId = dealer.userId;
+    const dealerPhone = normalizePhone(dealer.phone);
+    const dealerEmail = normalizeEmail(dealer.user?.email);
+    const dealerCanonical = normalizeEmail(dealer.user?.canonicalEmail) || dealerEmail;
+
+    // Check tenant root phone & email
+    const tenantPhone = normalizePhone(tenant.phone || tenant.contactPhone);
+    const tenantEmail = normalizeEmail(tenant.email);
+
+    if (dealerPhone && tenantPhone && dealerPhone === tenantPhone) return true;
+    if (dealerEmail && tenantEmail && dealerEmail === tenantEmail) return true;
+
+    // Check tenant users
+    if (tenant.users && Array.isArray(tenant.users)) {
+      for (const u of tenant.users) {
+        if (u.id === dealerUserId) return true;
+        const uPhone = normalizePhone(u.phone);
+        const uEmail = normalizeEmail(u.email);
+        const uCanonical = normalizeEmail(u.canonicalEmail) || uEmail;
+
+        if (dealerPhone && uPhone && dealerPhone === uPhone) return true;
+        if (dealerEmail && uEmail && dealerEmail === uEmail) return true;
+        if (dealerCanonical && uCanonical && dealerCanonical === uCanonical) return true;
+      }
+    }
+
+    return false;
+  }
+  /**
    * Resolves an active dealer profile by unique dealer code (case-insensitive).
    */
   static async resolveActiveDealerByCode(code: string): Promise<ActiveDealerInfo | null> {
@@ -68,7 +118,14 @@ export class DealerCommissionService {
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
       include: {
-        referredByDealer: true,
+        referredByDealer: {
+          include: {
+            user: { select: { id: true, email: true, canonicalEmail: true } },
+          },
+        },
+        users: {
+          select: { id: true, email: true, canonicalEmail: true, phone: true },
+        },
         transactions: {
           where: { status: 'SUCCESS' },
           select: { id: true },
@@ -91,15 +148,36 @@ export class DealerCommissionService {
     if (!dealer && dealerCodeInput) {
       const resolved = await this.resolveActiveDealerByCode(dealerCodeInput);
       if (resolved) {
+        const potentialDealer = await prisma.dealerProfile.findUnique({
+          where: { id: resolved.id },
+          include: { user: { select: { id: true, email: true, canonicalEmail: true } } },
+        });
+
+        // Anti-Fraud Guard: Block linking self-referral codes
+        if (potentialDealer && this.isSelfReferral(potentialDealer, tenant)) {
+          console.warn(
+            `[DEALER_ANTI_FRAUD] Blocked self-referral discount linkage for dealer "${potentialDealer.dealerCode}" on tenant "${tenantId}".`
+          );
+          return { eligible: false, discountPercent: 0 };
+        }
+
         await prisma.tenant.update({
           where: { id: tenantId },
           data: { referredByDealerId: resolved.id },
         });
-        dealer = await prisma.dealerProfile.findUnique({ where: { id: resolved.id } });
+        dealer = potentialDealer as any;
       }
     }
 
     if (!dealer || !dealer.isActive) {
+      return { eligible: false, discountPercent: 0 };
+    }
+
+    // Anti-Fraud Guard: Check if existing attributed dealer is a self-referral
+    if (this.isSelfReferral(dealer, tenant)) {
+      console.warn(
+        `[DEALER_ANTI_FRAUD] Blocked self-referral discount application for dealer "${dealer.dealerCode}" on tenant "${tenantId}".`
+      );
       return { eligible: false, discountPercent: 0 };
     }
 
@@ -128,7 +206,14 @@ export class DealerCommissionService {
         include: {
           tenant: {
             include: {
-              referredByDealer: true,
+              referredByDealer: {
+                include: {
+                  user: { select: { id: true, email: true, canonicalEmail: true } },
+                },
+              },
+              users: {
+                select: { id: true, email: true, canonicalEmail: true, phone: true },
+              },
             },
           },
         },
@@ -143,6 +228,22 @@ export class DealerCommissionService {
         return { recorded: false, reason: 'Tenant not referred by any dealer' };
       }
 
+      const dealer = tenant.referredByDealer;
+      if (!dealer) {
+        return { recorded: false, reason: 'Dealer profile not found' };
+      }
+
+      // Anti-Fraud Guard: Block dealer self-referral commission on own studio account
+      if (this.isSelfReferral(dealer, tenant)) {
+        console.warn(
+          `[DEALER_COMMISSION_BLOCKED_SELF_REFERRAL] Dealer "${dealer.businessName}" (${dealer.dealerCode}) attempted to earn commission on studio "${tenant.name}". Blocked.`
+        );
+        return {
+          recorded: false,
+          reason: 'Self-referral prohibited: Studio owners cannot earn commission on their own studio accounts.',
+        };
+      }
+
       // Idempotency check:
       const existingLedger = await prisma.dealerCommissionLedger.findUnique({
         where: { billingTransactionId: tx.id },
@@ -150,11 +251,6 @@ export class DealerCommissionService {
 
       if (existingLedger) {
         return { recorded: true, commissionId: existingLedger.id, alreadyRecorded: true };
-      }
-
-      const dealer = tenant.referredByDealer;
-      if (!dealer) {
-        return { recorded: false, reason: 'Dealer profile not found' };
       }
 
       // Count prior successful transactions to determine cycle number

@@ -101,6 +101,9 @@ export const authConfig = {
           if (role === 'DEALER' && !pathname.startsWith('/dealer') && !pathname.startsWith('/api')) {
             return Response.redirect(new URL('/dealer', request.nextUrl));
           }
+          if (pathname.startsWith('/super-admin') && role !== 'SUPER_ADMIN') {
+            return Response.redirect(new URL('/dashboard', request.nextUrl));
+          }
           return true;
         }
         return false; // Redirect unauthenticated users to login page

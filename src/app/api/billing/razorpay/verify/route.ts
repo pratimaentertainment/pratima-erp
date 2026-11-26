@@ -95,6 +95,38 @@ export async function POST(req: Request) {
       );
     }
 
+    // 3.1 Idempotency & Replay Attack Defense Gate:
+    // Prevent replaying captured payment signatures or double-crediting quotas/branches
+    const existingSuccessTx = await prisma.billingTransaction.findFirst({
+      where: {
+        OR: [
+          { razorpayPaymentId: razorpay_payment_id, status: 'SUCCESS' },
+          { razorpayOrderId: razorpay_order_id, status: 'SUCCESS' },
+        ],
+      },
+    });
+
+    if (existingSuccessTx) {
+      if (existingSuccessTx.tenantId === tenantId) {
+        console.log(
+          `[RAZORPAY_VERIFY_IDEMPOTENT] Payment ${razorpay_payment_id} / Order ${razorpay_order_id} already completed for tenant "${tenantId}".`
+        );
+        return NextResponse.json({
+          success: true,
+          idempotent: true,
+          message: 'Payment has already been successfully verified and processed.',
+        });
+      } else {
+        console.error(
+          `[RAZORPAY_VERIFY_CROSS_TENANT_BREACH_ATTEMPT] Tenant "${tenantId}" attempted to verify payment "${razorpay_payment_id}" belonging to tenant "${existingSuccessTx.tenantId}".`
+        );
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized: Payment record does not belong to your studio.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // 4. Fetch order details from Razorpay to retrieve authentic notes metadata
     let resolvedPurchaseType:
       | 'SUBSCRIPTION'
@@ -181,6 +213,20 @@ export async function POST(req: Request) {
 
       let recordedTxId = '';
       await prisma.$transaction(async (tx) => {
+        // Enforce tenant order authorization and prevent duplicate increment
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx && pendingTx.tenantId !== tenantId) {
+          throw new Error('Unauthorized: Order record belongs to another studio account.');
+        }
+
+        if (pendingTx?.status === 'SUCCESS') {
+          recordedTxId = pendingTx.id;
+          return;
+        }
+
         const tenantRecord = await tx.tenant.findUnique({
           where: { id: tenantId },
           select: { enabledAddons: true, extraBranchUnits: true, extraStaffUnits: true },
@@ -206,10 +252,6 @@ export async function POST(req: Request) {
             },
           });
         }
-
-        const pendingTx = await tx.billingTransaction.findFirst({
-          where: { razorpayOrderId: razorpay_order_id },
-        });
 
         if (pendingTx) {
           const updated = await tx.billingTransaction.update({
@@ -270,16 +312,34 @@ export async function POST(req: Request) {
 
       let recordedTxId = '';
       await prisma.$transaction(async (tx) => {
+        // Enforce tenant authorization on target event booking
+        const booking = await tx.eventBooking.findFirst({
+          where: { id: eventId, tenantId, deletedAt: null },
+        });
+
+        if (!booking) {
+          throw new Error('Event booking not found or does not belong to your studio.');
+        }
+
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx && pendingTx.tenantId !== tenantId) {
+          throw new Error('Unauthorized: Order record belongs to another studio account.');
+        }
+
+        if (pendingTx?.status === 'SUCCESS') {
+          recordedTxId = pendingTx.id;
+          return;
+        }
+
         await tx.eventBooking.update({
           where: { id: eventId },
           data: {
             aiFaceRecognitionUnlocked: true,
             aiUnlockedAt: new Date(),
           },
-        });
-
-        const pendingTx = await tx.billingTransaction.findFirst({
-          where: { razorpayOrderId: razorpay_order_id },
         });
 
         if (pendingTx) {
@@ -333,15 +393,25 @@ export async function POST(req: Request) {
 
       let recordedTxId = '';
       await prisma.$transaction(async (tx) => {
+        // Enforce tenant order authorization and prevent duplicate credit increments
+        const pendingTx = await tx.billingTransaction.findFirst({
+          where: { razorpayOrderId: razorpay_order_id },
+        });
+
+        if (pendingTx && pendingTx.tenantId !== tenantId) {
+          throw new Error('Unauthorized: Order record belongs to another studio account.');
+        }
+
+        if (pendingTx?.status === 'SUCCESS') {
+          recordedTxId = pendingTx.id;
+          return;
+        }
+
         await tx.tenant.update({
           where: { id: tenantId },
           data: {
             aiEventCredits: { increment: creditsIncluded },
           },
-        });
-
-        const pendingTx = await tx.billingTransaction.findFirst({
-          where: { razorpayOrderId: razorpay_order_id },
         });
 
         if (pendingTx) {
@@ -432,6 +502,15 @@ export async function POST(req: Request) {
       const pendingTx = await tx.billingTransaction.findFirst({
         where: { razorpayOrderId: razorpay_order_id },
       });
+
+      if (pendingTx && pendingTx.tenantId !== tenantId) {
+        throw new Error('Unauthorized: Order record belongs to another studio account.');
+      }
+
+      if (pendingTx?.status === 'SUCCESS') {
+        recordedTxId = pendingTx.id;
+        return;
+      }
 
       const txNotes = resolvedDiscountAmount > 0
         ? `Partner Discount: ₹${resolvedDiscountAmount} (Code: ${resolvedDealerCode || 'N/A'})`

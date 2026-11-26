@@ -356,7 +356,28 @@ export async function verifySignupOtpAndCreateStudioAction(input: PublicSignupVe
         validated.referralCode.trim()
       );
       if (activeDealer) {
-        referredByDealerId = activeDealer.id;
+        // Anti-Fraud Guard: Prevent dealer from self-referring their own studio
+        const dealerFull = await prisma.dealerProfile.findUnique({
+          where: { id: activeDealer.id },
+          include: { user: { select: { email: true, canonicalEmail: true, phone: true } } },
+        });
+
+        const dealerEmail = (dealerFull?.user?.email || '').toLowerCase().trim();
+        const dealerCanonical = (dealerFull?.user?.canonicalEmail || dealerEmail).toLowerCase().trim();
+        const dealerPhone = (dealerFull?.phone || '').replace(/\D/g, '').slice(-10);
+
+        const isSelf =
+          (dealerEmail && dealerEmail === normalizedEmail) ||
+          (dealerCanonical && dealerCanonical === canonicalEmail) ||
+          (dealerPhone && dealerPhone === cleanPhone);
+
+        if (isSelf) {
+          console.warn(
+            `[SIGNUP_ANTI_FRAUD] Blocked self-referral signup attribution for dealer code "${activeDealer.dealerCode}" from email "${normalizedEmail}".`
+          );
+        } else {
+          referredByDealerId = activeDealer.id;
+        }
       }
     }
 
