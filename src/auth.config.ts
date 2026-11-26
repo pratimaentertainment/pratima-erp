@@ -29,6 +29,7 @@ export const authConfig = {
         token.tenantId = (user as any).tenantId;
         token.sessionId = (user as any).sessionId;
         token.remember = (user as any).remember;
+        token.mustChangePassword = (user as any).mustChangePassword ?? false;
         
         // Calculate expiration dynamically
         const nowInSeconds = Math.floor(Date.now() / 1000);
@@ -50,6 +51,7 @@ export const authConfig = {
         if (token.role) (session.user as any).role = token.role;
         if (token.tenantId !== undefined) (session.user as any).tenantId = token.tenantId;
         if (token.sessionId) (session.user as any).sessionId = token.sessionId;
+        if (token.mustChangePassword !== undefined) (session.user as any).mustChangePassword = token.mustChangePassword;
       }
       return session;
     },

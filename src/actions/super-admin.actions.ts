@@ -208,6 +208,7 @@ export async function registerStudioAction(input: RegisterStudioInput) {
           role: 'TENANT_OWNER',
           status: 'ACTIVE',
           canLogin: true,
+          mustChangePassword: true,
         },
       });
 
@@ -487,6 +488,7 @@ export async function resetTenantOwnerPasswordAction(tenantId: string) {
       where: { id: ownerUser.id },
       data: {
         passwordHash: hashedPassword,
+        mustChangePassword: true,
         failedLoginAttempts: 0,
         isLocked: false,
         lockUntil: null,

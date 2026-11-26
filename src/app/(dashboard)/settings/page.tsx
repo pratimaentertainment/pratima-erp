@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Building2, Network, Users, FileText, Cloud, Share2, CreditCard } from 'lucide-react';
+import { Building2, Network, Users, FileText, Cloud, Share2, CreditCard, ShieldCheck } from 'lucide-react';
 import { buildContextAndAuthorize } from '@/lib/application/utils/context';
 
 export default async function SettingsPage() {
@@ -9,7 +9,7 @@ export default async function SettingsPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your organization's core configuration.</p>
+        <p className="text-muted-foreground mt-2">Manage your organization's core configuration and security.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -26,6 +26,22 @@ export default async function SettingsPage() {
               <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded">Razorpay</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">Manage active subscription plans, upgrade tiers, quotas, and GST tax invoices.</p>
+          </div>
+        </Link>
+
+        <Link 
+          href="/profile/security" 
+          className="flex flex-col gap-3 p-6 border rounded-xl hover:border-primary hover:shadow-sm transition-all bg-card text-card-foreground group border-emerald-500/30 ring-1 ring-emerald-500/10"
+        >
+          <div className="p-3 bg-emerald-500/10 w-fit rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+            <ShieldCheck className="w-6 h-6 text-emerald-500" />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Login Password &amp; Security</h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded">Verified 2FA</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">Manage login credentials, 6-digit email verification OTPs, and active login sessions.</p>
           </div>
         </Link>
 

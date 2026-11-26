@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { AuthRepository } from '@/repositories/auth.repository';
 import { SecuritySettings } from './security-settings';
 
@@ -24,16 +25,18 @@ export default async function SecurityPage() {
       <div>
         <h3 className="text-lg font-medium">Security</h3>
         <p className="text-sm text-muted-foreground">
-          Manage your password and active sessions.
+          Manage your password, email 2-step verification, and active sessions.
         </p>
       </div>
-      <SecuritySettings 
-        userId={userId} 
-        tenantId={tenantId}
-        currentSessionId={currentSessionId}
-        sessions={activeSessions} 
-        loginHistory={loginHistory}
-      />
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading security controls...</div>}>
+        <SecuritySettings 
+          userId={userId} 
+          tenantId={tenantId}
+          currentSessionId={currentSessionId}
+          sessions={activeSessions} 
+          loginHistory={loginHistory}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { loginAction } from '@/actions/auth.actions';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -35,6 +35,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const urlMessage = searchParams.get('message');
   const urlError = searchParams.get('error');
+  const isResetSuccess = searchParams.get('reset') === 'success';
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
@@ -110,6 +111,13 @@ export function LoginForm() {
         <CardTitle className="text-2xl font-bold tracking-tight">Sign In</CardTitle>
       </CardHeader>
       <CardContent>
+        {isResetSuccess && (
+          <div className="flex items-start gap-2.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 p-3 rounded-md text-sm mb-4 font-medium animate-in fade-in-50">
+            <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>Password updated successfully! Please sign in with your new password.</span>
+          </div>
+        )}
+
         {urlMessage && (
           <div className="bg-primary/10 text-primary border border-primary/20 p-3 rounded-md text-sm mb-4">
             {urlMessage}

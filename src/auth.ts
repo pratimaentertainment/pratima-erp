@@ -67,6 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: user.role,
             tenantId: user.tenantId,
             sessionId: loginSessionId || user.id,
+            mustChangePassword: (user as any).mustChangePassword ?? false,
             remember: (credentials as any).remember === 'true'
           } as any;
         } catch (error: any) {

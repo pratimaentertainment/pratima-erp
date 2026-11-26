@@ -93,28 +93,120 @@ export async function loginAction(formData: FormData): Promise<LoginActionResult
   }
 }
 
-export async function forgotPasswordAction(email: string) {
+// =========================================================================
+// 3-STEP AUTOMATIC FORGOT PASSWORD (EMAIL 6-DIGIT OTP) ACTIONS
+// =========================================================================
+
+/**
+ * Step 1: Request 6-digit OTP to registered email
+ */
+export async function forgotPasswordRequestOtpAction(email: string) {
   try {
     const reqHeaders = await headers();
     const ipAddress = reqHeaders.get('x-forwarded-for') || undefined;
 
-    await AuthService.requestPasswordReset(email, ipAddress);
-    return { success: true };
+    const result = await AuthService.requestPasswordResetOtp(email, ipAddress);
+    return {
+      success: true,
+      maskedEmail: result.maskedEmail,
+      message: result.message,
+    };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Failed to dispatch verification code.' };
   }
 }
 
-export async function resetPasswordAction(token: string, password: string) {
+/**
+ * Step 2: Verify 6-digit OTP and get verified reset session token
+ */
+export async function forgotPasswordVerifyOtpAction(email: string, otp: string) {
   try {
     const reqHeaders = await headers();
     const ipAddress = reqHeaders.get('x-forwarded-for') || undefined;
 
-    await AuthService.resetPassword(token, password, ipAddress);
+    const result = await AuthService.verifyPasswordResetOtp(email, otp, ipAddress);
+    return {
+      success: true,
+      resetSessionToken: result.resetSessionToken,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Verification failed.' };
+  }
+}
+
+/**
+ * Step 3: Complete Password Reset with New Password
+ */
+export async function forgotPasswordResetAction(resetSessionToken: string, newPassword: string) {
+  try {
+    const reqHeaders = await headers();
+    const ipAddress = reqHeaders.get('x-forwarded-for') || undefined;
+
+    await AuthService.completePasswordReset(resetSessionToken, newPassword, ipAddress);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Failed to update password.' };
   }
+}
+
+// =========================================================================
+// AUTHENTICATED PROFILE PASSWORD ACTIONS (WITH OTP VERIFICATION)
+// =========================================================================
+
+/**
+ * Request OTP for authenticated password change
+ */
+export async function requestProfileChangePasswordOtpAction(currentPassword: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized: Session required.' };
+    }
+
+    const reqHeaders = await headers();
+    const ipAddress = reqHeaders.get('x-forwarded-for') || undefined;
+
+    const result = await AuthService.requestProfilePasswordChangeOtp(session.user.id, currentPassword, ipAddress);
+    return {
+      success: true,
+      maskedEmail: result.maskedEmail,
+      message: result.message,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to dispatch verification code.' };
+  }
+}
+
+/**
+ * Update authenticated password with OTP
+ */
+export async function changePasswordWithOtpAction(currentPassword: string, otp: string, newPassword: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized: Session required.' };
+    }
+
+    const reqHeaders = await headers();
+    const ipAddress = reqHeaders.get('x-forwarded-for') || undefined;
+
+    await AuthService.changePasswordWithOtp(session.user.id, currentPassword, otp, newPassword, ipAddress);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to change password.' };
+  }
+}
+
+// =========================================================================
+// BACKWARD-COMPATIBLE ACTIONS
+// =========================================================================
+
+export async function forgotPasswordAction(email: string) {
+  return forgotPasswordRequestOtpAction(email);
+}
+
+export async function resetPasswordAction(token: string, password: string) {
+  return forgotPasswordResetAction(token, password);
 }
 
 export async function changePasswordAction(userId: string, currentPass: string, newPass: string) {

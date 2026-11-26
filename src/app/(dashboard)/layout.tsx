@@ -1,6 +1,7 @@
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { AuthRepository } from '@/repositories/auth.repository';
 import { getActiveContext } from '@/lib/context';
 import { AppContextProvider } from '@/providers/app-context';
@@ -42,6 +43,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login?error=SessionRequired');
   }
   const context = contextResult;
+
+  // Mandatory Password Reset Enforcement: If temporary password is active, redirect to /profile/security
+  const reqHeaders = await headers();
+  const currentPath = reqHeaders.get('x-pathname') || '';
+  const mustChangePassword = Boolean(
+    (session.user as any)?.mustChangePassword || (context.user as any)?.mustChangePassword
+  );
+  if (mustChangePassword && !currentPath.startsWith('/profile/security')) {
+    redirect('/profile/security?forced=true');
+  }
 
   // Hard Lock Check (Phase 13.3): Evaluate Tenant Subscription & Trial Status
   // Super Admin role is exempt from tenant locks

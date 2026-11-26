@@ -747,8 +747,9 @@ model User {
   passwordHash String?
   name         String
 
-  canLogin       Boolean        @default(true)
-  status         UserStatus     @default(PENDING_INVITATION)
+  canLogin           Boolean        @default(true)
+  mustChangePassword Boolean        @default(false)
+  status             UserStatus     @default(PENDING_INVITATION)
   employmentType EmploymentType @default(IN_HOUSE)
   isActive       Boolean        @default(true)
   monthlySalary  Decimal?       @db.Decimal(10, 2)
@@ -980,6 +981,7 @@ model Token {
   token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
+  attempts  Int       @default(0)
 
   createdAt DateTime @default(now())
 }

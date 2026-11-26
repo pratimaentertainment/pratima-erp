@@ -102,6 +102,11 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
+  // 4.0 Forced Password Change: Users with temporary/reset passwords must update before continuing
+  if (isLoggedIn && (req.auth?.user as any)?.mustChangePassword && !pathname.startsWith('/profile/security') && !pathname.startsWith('/api') && pathname !== '/login') {
+    return NextResponse.redirect(new URL('/profile/security?forced=true', nextUrl));
+  }
+
   // 4.1 Role isolation: DEALER cannot access internal ERP dashboard or super-admin
   if (isLoggedIn && isDealer && !pathname.startsWith('/dealer') && !pathname.startsWith('/api')) {
     return NextResponse.redirect(new URL('/dealer', nextUrl));
@@ -122,7 +127,14 @@ export const proxy = auth((req) => {
     }
   }
 
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   response.headers.set('X-RateLimit-Limit', String(rateLimit.limit));
   response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
   response.headers.set('X-RateLimit-Reset', String(rateLimit.resetTime));
