@@ -6,23 +6,16 @@ import {
   Check,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
   Building2,
   Users,
-  ChevronDown,
-  Network,
   Star,
   PlusCircle,
+  HelpCircle,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import {
-  getFeatureDefinition,
-  STARTER_DEFAULT_FEATURES,
-  PRO_DEFAULT_FEATURES,
-  ENTERPRISE_DEFAULT_FEATURES,
-} from '@/lib/constants/plan-features';
+import { FramiqVisualShowcase } from '@/components/pricing/framiq-visual-showcase';
 
 export interface SerializedSubscriptionPlan {
   id: string;
@@ -65,12 +58,14 @@ interface PricingTableClientProps {
 
 export function PricingTableClient({ plans, addons = [] }: PricingTableClientProps) {
   const [isAnnual, setIsAnnual] = React.useState(true);
-  const [openFaq, setOpenFaq] = React.useState<number | null>(null);
 
   // Helper to determine plan metadata and feature checklist
   const getPlanDetails = (plan: SerializedSubscriptionPlan) => {
     const isMulti = plan.slug.includes('multi') || plan.name.toLowerCase().includes('multi');
-    const isHigher = plan.slug.includes('higher') || plan.slug.includes('franchise') || plan.name.toLowerCase().includes('higher');
+    const isHigher =
+      plan.slug.includes('higher') ||
+      plan.slug.includes('franchise') ||
+      plan.name.toLowerCase().includes('higher');
 
     let badge: string | null = plan.offerBadgeText || null;
     let isRecommended = false;
@@ -103,42 +98,9 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
     return { badge, isRecommended, tagline, features: featureItems };
   };
 
-  const faqs = [
-    {
-      question: 'How does the 15-day free trial work?',
-      answer:
-        'You receive full, unrestricted access to FRAMIQ immediately after registering your studio. No credit card or upfront deposit is required. You can test shoot scheduling, crew dispatch, client proofing, and GST invoicing.',
-    },
-    {
-      question: 'What is the Base Plan and how do add-ons work?',
-      answer:
-        'Our Starter Studio plan serves as the comprehensive Base Plan. If you only need one or two advanced capabilities (such as Google Drive BYOS sync or Meta Lead Ads auto-import), you do not need to upgrade to a higher tier—you can simply attach standalone add-ons at modular rates.',
-    },
-    {
-      question: 'Can I provide my GSTIN to claim Input Tax Credit (ITC)?',
-      answer:
-        'Yes. FRAMIQ by Pratima Entertainment & Technology is 100% compliant with Indian GST requirements. You can enter your studio GSTIN during signup or in Studio Settings, and all subscription tax invoices will include valid B2B ITC details.',
-    },
-    {
-      question: 'What happens to my client galleries and data after the trial?',
-      answer:
-        'All your leads, events, client photos, approval locks, and invoices remain intact. Once you activate your subscription, your account transitions seamlessly without any downtime or data migration needed.',
-    },
-    {
-      question: 'Can I change my plan or billing cycle later?',
-      answer:
-        'Yes. You can upgrade, downgrade, or switch between Monthly and Annual billing anytime directly from your Studio Settings. Plan upgrades take effect immediately.',
-    },
-    {
-      question: 'Which payment methods do you support in India?',
-      answer:
-        'We support UPI (Google Pay, PhonePe, Paytm, BHIM), Indian & International Credit/Debit Cards (Visa, MasterCard, RuPay), and Net Banking via Razorpay secure checkout.',
-    },
-  ];
-
   return (
     <div className="space-y-16">
-            {/* Full Core CRM & ERP Guaranteed Value Banner */}
+      {/* Full Core CRM & ERP Guaranteed Value Banner */}
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 text-center space-y-1.5 shadow-xs max-w-4xl mx-auto">
         <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm sm:text-base">
           <Sparkles className="h-4 w-4" />
@@ -193,7 +155,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
               variant="secondary"
               className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"
             >
-              Save ~17%
+              Save ~17% (2 Months Free)
             </Badge>
           </span>
         </div>
@@ -216,7 +178,9 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
 
           const discountPct =
             effectiveOriginalMonthly && effectiveOriginalMonthly > effectiveMonthly
-              ? Math.round(((effectiveOriginalMonthly - effectiveMonthly) / effectiveOriginalMonthly) * 100)
+              ? Math.round(
+                  ((effectiveOriginalMonthly - effectiveMonthly) / effectiveOriginalMonthly) * 100
+                )
               : 0;
 
           return (
@@ -257,14 +221,15 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                       {plan.name}
                     </h3>
                     {plan.isBasePlan && (
-                      <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/40">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
+                      >
                         Base Plan
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground leading-snug">
-                    {tagline}
-                  </p>
+                  <p className="text-xs text-muted-foreground leading-snug">{tagline}</p>
                 </div>
 
                 {/* Price Display with Strikethrough MRP */}
@@ -278,9 +243,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                     <span className="text-3xl sm:text-4xl font-black text-foreground font-heading">
                       ₹{effectiveMonthly.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      / month
-                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">/ month</span>
                     {discountPct > 0 && (
                       <Badge
                         variant="secondary"
@@ -294,12 +257,16 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                     {isAnnual ? (
                       <>
                         Billed annually at{' '}
-                        {plan.originalAnnualPrice && plan.originalAnnualPrice > plan.annualPrice && (
-                          <span className="line-through mr-1 text-muted-foreground">
-                            ₹{plan.originalAnnualPrice.toLocaleString('en-IN')}
-                          </span>
-                        )}
-                        <strong className="text-foreground">₹{plan.annualPrice.toLocaleString('en-IN')}</strong> + GST
+                        {plan.originalAnnualPrice &&
+                          plan.originalAnnualPrice > plan.annualPrice && (
+                            <span className="line-through mr-1 text-muted-foreground">
+                              ₹{plan.originalAnnualPrice.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        <strong className="text-foreground">
+                          ₹{plan.annualPrice.toLocaleString('en-IN')}
+                        </strong>{' '}
+                        + GST
                       </>
                     ) : (
                       'Billed monthly + GST'
@@ -311,7 +278,9 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                 <div className="grid grid-cols-2 gap-2 pt-2 pb-1 border-y border-border/40 text-[11px]">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <span>{plan.maxBranches} {plan.maxBranches === 1 ? 'Branch' : 'Branches'}</span>
+                    <span>
+                      {plan.maxBranches} {plan.maxBranches === 1 ? 'Branch' : 'Branches'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Users className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -326,10 +295,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                   </p>
                   <ul className="space-y-2.5">
                     {features.map((feature, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2.5 text-xs text-muted-foreground"
-                      >
+                      <li key={idx} className="flex items-start gap-2.5 text-xs text-muted-foreground">
                         <div className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
                           <Check className="h-3 w-3 stroke-[3]" />
                         </div>
@@ -376,7 +342,7 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
               Optional Add-on Capabilities
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Need specific superpowers without jumping to an Enterprise tier? Start on our Base Plan and attach any individual add-on at transparent, pay-as-you-grow pricing.
+              Need extra branch capacity or pay-as-you-need AI photo discovery? Attach stackable add-ons at crystal-clear, transparent pricing without jumping tiers.
             </p>
           </div>
 
@@ -414,21 +380,31 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {addon.billingType === 'PER_EVENT' ? (
-                            <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px]">
+                            <Badge
+                              variant="outline"
+                              className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px]"
+                            >
                               Pay-Per-Event (1 Credit)
                             </Badge>
                           ) : addon.billingType === 'CREDIT_PACK' ? (
-                            <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px]">
+                            <Badge
+                              variant="outline"
+                              className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px]"
+                            >
                               Prepaid Pack ({addon.creditsIncluded || 10} Credits)
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]"
+                            >
                               Monthly / Annual Add-on
                             </Badge>
                           )}
                         </td>
                         <td className="py-3.5 px-4 sm:px-6 text-right font-mono">
-                          {addon.billingType === 'PER_EVENT' || addon.billingType === 'CREDIT_PACK' ? (
+                          {addon.billingType === 'PER_EVENT' ||
+                          addon.billingType === 'CREDIT_PACK' ? (
                             <div className="flex items-center justify-end gap-1.5">
                               {origM && origM > curM && (
                                 <span className="text-muted-foreground line-through text-[11px]">
@@ -468,48 +444,56 @@ export function PricingTableClient({ plans, addons = [] }: PricingTableClientPro
               💡 Add-ons can be enabled directly during subscription checkout or assigned anytime via your studio billing desk.
             </div>
           </div>
+
+          {/* Real-World Cost Examples Callout */}
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-8 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span>Real-World Cost Examples (Transparent Studio Arithmetic)</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="rounded-xl border border-border/70 bg-card/90 p-4 space-y-1.5 shadow-xs">
+                <div className="font-bold text-foreground text-sm">Need 2 Branches?</div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Keep <strong className="text-foreground">Starter Plan</strong> (₹499/mo) +{' '}
+                  <strong className="text-foreground">1 Extra Branch Add-on</strong> (₹299/mo) ={' '}
+                  <strong className="text-primary font-mono text-sm">₹798/mo total</strong>.
+                </p>
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Save ₹501/mo compared to jumping to Multi-Branch tier!
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-card/90 p-4 space-y-1.5 shadow-xs">
+                <div className="font-bold text-foreground text-sm">Need 8 Staff Logins?</div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Take <strong className="text-foreground">Starter Plan</strong> (₹499/mo, 3 staff) +{' '}
+                  <strong className="text-foreground">+5 Staff Pack</strong> (₹199/mo) ={' '}
+                  <strong className="text-primary font-mono text-sm">₹698/mo total</strong> for 8 logins.
+                </p>
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  (Freelance crew without logins are always unlimited at ₹0).
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-card/90 p-4 space-y-1.5 shadow-xs">
+                <div className="font-bold text-foreground text-sm">AI Face Delivery on Demand?</div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Pay only <strong className="text-primary font-mono text-sm">₹149</strong> per wedding on Starter or Multi-Branch.
+                </p>
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Or choose Franchise / Higher Plan where AI Face Recognition is inbuilt for ₹0 across all shoots!
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Frequently Asked Questions */}
-      <div className="max-w-3xl mx-auto space-y-6 pt-10">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-foreground">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Have questions about billing, quotas, or GST invoicing? We have answers.
-          </p>
-        </div>
-
-        <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card/40 overflow-hidden">
-          {faqs.map((faq, index) => {
-            const isOpen = openFaq === index;
-            return (
-              <div key={index} className="transition-colors hover:bg-muted/10">
-                <button
-                  type="button"
-                  onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between p-5 text-left text-sm font-semibold text-foreground transition-all"
-                >
-                  <span>{faq.question}</span>
-                  <ChevronDown
-                    className={cn(
-                      'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                      isOpen && 'rotate-180 text-primary'
-                    )}
-                  />
-                </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 text-xs text-muted-foreground leading-relaxed">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* =========================================================================
+          RICH VISUAL SHOWCASE: 6 INTERACTIVE PRODUCT MOCKUPS + COMPARISON + FAQS + CTA
+          ========================================================================= */}
+      <FramiqVisualShowcase />
     </div>
   );
 }

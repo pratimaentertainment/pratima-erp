@@ -1,0 +1,114 @@
+
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aiBg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="50%" stop-color="#1e1035"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="scannerGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="50%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="25" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" rx="24" fill="url(#aiBg)"/>
+  <circle cx="350" cy="400" r="220" fill="#a855f7" opacity="0.16" filter="url(#softGlow)"/>
+  <circle cx="900" cy="350" r="250" fill="#3b82f6" opacity="0.15" filter="url(#softGlow)"/>
+
+  <!-- Left: Mobile Phone Selfie Mockup -->
+  <g transform="translate(140, 100)">
+    <!-- Phone Body -->
+    <rect x="0" y="0" width="320" height="600" rx="40" fill="#0f172a" stroke="#475569" stroke-width="4"/>
+    <rect x="15" y="15" width="290" height="570" rx="28" fill="#1e293b"/>
+    <!-- Dynamic Island / Speaker -->
+    <rect x="105" y="25" width="110" height="24" rx="12" fill="#0f172a"/>
+
+    <!-- Selfie Viewport -->
+    <rect x="25" y="65" width="270" height="360" rx="20" fill="#0f172a"/>
+    <!-- Face Silhouette / Target -->
+    <circle cx="160" cy="210" r="75" fill="#334155" fill-opacity="0.6"/>
+    <path d="M120 280 Q160 330 200 280 Z" fill="#334155" fill-opacity="0.6"/>
+
+    <!-- AI Facial Scanning Mesh Overlay -->
+    <circle cx="160" cy="210" r="85" fill="none" stroke="url(#scannerGrad)" stroke-width="3" stroke-dasharray="8 6"/>
+    <circle cx="140" cy="195" r="4" fill="#a855f7"/>
+    <circle cx="180" cy="195" r="4" fill="#a855f7"/>
+    <circle cx="160" cy="215" r="4" fill="#ec4899"/>
+    <circle cx="150" cy="240" r="4" fill="#3b82f6"/>
+    <circle cx="170" cy="240" r="4" fill="#3b82f6"/>
+    <line x1="140" y1="195" x2="160" y2="215" stroke="#c084fc" stroke-width="1.5"/>
+    <line x1="180" y1="195" x2="160" y2="215" stroke="#c084fc" stroke-width="1.5"/>
+    <line x1="160" y1="215" x2="150" y2="240" stroke="#c084fc" stroke-width="1.5"/>
+    <line x1="160" y1="215" x2="170" y2="240" stroke="#c084fc" stroke-width="1.5"/>
+
+    <!-- Scan Line -->
+    <line x1="30" y1="210" x2="290" y2="210" stroke="#ec4899" stroke-width="3" opacity="0.9"/>
+
+    <!-- Success Chip -->
+    <rect x="45" y="445" width="230" height="42" rx="10" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1.5"/>
+    <text x="65" y="471" fill="#34d399" font-family="system-ui, sans-serif" font-size="13" font-weight="700">✓ Selfie Matched in 1.4s</text>
+
+    <!-- Match Count Button -->
+    <rect x="45" y="500" width="230" height="46" rx="12" fill="url(#scannerGrad)"/>
+    <text x="75" y="528" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="800">View 68 Photos (Free)</text>
+  </g>
+
+  <!-- Connecting Stream Line -->
+  <path d="M470 380 C 530 380, 530 250, 600 250" stroke="url(#scannerGrad)" stroke-width="3" stroke-dasharray="6 6" fill="none"/>
+
+  <!-- Right: Wedding Gallery Results Grid Mockup -->
+  <g transform="translate(560, 100)">
+    <rect x="0" y="0" width="520" height="600" rx="20" fill="#0f172a" fill-opacity="0.85" stroke="#334155" stroke-width="2"/>
+    
+    <!-- Header -->
+    <rect x="0" y="0" width="520" height="65" rx="20" fill="#1e293b"/>
+    <text x="30" y="38" fill="#ffffff" font-family="system-ui, sans-serif" font-size="16" font-weight="800">Pooja &amp; Kunal's Royal Wedding</text>
+    <text x="30" y="55" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="600">68 Photos Found Featuring You • High-Res Download Ready</text>
+
+    <!-- Grid of Matched Photos -->
+    <!-- Photo 1 -->
+    <rect x="25" y="85" width="145" height="145" rx="12" fill="#334155"/>
+    <rect x="35" y="95" width="55" height="20" rx="6" fill="#10b981"/>
+    <text x="43" y="109" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="800">99% MATCH</text>
+    <circle cx="150" cy="210" r="10" fill="#ef4444"/>
+    <text x="146" y="214" fill="#ffffff" font-size="10">♥</text>
+
+    <!-- Photo 2 -->
+    <rect x="185" y="85" width="145" height="145" rx="12" fill="#475569"/>
+    <rect x="195" y="95" width="55" height="20" rx="6" fill="#10b981"/>
+    <text x="203" y="109" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="800">97% MATCH</text>
+
+    <!-- Photo 3 -->
+    <rect x="345" y="85" width="145" height="145" rx="12" fill="#334155"/>
+    <rect x="355" y="95" width="55" height="20" rx="6" fill="#10b981"/>
+    <text x="363" y="109" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="800">98% MATCH</text>
+
+    <!-- Photo 4 -->
+    <rect x="25" y="245" width="145" height="145" rx="12" fill="#475569"/>
+    <!-- Photo 5 -->
+    <rect x="185" y="245" width="145" height="145" rx="12" fill="#334155"/>
+    <!-- Photo 6 -->
+    <rect x="345" y="245" width="145" height="145" rx="12" fill="#475569"/>
+
+    <!-- Bottom Feature Callout in Gallery Card -->
+    <rect x="25" y="415" width="465" height="155" rx="14" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="45" y="445" fill="#ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="800">Instant Privacy &amp; Watermark Protection</text>
+    <text x="45" y="470" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="12">
+      • Guests see only their own pictures or full public galleries as per host choice.
+    </text>
+    <text x="45" y="492" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="12">
+      • Pay-As-You-Need: ₹149 per wedding or Inbuilt Free in Higher Plan.
+    </text>
+    <text x="45" y="514" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="12">
+      • Instant automated WhatsApp delivery with high-res download toggle.
+    </text>
+    <rect x="45" y="530" width="160" height="26" rx="6" fill="#6366f1" fill-opacity="0.3"/>
+    <text x="55" y="547" fill="#818cf8" font-family="system-ui, sans-serif" font-size="10" font-weight="700">POWERED BY FRAMIQ AI</text>
+  </g>
+</svg>

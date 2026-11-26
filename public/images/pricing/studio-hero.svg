@@ -1,0 +1,123 @@
+
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="30" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="800" rx="24" fill="url(#bgGrad)"/>
+
+  <!-- Ambient Glow Orbs -->
+  <circle cx="200" cy="200" r="180" fill="#6366f1" opacity="0.18" filter="url(#glow)"/>
+  <circle cx="1000" cy="300" r="220" fill="#a855f7" opacity="0.15" filter="url(#glow)"/>
+  <circle cx="600" cy="700" r="200" fill="#3b82f6" opacity="0.12" filter="url(#glow)"/>
+
+  <!-- Grid overlay -->
+  <path d="M0 100 H1200 M0 200 H1200 M0 300 H1200 M0 400 H1200 M0 500 H1200 M0 600 H1200 M0 700 H1200" stroke="#334155" stroke-opacity="0.25" stroke-width="1"/>
+  <path d="M150 0 V800 M300 0 V800 M450 0 V800 M600 0 V800 M750 0 V800 M900 0 V800 M1050 0 V800" stroke="#334155" stroke-opacity="0.25" stroke-width="1"/>
+
+  <!-- Main Monitor Window Frame -->
+  <rect x="120" y="90" width="960" height="600" rx="18" fill="#1e293b" fill-opacity="0.85" stroke="#475569" stroke-width="2"/>
+  
+  <!-- Window Header Bar -->
+  <rect x="120" y="90" width="960" height="50" rx="18" fill="#0f172a" fill-opacity="0.95"/>
+  <circle cx="155" cy="115" r="7" fill="#ef4444"/>
+  <circle cx="178" cy="115" r="7" fill="#f59e0b"/>
+  <circle cx="201" cy="115" r="7" fill="#10b981"/>
+  <text x="240" y="121" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="14" font-weight="600">FRAMIQ Studio ERP • Royal Lens Productions (Mumbai HQ)</text>
+  
+  <!-- Status Badge in Header -->
+  <rect x="910" y="103" width="145" height="26" rx="13" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1"/>
+  <circle cx="925" cy="116" r="4" fill="#10b981"/>
+  <text x="937" y="121" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="700">LIVE WORKSPACE</text>
+
+  <!-- Left Sidebar Mock -->
+  <rect x="140" y="160" width="200" height="510" rx="12" fill="#0f172a" fill-opacity="0.6"/>
+  <rect x="155" y="180" width="170" height="36" rx="8" fill="url(#primaryGrad)"/>
+  <text x="195" y="203" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Studio Dashboard</text>
+  <rect x="155" y="230" width="170" height="34" rx="8" fill="#334155" fill-opacity="0.4"/>
+  <text x="195" y="252" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="13" font-weight="500">Leads &amp; Inquiries</text>
+  <rect x="155" y="275" width="170" height="34" rx="8" fill="#334155" fill-opacity="0.4"/>
+  <text x="195" y="297" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="13" font-weight="500">Wedding Bookings</text>
+  <rect x="155" y="320" width="170" height="34" rx="8" fill="#334155" fill-opacity="0.4"/>
+  <text x="195" y="342" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="13" font-weight="500">Crew Roster &amp; Gear</text>
+  <rect x="155" y="365" width="170" height="34" rx="8" fill="#334155" fill-opacity="0.4"/>
+  <text x="195" y="387" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="13" font-weight="500">GST Tax Invoices</text>
+  <rect x="155" y="410" width="170" height="34" rx="8" fill="#334155" fill-opacity="0.4"/>
+  <text x="195" y="432" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="13" font-weight="500">AI Client Galleries</text>
+
+  <!-- Metric KPI Cards (Top Row) -->
+  <rect x="360" y="160" width="220" height="110" rx="14" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1.5"/>
+  <text x="380" y="190" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12" font-weight="600">CONFIRMED WEDDINGS</text>
+  <text x="380" y="232" fill="#ffffff" font-family="system-ui, sans-serif" font-size="32" font-weight="900">28 Shoots</text>
+  <text x="380" y="255" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="600">↑ 6 Bookings added this week</text>
+
+  <rect x="600" y="160" width="220" height="110" rx="14" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1.5"/>
+  <text x="620" y="190" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12" font-weight="600">COLLECTIONS &amp; REVENUE</text>
+  <text x="620" y="232" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="32" font-weight="900">₹18,45,000</text>
+  <text x="620" y="255" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="500">₹4,20,000 Due on Shoot Day</text>
+
+  <rect x="840" y="160" width="220" height="110" rx="14" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1.5"/>
+  <text x="860" y="190" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12" font-weight="600">CREW &amp; FREELANCERS</text>
+  <text x="860" y="232" fill="#a855f7" font-family="system-ui, sans-serif" font-size="32" font-weight="900">42 Rostered</text>
+  <text x="860" y="255" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Zero double-booking clashes</text>
+
+  <!-- Live Multi-Day Wedding Timeline Card -->
+  <rect x="360" y="290" width="700" height="230" rx="14" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1.5"/>
+  <text x="385" y="325" fill="#ffffff" font-family="system-ui, sans-serif" font-size="16" font-weight="800">Upcoming Grand Wedding: Malhotra &amp; Kapoor (3-Day Royal Package)</text>
+  <text x="385" y="345" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">The Leela Palace, Udaipur • Total Contract: ₹4,50,000 + 18% GST</text>
+
+  <!-- Ceremony 1 -->
+  <rect x="385" y="365" width="200" height="135" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <rect x="395" y="375" width="80" height="20" rx="5" fill="#f59e0b" fill-opacity="0.2"/>
+  <text x="405" y="389" fill="#f59e0b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">DAY 1: HALDI</text>
+  <text x="395" y="415" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">10:00 AM - 3:00 PM</text>
+  <text x="395" y="435" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Lead: Rahul (In-House)</text>
+  <text x="395" y="452" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Candid: Amit (Freelancer)</text>
+  <text x="395" y="475" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="600">✓ Gear Pre-Dispatched</text>
+
+  <!-- Ceremony 2 -->
+  <rect x="605" y="365" width="200" height="135" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <rect x="615" y="375" width="95" height="20" rx="5" fill="#a855f7" fill-opacity="0.2"/>
+  <text x="625" y="389" fill="#c084fc" font-family="system-ui, sans-serif" font-size="10" font-weight="700">DAY 2: SANGEET</text>
+  <text x="615" y="415" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">6:00 PM - 2:00 AM</text>
+  <text x="615" y="435" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Cinematography: 2 Drone + 3 Cam</text>
+  <text x="615" y="452" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Crew: 6 External Freelancers</text>
+  <text x="615" y="475" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">⚡ Live Stream Enabled</text>
+
+  <!-- Ceremony 3 -->
+  <rect x="825" y="365" width="215" height="135" rx="10" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+  <rect x="835" y="375" width="105" height="20" rx="5" fill="#6366f1" fill-opacity="0.2"/>
+  <text x="845" y="389" fill="#818cf8" font-family="system-ui, sans-serif" font-size="10" font-weight="700">DAY 3: WEDDING</text>
+  <text x="835" y="415" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Peak Muhurat 7:15 PM</text>
+  <text x="835" y="435" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Full 8-Member Team Roster</text>
+  <text x="835" y="452" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">AI Face Delivery: Enabled</text>
+  <text x="835" y="475" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="700">✓ Contract Paid in Full</text>
+
+  <!-- Bottom Floating Badge (Highlighting AI & GST) -->
+  <rect x="360" y="535" width="700" height="55" rx="12" fill="url(#primaryGrad)" fill-opacity="0.15" stroke="#8b5cf6" stroke-width="1.5"/>
+  <circle cx="390" cy="562" r="14" fill="#8b5cf6"/>
+  <text x="385" y="567" fill="#ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="900">✨</text>
+  <text x="415" y="557" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Instant AI Guest Photo Finder</text>
+  <text x="415" y="575" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="11">Guests upload a quick selfie to discover their wedding photos in under 2 seconds. Included free in Higher Plan.</text>
+</svg>
