@@ -17,32 +17,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login');
   }
 
-  // Validate the session exists and is active in DB
+  // Validate the session exists and is active in DB, hydrate context, and load broadcast in parallel
   const sessionId = (session.user as any).sessionId;
-  if (sessionId) {
-    const dbSession = await AuthRepository.findSessionById(sessionId);
-    if (!dbSession || dbSession.status !== 'ACTIVE') {
-      // Session revoked or expired
-      redirect('/login?error=SessionExpired');
-    }
+  const [dbSession, contextResult, broadcast] = await Promise.all([
+    sessionId ? AuthRepository.findSessionById(sessionId) : Promise.resolve(null),
+    getActiveContext().catch((error: any) => {
+      if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith?.('NEXT_REDIRECT')) {
+        throw error;
+      }
+      return null;
+    }),
+    getActivePlatformBroadcast(),
+  ]);
+
+  if (sessionId && (!dbSession || dbSession.status !== 'ACTIVE')) {
+    redirect('/login?error=SessionExpired');
   }
 
   if ((session.user as any)?.role === 'DEALER') {
     redirect('/dealer');
   }
 
-  let context = null;
-  try {
-    context = await getActiveContext();
-    if (!context) {
-      redirect('/login?error=SessionRequired');
-    }
-  } catch (error: any) {
-    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith?.('NEXT_REDIRECT')) {
-      throw error;
-    }
+  if (!contextResult) {
     redirect('/login?error=SessionRequired');
   }
+  const context = contextResult;
 
   // Hard Lock Check (Phase 13.3): Evaluate Tenant Subscription & Trial Status
   // Super Admin role is exempt from tenant locks
@@ -67,7 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
-  const broadcast = await getActivePlatformBroadcast();
+  // broadcast was already fetched concurrently with context and session validation
 
   return (
     <AppContextProvider initialContext={context}>

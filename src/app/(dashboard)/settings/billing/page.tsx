@@ -31,6 +31,7 @@ import {
   type SerializedPlanAddonItem,
 } from './billing-plans-table';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
+import { getCachedSubscriptionPlans, getCachedPlanAddons } from '@/services/catalog-cache.service';
 
 export const metadata: Metadata = {
   title: 'Subscription & Billing - Studio Settings | FRAMIQ',
@@ -92,14 +93,8 @@ export default async function TenantBillingPage() {
     prisma.user.count({
       where: { tenantId },
     }),
-    prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
-    }),
-    prisma.planAddonConfig.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    }),
+    getCachedSubscriptionPlans(),
+    getCachedPlanAddons(),
     prisma.billingTransaction.findMany({
       where: { tenantId },
       orderBy: { transactionDate: 'desc' },

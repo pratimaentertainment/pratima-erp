@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 
 export const IMPERSONATION_COOKIE_NAME = 'pratima_impersonation';
@@ -93,8 +94,9 @@ export function verifyImpersonationToken(token: string): ImpersonationState | nu
 /**
  * Reads and verifies the current active impersonation cookie.
  * Returns the ImpersonationState or null if no valid/unexpired session exists.
+ * Wrapped in React.cache() to deduplicate within the same HTTP request lifecycle.
  */
-export async function getActiveImpersonationState(): Promise<ImpersonationState | null> {
+export const getActiveImpersonationState = cache(async function getActiveImpersonationState(): Promise<ImpersonationState | null> {
   try {
     const cookieStore = await cookies();
     const cookie = cookieStore.get(IMPERSONATION_COOKIE_NAME);
@@ -104,4 +106,4 @@ export async function getActiveImpersonationState(): Promise<ImpersonationState 
   } catch {
     return null;
   }
-}
+});

@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { signOut } from '@/auth';
+import { getCachedSubscriptionPlans } from '@/services/catalog-cache.service';
 import {
   Lock,
   ShieldAlert,
@@ -45,12 +46,9 @@ export async function SubscriptionLockScreen({
   userEmail,
   userName,
 }: SubscriptionLockScreenProps) {
-  // 1. Fetch available plans and current subscription status from DB
+  // 1. Fetch available plans from cached catalog and current subscription status from DB
   const [allPlans, tenantSub, tenantRecord] = await Promise.all([
-    prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
-      orderBy: { monthlyPrice: 'asc' },
-    }),
+    getCachedSubscriptionPlans(),
     prisma.tenantSubscription.findUnique({
       where: { tenantId },
       include: { plan: true },

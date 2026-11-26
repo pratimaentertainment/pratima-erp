@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { buildContextAndAuthorize, ServiceContext } from '@/lib/application/utils/context';
 import { getActiveImpersonationState, ImpersonationState } from '@/lib/impersonation';
 import { getTenantEntitlements } from '@/services/billing/entitlement.service';
@@ -47,7 +48,11 @@ export interface ActiveContext {
   impersonation?: ImpersonationState | null;
 }
 
-export async function getActiveContext(): Promise<ActiveContext | null> {
+/**
+ * Resolves the complete multi-tenant, role-aware, branch-aware active context.
+ * Wrapped in React.cache() to deduplicate execution within the same request lifecycle.
+ */
+export const getActiveContext = cache(async function getActiveContext(): Promise<ActiveContext | null> {
   const session = await auth();
   if (!session?.user) {
     return null;
@@ -276,7 +281,7 @@ export async function getActiveContext(): Promise<ActiveContext | null> {
     isOwnerOrAdmin,
     impersonation,
   };
-}
+});
 
 export { buildContextAndAuthorize };
 export type { ServiceContext };

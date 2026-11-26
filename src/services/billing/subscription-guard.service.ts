@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { cache } from 'react';
 
 export type SubscriptionLockReason = 'TRIAL_EXPIRED' | 'SUBSCRIPTION_EXPIRED' | 'NONE';
 
@@ -25,7 +26,7 @@ export interface TenantLockStatus {
  * @param tenantId UUID of the tenant studio
  * @returns TenantLockStatus containing lock flag, canonical reason, and days remaining.
  */
-export async function checkTenantLockStatus(tenantId: string): Promise<TenantLockStatus> {
+export const checkTenantLockStatus = cache(async function checkTenantLockStatus(tenantId: string): Promise<TenantLockStatus> {
   if (!tenantId) {
     return {
       isLocked: true,
@@ -190,7 +191,7 @@ export async function checkTenantLockStatus(tenantId: string): Promise<TenantLoc
       daysLeft: 0,
     };
   }
-}
+});
 
 /**
  * Singleton / namespace class representation for enterprise injection.

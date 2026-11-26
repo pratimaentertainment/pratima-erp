@@ -945,6 +945,9 @@ model LoginSession {
   refreshTokenId  String?
 
   createdAt DateTime @default(now())
+
+  @@index([userId, status])
+  @@index([status])
 }
 
 model PasswordHistory {
@@ -1166,6 +1169,9 @@ model Quotation {
   subjects           QuotationEventSubject[]
   functions          QuotationFunction[]
   deliverables       QuotationDeliverable[]
+
+  @@index([leadId])
+  @@index([status])
 }
 
 model QuotationRevision {

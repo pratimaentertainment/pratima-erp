@@ -1,16 +1,17 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { cache } from 'react';
 
 export class AuthRepository {
   static async createLoginSession(data: Prisma.LoginSessionUncheckedCreateInput) {
     return prisma.loginSession.create({ data });
   }
 
-  static async findSessionById(sessionId: string) {
+  static findSessionById = cache(async (sessionId: string) => {
     return prisma.loginSession.findUnique({
       where: { id: sessionId },
     });
-  }
+  });
 
   static async updateSession(sessionId: string, data: Prisma.LoginSessionUncheckedUpdateInput) {
     return prisma.loginSession.update({

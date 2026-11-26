@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { BroadcastSeverity } from '@prisma/client';
+import { cache } from 'react';
 
 /**
  * Strict Security Guard: Ensures caller is an active SUPER_ADMIN
@@ -255,8 +256,9 @@ export async function getAllPlatformBroadcastsAction() {
 
 /**
  * Public/Dashboard Query: Returns the latest active, unexpired system broadcast (if any).
+ * Wrapped in React.cache() for per-request deduplication.
  */
-export async function getActivePlatformBroadcast() {
+export const getActivePlatformBroadcast = cache(async function getActivePlatformBroadcast() {
   try {
     const broadcast = await prisma.platformBroadcast.findFirst({
       where: {
@@ -290,4 +292,4 @@ export async function getActivePlatformBroadcast() {
   } catch {
     return null;
   }
-}
+});

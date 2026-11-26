@@ -10,8 +10,44 @@ export default async function LeadsPage() {
   const user = session?.user as any;
   const context = await getActiveContext();
 
-  const rawLeads = await LeadService.findAll();
-  
+  const isFranchisor = Boolean(context?.tenant?.isFranchisor || user?.role === 'SUPER_ADMIN');
+
+  // Parallelize all 4 independent database queries with lean select projections
+  const [rawLeads, users, packages, rawFranchisees] = await Promise.all([
+    LeadService.findAll(context),
+    user?.tenantId
+      ? prisma.user.findMany({
+          where: { tenantId: user.tenantId, deletedAt: null },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+          orderBy: { name: 'asc' },
+        })
+      : Promise.resolve([]),
+    user?.tenantId
+      ? prisma.package.findMany({
+          where: { tenantId: user.tenantId },
+          select: {
+            id: true,
+            name: true,
+            basePrice: true,
+            isActive: true,
+          },
+          orderBy: { name: 'asc' },
+        })
+      : Promise.resolve([]),
+    isFranchisor && user?.tenantId
+      ? prisma.tenant.findMany({
+          where: { parentTenantId: user.tenantId, deletedAt: null },
+          select: { id: true, name: true, city: true, state: true },
+          orderBy: { name: 'asc' },
+        })
+      : Promise.resolve([]),
+  ]);
+
   // Explicit Decimal-to-number mapping to prevent Next.js Server-to-Client serialization errors
   const leads: SerializedLead[] = (Array.isArray(rawLeads) ? rawLeads : []).map((lead: any) => ({
     ...lead,
@@ -42,15 +78,6 @@ export default async function LeadsPage() {
       : [],
   }));
 
-  // We need users for assignment
-  const users = await prisma.user.findMany({
-    where: { tenantId: user.tenantId, deletedAt: null }
-  });
-
-  const packages = await prisma.package.findMany({
-    where: { tenantId: user.tenantId }
-  });
-
   const serializedPackages = packages.map((pkg: any) => ({
     ...pkg,
     basePrice: pkg.basePrice !== null && pkg.basePrice !== undefined
@@ -60,17 +87,7 @@ export default async function LeadsPage() {
       : 0,
   }));
 
-  // Fetch linked franchisee studios if tenant is a franchisor
-  const isFranchisor = Boolean(context?.tenant?.isFranchisor || user?.role === 'SUPER_ADMIN');
-  const rawFranchisees = isFranchisor && user?.tenantId
-    ? await prisma.tenant.findMany({
-        where: { parentTenantId: user.tenantId, deletedAt: null },
-        select: { id: true, name: true, city: true, state: true },
-        orderBy: { name: 'asc' },
-      })
-    : [];
-
-  const formattedFranchisees = rawFranchisees.map((f) => ({
+  const formattedFranchisees = rawFranchisees.map((f: any) => ({
     id: f.id,
     name: f.name,
     city: f.city || undefined,

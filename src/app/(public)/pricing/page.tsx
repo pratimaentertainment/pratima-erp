@@ -8,6 +8,7 @@ import {
   type SerializedPlanAddon,
 } from './pricing-table-client';
 import { ensureAddonPriceListInitialized } from '@/actions/subscription.actions';
+import { getCachedSubscriptionPlans, getCachedPlanAddons } from '@/services/catalog-cache.service';
 
 export const metadata: Metadata = {
   title: 'Pricing Plans | FRAMIQ by Pratima Entertainment & Technology',
@@ -24,16 +25,10 @@ export default async function PricingPage() {
   try {
     await ensureAddonPriceListInitialized();
 
-    // 1. Fetch active plans and modular addons from Prisma database
+    // 1. Fetch active plans and modular addons from cached catalog service
     const [dbPlans, dbAddons] = await Promise.all([
-      prisma.subscriptionPlan.findMany({
-        where: { isActive: true },
-        orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
-      }),
-      prisma.planAddonConfig.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      }),
+      getCachedSubscriptionPlans(),
+      getCachedPlanAddons(),
     ]);
 
     // 2. Serialize Decimal fields for React Server Component -> Client Component boundary

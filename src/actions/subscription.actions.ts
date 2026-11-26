@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import {
   createPlanSchema,
   updatePlanSchema,
@@ -133,6 +133,7 @@ export async function upsertAddonPriceAction(payload: UpsertAddonPriceInput) {
     revalidatePath('/super-admin/subscriptions');
     revalidatePath('/pricing');
     revalidatePath('/settings/billing');
+    updateTag('plan-addons');
 
     return {
       success: true,
@@ -232,6 +233,7 @@ export async function createSubscriptionPlanAction(input: CreatePlanInput) {
     revalidatePath('/super-admin/subscriptions');
     revalidatePath('/pricing');
     revalidatePath('/settings/billing');
+    updateTag('subscription-plans');
 
     return {
       success: true,
@@ -282,6 +284,7 @@ export async function togglePlanActiveStatusAction(planId: string, isActive: boo
     revalidatePath('/super-admin/subscriptions');
     revalidatePath('/pricing');
     revalidatePath('/settings/billing');
+    updateTag('subscription-plans');
 
     return {
       success: true,
@@ -379,6 +382,7 @@ export async function updateSubscriptionPlanAction(planId: string, input: Update
     revalidatePath('/super-admin/subscriptions');
     revalidatePath('/pricing');
     revalidatePath('/settings/billing');
+    updateTag('subscription-plans');
 
     return {
       success: true,

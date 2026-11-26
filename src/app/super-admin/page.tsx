@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { getCachedSubscriptionPlans, getCachedPlanAddons } from '@/services/catalog-cache.service';
 import {
   Building2,
   Users,
@@ -55,28 +56,8 @@ export default async function SuperAdminPage() {
     }),
     prisma.user.count(),
     prisma.branch.count(),
-    prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { monthlyPrice: 'asc' }],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        monthlyPrice: true,
-        annualPrice: true,
-        isBasePlan: true,
-      },
-    }),
-    prisma.planAddonConfig.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-      select: {
-        featureKey: true,
-        name: true,
-        monthlyPrice: true,
-        annualPrice: true,
-      },
-    }),
+    getCachedSubscriptionPlans(),
+    getCachedPlanAddons(),
   ]);
 
   const availablePlans = plansRaw.map((p) => ({
