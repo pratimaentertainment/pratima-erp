@@ -24,8 +24,9 @@ export class SetupService {
     // Hash the password before the transaction
     const passwordHash = await bcrypt.hash(data.password, 10);
 
-    return prisma.$transaction(async (tx) => {
-      // 1. Create Tenant
+    return prisma.$transaction(
+      async (tx) => {
+        // 1. Create Tenant
       const tenant = await tx.tenant.create({
         data: {
           name: data.companyName,
@@ -50,7 +51,7 @@ export class SetupService {
 
       // 3. Provision Default Roles with full permissions
       const roles = await RoleService.provisionTenantAdminRoles(tenant.id, tx);
-      const superAdminRole = roles.find(r => r.name === 'SUPER_ADMIN') || roles[0];
+      const superAdminRole = (roles as any[]).find((r: any) => r.name === 'SUPER_ADMIN') || roles[0];
 
       // 4. Create First User
       const user = await tx.user.create({
@@ -83,6 +84,11 @@ export class SetupService {
       });
 
       return { tenant, user };
-    });
+      },
+      {
+        maxWait: 10000,
+        timeout: 20000,
+      }
+    );
   }
 }

@@ -27,6 +27,7 @@ export async function updateTenantProfileAction(formData: any) {
     const validatedData = tenantUpdateSchema.parse(formData);
     const updated = await TenantService.updateTenantProfile((session.user as any).tenantId, session.user.id, validatedData);
     revalidatePath('/dashboard/settings/tenant');
+    revalidatePath('/settings/tenant');
     return { success: true, data: updated };
   } catch (error: any) {
     return { success: false, error: error.message || 'Validation failed' };

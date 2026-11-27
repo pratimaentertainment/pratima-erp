@@ -411,31 +411,21 @@ export class RoleService {
       { module: 'Branches', action: 'Delete', name: 'Branches:Delete' },
     ];
 
-    // 1. Ensure all core permissions exist in the Permission table
-    for (const perm of CORE_SYSTEM_PERMISSIONS) {
-      await client.permission.upsert({
-        where: {
-          module_action: {
-            module: perm.module,
-            action: perm.action,
-          },
-        },
-        update: {
-          name: perm.name,
-        },
-        create: {
-          name: perm.name,
-          module: perm.module,
-          action: perm.action,
-        },
-      });
-    }
+    // 1. Ensure all core permissions exist in the Permission table in a single bulk operation
+    await client.permission.createMany({
+      data: CORE_SYSTEM_PERMISSIONS.map((perm) => ({
+        name: perm.name,
+        module: perm.module,
+        action: perm.action,
+      })),
+      skipDuplicates: true,
+    });
 
-    // Retrieve all permission IDs
+    // Retrieve all permission IDs in one query
     const allPermissions = await client.permission.findMany({
       select: { id: true },
     });
-    const allPermissionIds = allPermissions.map(p => p.id);
+    const allPermissionIds = allPermissions.map((p) => p.id);
 
     // 2. Ensure default Admin & Operational roles exist for the Tenant
     const adminRoleDefs = [
@@ -452,42 +442,58 @@ export class RoleService {
       { name: 'FREELANCER', description: 'External creative contractor assigned per-shoot', isSystem: false },
     ];
 
-    const roles = [];
-    for (const def of adminRoleDefs) {
-      let role = await (client as any).tenantRole.findFirst({
-        where: { tenantId, name: def.name },
+    // Bulk check & create missing tenant roles in parallel/bulk
+    const existingRoles = await (client as any).tenantRole.findMany({
+      where: { tenantId },
+    });
+    const existingRoleMap = new Map<string, any>(existingRoles.map((r: any) => [r.name, r]));
+    const missingRoles = adminRoleDefs.filter((def) => !existingRoleMap.has(def.name));
+
+    if (missingRoles.length > 0) {
+      await (client as any).tenantRole.createMany({
+        data: missingRoles.map((def) => ({
+          tenantId,
+          name: def.name,
+          description: def.description,
+          isSystem: def.isSystem,
+        })),
+        skipDuplicates: true,
       });
-      if (!role) {
-        role = await (client as any).tenantRole.create({
-          data: {
-            tenantId,
-            name: def.name,
-            description: def.description,
-            isSystem: def.isSystem,
-          },
-        });
-      }
-      roles.push(role);
     }
 
-    // 3. Link all permissions to each admin role
-    for (const role of roles) {
-      const existingRolePerms = await client.rolePermission.findMany({
-        where: { roleId: role.id },
-        select: { permissionId: true },
-      });
-      const existingPermIds = new Set(existingRolePerms.map(rp => rp.permissionId));
-      const missingPermIds = allPermissionIds.filter(pid => !existingPermIds.has(pid));
+    const roles: any[] = await (client as any).tenantRole.findMany({
+      where: { tenantId },
+    });
 
-      if (missingPermIds.length > 0) {
-        await client.rolePermission.createMany({
-          data: missingPermIds.map(permissionId => ({
+    // 3. Link all permissions to each admin role in bulk
+    const roleIds = roles.map((r: any) => r.id);
+    const existingRolePerms = await client.rolePermission.findMany({
+      where: { roleId: { in: roleIds } },
+      select: { roleId: true, permissionId: true },
+    });
+
+    const existingPermKeySet = new Set(
+      existingRolePerms.map((rp) => `${rp.roleId}:${rp.permissionId}`)
+    );
+
+    const newRolePermsToInsert = [];
+    for (const role of roles) {
+      for (const permId of allPermissionIds) {
+        const key = `${role.id}:${permId}`;
+        if (!existingPermKeySet.has(key)) {
+          newRolePermsToInsert.push({
             roleId: role.id,
-            permissionId,
-          })),
-          skipDuplicates: true,
-        });
+            permissionId: permId,
+          });
+        }
       }
+    }
+
+    if (newRolePermsToInsert.length > 0) {
+      await client.rolePermission.createMany({
+        data: newRolePermsToInsert,
+        skipDuplicates: true,
+      });
     }
 
     // 4. Invalidate RBAC cache
