@@ -5,6 +5,7 @@ import { auth, signOut } from '@/auth';
 import {
   ShieldCheck,
   LogOut,
+  UserCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,10 +75,22 @@ export default async function SuperAdminLayout({
               </div>
 
               {/* Right Side: Theme Toggle, Admin Profile & Sign Out */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <ThemeToggle />
 
-                <div className="hidden sm:flex flex-col text-right">
+                <Link href="/super-admin/profile">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5 h-8 px-2.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+                    title="Super Admin Profile & Security Settings"
+                  >
+                    <UserCog className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Admin Profile & Security</span>
+                  </Button>
+                </Link>
+
+                <div className="hidden md:flex flex-col text-right">
                   <span className="text-xs font-semibold text-foreground">{adminName}</span>
                   <span className="text-[11px] text-muted-foreground font-mono">{adminEmail}</span>
                 </div>

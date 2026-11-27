@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, CreditCard, ShieldCheck, IndianRupee, Users } from 'lucide-react';
+import { Building2, CreditCard, ShieldCheck, IndianRupee, Users, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function SuperAdminNav() {
@@ -39,6 +39,12 @@ export function SuperAdminNav() {
       href: '/super-admin/settings',
       icon: ShieldCheck,
       isActive: pathname.startsWith('/super-admin/settings'),
+    },
+    {
+      name: 'Profile & Security',
+      href: '/super-admin/profile',
+      icon: UserCog,
+      isActive: pathname.startsWith('/super-admin/profile'),
     },
   ];
 
