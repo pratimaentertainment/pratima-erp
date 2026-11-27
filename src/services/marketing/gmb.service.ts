@@ -55,12 +55,19 @@ class GoogleMyBusinessService {
 
     const cleanPlaceId = placeId.trim();
     const apiKey = this.getApiKey();
-    const writeReviewUri = `https://search.google.com/local/writereview?placeid=${encodeURIComponent(cleanPlaceId)}`;
+    const isUrl = cleanPlaceId.startsWith('http://') || cleanPlaceId.startsWith('https://');
+    const googleMapsUri = isUrl
+      ? cleanPlaceId
+      : `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(cleanPlaceId)}`;
+    const writeReviewUri = isUrl
+      ? cleanPlaceId
+      : `https://search.google.com/local/writereview?placeid=${encodeURIComponent(cleanPlaceId)}`;
 
-    if (!apiKey) {
-      // Graceful degradation when Google Places API key is not configured in environment
+    if (isUrl || !apiKey) {
+      // Graceful degradation when Google Places API key is not configured or direct URL is stored
       return {
         placeId: cleanPlaceId,
+        googleMapsUri,
         writeReviewUri,
         reviews: [],
         photos: [],

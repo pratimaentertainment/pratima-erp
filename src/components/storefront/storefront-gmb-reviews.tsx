@@ -22,8 +22,18 @@ export function StorefrontGmbReviews({
   studioName = 'Studio',
   className,
 }: StorefrontGmbReviewsProps) {
+  const isUrl = placeId?.startsWith('http://') || placeId?.startsWith('https://');
+
+  const googleMapsUrl = placeId
+    ? isUrl
+      ? placeId
+      : `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(placeId)}`
+    : null;
+
   const writeReviewUrl = placeId
-    ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`
+    ? isUrl
+      ? placeId
+      : `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`
     : null;
 
   const hasReviews = Boolean(reviews && reviews.length > 0);
@@ -90,7 +100,7 @@ export function StorefrontGmbReviews({
           )}
         </div>
 
-        {/* Dynamic Content: Reviews Grid or Graceful Empty State */}
+        {/* Dynamic Content: Reviews Grid OR Verified Trust Card Fallback */}
         {hasReviews ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {reviews!.map((rev) => (
@@ -148,8 +158,68 @@ export function StorefrontGmbReviews({
               </Card>
             ))}
           </div>
+        ) : placeId ? (
+          /* Verified Google Trust Card (Mode B Fallback) */
+          <div className="max-w-2xl mx-auto rounded-3xl border border-border/80 bg-gradient-to-b from-card/90 to-card/50 p-8 sm:p-10 text-center space-y-6 shadow-md relative overflow-hidden">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>Verified Google Business Location</span>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
+                Verified on Google Maps • Read Our Client Reviews
+              </h3>
+              <div className="flex items-center justify-center gap-1.5 text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-amber-500" />
+                ))}
+                <span className="text-sm font-bold text-foreground ml-2">
+                  {rating ? rating.toFixed(1) : '5.0'} / 5.0 Star Rating
+                </span>
+                {userRatingCount !== undefined && (
+                  <span className="text-xs text-muted-foreground">({userRatingCount} Reviews)</span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
+                Our client testimonials and ratings are published publicly on Google Maps for{' '}
+                <strong className="text-foreground">{studioName}</strong>. Browse authentic, unfiltered reviews or write your own feedback.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              {googleMapsUrl && (
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    buttonVariants({ variant: 'default', size: 'lg' }),
+                    'rounded-full px-6 gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm w-full sm:w-auto'
+                  )}
+                >
+                  <span>Read Reviews on Google Maps</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+              {writeReviewUrl && (
+                <a
+                  href={writeReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'lg' }),
+                    'rounded-full px-6 gap-2 border-border/80 text-foreground hover:bg-muted font-semibold w-full sm:w-auto'
+                  )}
+                >
+                  <MessageSquarePlus className="w-4 h-4 text-primary" />
+                  <span>Write a Review</span>
+                </a>
+              )}
+            </div>
+          </div>
         ) : (
-          /* Graceful Fallback / Empty State UI */
+          /* Graceful Fallback / Unconnected State */
           <div className="max-w-xl mx-auto rounded-3xl border border-dashed border-border/80 bg-card/50 p-10 sm:p-12 text-center space-y-5 shadow-xs">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center shadow-inner">
               <Star className="w-7 h-7 fill-amber-500 text-amber-500" />
@@ -164,24 +234,6 @@ export function StorefrontGmbReviews({
                 <strong className="text-foreground">{studioName}</strong> on Google Maps.
               </p>
             </div>
-
-            {writeReviewUrl && (
-              <div className="pt-2">
-                <a
-                  href={writeReviewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    buttonVariants({ variant: 'outline', size: 'sm' }),
-                    'rounded-full px-5 gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-semibold'
-                  )}
-                >
-                  <MessageSquarePlus className="w-4 h-4" />
-                  <span>Be the First to Review</span>
-                  <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
-                </a>
-              </div>
-            )}
           </div>
         )}
       </div>

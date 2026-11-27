@@ -15,6 +15,7 @@ import {
   ArrowRight,
   X,
   HelpCircle,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
+  checkGmbConfigAction,
   searchPlacesAction,
   extractPlaceIdFromUrlAction,
   getPlaceDetailsAction,
@@ -43,6 +45,9 @@ export function TenantGmbConnector({
 }: TenantGmbConnectorProps) {
   const [, startTransition] = useTransition();
 
+  // Environment capability state
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+
   // Connected place state
   const [connectedDetails, setConnectedDetails] = useState<PlaceSuggestion | null>(null);
   const [isChanging, setIsChanging] = useState<boolean>(false);
@@ -60,6 +65,21 @@ export function TenantGmbConnector({
   const [isResolvingUrl, setIsResolvingUrl] = useState<boolean>(false);
   const [urlError, setUrlError] = useState<string | null>(null);
 
+  // Check API key configuration on mount
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const config = await checkGmbConfigAction();
+        setHasApiKey(config.hasApiKey);
+        if (!config.hasApiKey) {
+          setShowUrlFallback(true);
+        }
+      } catch (err) {
+        console.warn('[GMB_CONNECTOR] Config check notice:', err);
+      }
+    });
+  }, []);
+
   // Load details of pre-existing value on mount or when value changes
   useEffect(() => {
     if (value && value.trim()) {
@@ -68,10 +88,12 @@ export function TenantGmbConnector({
         if (res.success && res.data) {
           setConnectedDetails(res.data);
         } else {
+          const isUrl = value.trim().startsWith('http://') || value.trim().startsWith('https://');
           setConnectedDetails({
             placeId: value.trim(),
             name: studioName,
             formattedAddress: '',
+            googleMapsUri: isUrl ? value.trim() : undefined,
           });
         }
       });
@@ -137,7 +159,7 @@ export function TenantGmbConnector({
     toast.info('Google My Business profile disconnected');
   };
 
-  // Resolve Place ID from pasted link
+  // Resolve Place ID or Location from pasted link
   const handleResolveUrl = async () => {
     if (!urlInput || !urlInput.trim()) {
       toast.error('Please enter a Google Maps link or Place ID');
@@ -168,9 +190,12 @@ export function TenantGmbConnector({
 
   // 1. Render Connected Business State
   if (value && value.trim() && !isChanging) {
+    const isUrl = value.trim().startsWith('http://') || value.trim().startsWith('https://');
     const mapsUrl =
       connectedDetails?.googleMapsUri ||
-      `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(value.trim())}`;
+      (isUrl
+        ? value.trim()
+        : `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(value.trim())}`);
 
     return (
       <div className={cn('space-y-3', className)}>
@@ -215,8 +240,8 @@ export function TenantGmbConnector({
               )}
 
               <div className="pt-1 flex items-center gap-2">
-                <span className="text-[11px] font-mono text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/60">
-                  Place ID: {value}
+                <span className="text-[11px] font-mono text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/60 max-w-sm sm:max-w-md truncate">
+                  {isUrl ? 'Google Maps Link Connected' : `Place ID: ${value}`}
                 </span>
               </div>
             </div>
@@ -269,34 +294,51 @@ export function TenantGmbConnector({
   // 2. Render Search / Connector Input State
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="space-y-2">
-        <div className="relative">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Type your studio or business name (e.g., Pratima Photography Mumbai)..."
-            className="pl-9 pr-9 text-xs h-10 border-border/80 shadow-xs focus-visible:ring-primary"
-            autoComplete="off"
-          />
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-
-          {isSearching ? (
-            <RefreshCw className="w-4 h-4 text-primary animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
-          ) : searchQuery ? (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setSuggestions([]);
-                setSearchError(null);
-                setHasSearched(false);
-              }}
-              className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          ) : null}
+      {/* Mode Guidance Note */}
+      {!hasApiKey && (
+        <div className="p-3.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-semibold text-blue-950 dark:text-blue-100">
+              Dual-Mode Google Integration: Direct Share Link Active
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Connect your studio immediately by pasting your Google Maps share link or Place ID below. Your public storefront will display a verified Google trust card with direct links for clients to read and leave reviews.
+            </p>
+          </div>
         </div>
+      )}
+
+      <div className="space-y-2">
+        {hasApiKey && (
+          <div className="relative">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search studio by name (e.g., Pratima Photography Mumbai)..."
+              className="pl-9 pr-9 text-xs h-10 border-border/80 shadow-xs focus-visible:ring-primary"
+              autoComplete="off"
+            />
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+
+            {isSearching ? (
+              <RefreshCw className="w-4 h-4 text-primary animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+            ) : searchQuery ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSuggestions([]);
+                  setSearchError(null);
+                  setHasSearched(false);
+                }}
+                className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : null}
+          </div>
+        )}
 
         {/* Loading State Dropdown */}
         {isSearching && (
@@ -340,7 +382,7 @@ export function TenantGmbConnector({
           </div>
         )}
 
-        {/* Empty Results State (when searched but no results found and no error) */}
+        {/* Empty Results State */}
         {!isSearching && hasSearched && suggestions.length === 0 && !searchError && searchQuery.trim().length >= 2 && (
           <div className="rounded-xl border border-border bg-card shadow-lg p-4 text-center text-xs text-muted-foreground space-y-1.5 animate-in fade-in-50 duration-200">
             <div className="flex items-center justify-center gap-1.5 font-medium text-foreground">
@@ -348,31 +390,28 @@ export function TenantGmbConnector({
               <span>No Google Places found for &ldquo;{searchQuery}&rdquo;</span>
             </div>
             <p className="text-[11px] leading-relaxed max-w-sm mx-auto">
-              Try adding your city name (e.g. &ldquo;{searchQuery} Mumbai&rdquo;) or click below to paste your Google Maps link directly.
+              Try adding your city name (e.g. &ldquo;{searchQuery} Mumbai&rdquo;) or paste your Google Maps link directly below.
             </p>
           </div>
         )}
 
-        {/* Search Error Notice (e.g. missing API key, invalid key, or Google API quota/billing error) */}
+        {/* Informational Notice (Non-blocking) */}
         {searchError && (
-          <div className="p-4 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-xs space-y-2 text-amber-950 dark:text-amber-200 animate-in fade-in-50 duration-200">
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2 text-amber-950 dark:text-amber-200 animate-in fade-in-50 duration-200">
             <div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-300">
               <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>Google Places API (New) Error</span>
+              <span>Google Places Search Notice</span>
             </div>
-            <div className="p-2.5 rounded-lg bg-background/90 border border-amber-500/30 text-foreground font-mono text-xs leading-relaxed break-words whitespace-pre-wrap select-all">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               {searchError}
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              You can still connect your studio by pasting your Google Maps link below or entering your Place ID directly.
             </p>
           </div>
         )}
       </div>
 
-      {/* Fallback Toggle: Paste Google Maps Link */}
+      {/* Fallback / Direct Link Connector */}
       <div className="pt-1">
-        {!showUrlFallback ? (
+        {!showUrlFallback && hasApiKey ? (
           <div className="flex items-center justify-between text-xs">
             <button
               type="button"
@@ -380,7 +419,7 @@ export function TenantGmbConnector({
               className="text-primary hover:underline text-[11px] font-medium flex items-center gap-1.5"
             >
               <Link2 className="w-3.5 h-3.5" />
-              <span>Can&apos;t find it? Paste your Google Maps Link or Place ID</span>
+              <span>Paste Google Maps Link or Place ID directly</span>
             </button>
 
             {value && isChanging && (
@@ -404,18 +443,20 @@ export function TenantGmbConnector({
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
                 <Link2 className="w-3.5 h-3.5 text-primary" />
-                <span>Paste Google Maps Link or Place ID</span>
+                <span>Paste Google Maps Share Link or Place ID</span>
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUrlFallback(false);
-                  setUrlError(null);
-                }}
-                className="text-muted-foreground hover:text-foreground text-[11px]"
-              >
-                Hide
-              </button>
+              {hasApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUrlFallback(false);
+                    setUrlError(null);
+                  }}
+                  className="text-muted-foreground hover:text-foreground text-[11px]"
+                >
+                  Hide
+                </button>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -440,7 +481,7 @@ export function TenantGmbConnector({
                 ) : (
                   <ArrowRight className="w-3.5 h-3.5" />
                 )}
-                <span>Resolve</span>
+                <span>Connect</span>
               </Button>
             </div>
 
@@ -452,7 +493,7 @@ export function TenantGmbConnector({
             )}
 
             <p className="text-[10px] text-muted-foreground">
-              Open Google Maps on your phone or computer, search for your studio, click &ldquo;Share&rdquo;, and copy the link.
+              Tip: Open Google Maps on mobile or desktop, search your studio, tap &ldquo;Share&rdquo;, and copy the link.
             </p>
           </div>
         )}

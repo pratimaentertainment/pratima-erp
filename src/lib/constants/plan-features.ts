@@ -160,6 +160,12 @@ export const PLAN_FEATURES_CATALOG: PlanFeatureDefinition[] = [
 export const STARTER_DEFAULT_FEATURES: PlanFeatureKey[] = [
   'CLIENT_PROOFING',
   'CUSTOM_BRANDING',
+  'CLOUD_STORAGE_BYOS',
+  'META_LEADS',
+  'GOOGLE_BUSINESS',
+  'FLEET_DISPATCH',
+  'HR_PAYROLL',
+  'ADVANCED_ANALYTICS',
 ];
 
 export const PRO_DEFAULT_FEATURES: PlanFeatureKey[] = [

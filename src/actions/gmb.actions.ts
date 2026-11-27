@@ -40,6 +40,20 @@ export interface PlaceSuggestion {
 }
 
 /**
+ * Server action to check whether Google Places API Key is configured.
+ */
+export async function checkGmbConfigAction(): Promise<{
+  success: boolean;
+  hasApiKey: boolean;
+}> {
+  const apiKey = getGooglePlacesApiKey();
+  return {
+    success: true,
+    hasApiKey: Boolean(apiKey),
+  };
+}
+
+/**
  * Server action to search Google Places using Text Search.
  * Exclusively uses Google Places API (New) via `https://places.googleapis.com/v1/places:searchText`.
  */
@@ -59,13 +73,14 @@ export async function searchPlacesAction(query: string): Promise<{
     const apiKey = getGooglePlacesApiKey();
 
     if (!apiKey) {
-      const missingKeyMsg =
-        'Missing Google Places API Key: Please configure GOOGLE_PLACES_API_KEY in your server environment (.env) to enable live Google Places search.';
-      console.error(`[GMB_ACTION_SEARCH_ERROR] ${missingKeyMsg}`);
-      throw new Error(missingKeyMsg);
+      return {
+        success: false,
+        error:
+          'Live search requires GOOGLE_PLACES_API_KEY in server environment. You can connect immediately below by pasting your Google Maps link or Place ID.',
+      };
     }
 
-    // Google Places API (New) Text Search exclusively
+    // Google Places API (New) Text Search
     const newApiUrl = 'https://places.googleapis.com/v1/places:searchText';
     const response = await fetch(newApiUrl, {
       method: 'POST',
@@ -88,15 +103,12 @@ export async function searchPlacesAction(query: string): Promise<{
       let googleErrorMessage = '';
       try {
         const errorJson = JSON.parse(errText);
-        // Google Places API (New) error format:
-        // { "error": { "code": 400, "message": "API key not valid. Please pass a valid API key.", "status": "INVALID_ARGUMENT", "details": [...] } }
         googleErrorMessage =
           errorJson.error?.message ||
           errorJson.error?.status ||
           errorJson.message ||
           '';
       } catch {
-        // Fall back to errText if non-JSON
         googleErrorMessage = errText.trim();
       }
 
@@ -104,8 +116,10 @@ export async function searchPlacesAction(query: string): Promise<{
         googleErrorMessage = `Google Places API HTTP ${response.status}: ${response.statusText}`;
       }
 
-      // Strict error propagation: Throw the exact Google error without generic wrapping
-      throw new Error(googleErrorMessage);
+      return {
+        success: false,
+        error: googleErrorMessage,
+      };
     }
 
     const result = await response.json();
@@ -133,12 +147,12 @@ export async function searchPlacesAction(query: string): Promise<{
 }
 
 /**
- * Server action to resolve a Google Place ID from various Google Maps URLs or direct Place ID strings.
+ * Server action to resolve a Google Place ID or Verified Location from URLs or strings.
  * Supports:
- * - maps.app.goo.gl / goo.gl/maps short links (following HTTP 301/302 redirects)
- * - google.com/maps/place/... links
- * - google.com/maps?cid=... or data=... links
  * - Direct Place ID input (e.g. ChIJ...)
+ * - Shortlinks (maps.app.goo.gl / goo.gl/maps) with HTTP redirect expansion
+ * - Standard google.com/maps/place/... links
+ * - Fallback Mode B direct link storage when no Google Places API key is configured
  */
 export async function extractPlaceIdFromUrlAction(url: string): Promise<{
   success: boolean;
@@ -154,7 +168,7 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
 
     const cleanInput = url.trim();
 
-    // 1. Direct Place ID Detection (e.g., "ChIJ..." or alphanumeric ID without slashes/protocol)
+    // 1. Direct Place ID Detection (e.g. ChIJ... or alphanumeric ID without slashes/protocol)
     if (
       /^[a-zA-Z0-9_-]{20,80}$/.test(cleanInput) &&
       !cleanInput.includes('/') &&
@@ -190,7 +204,9 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
           formattedAddress: '',
           rating: details?.rating,
           userRatingCount: details?.userRatingCount,
-          googleMapsUri: details?.googleMapsUri,
+          googleMapsUri:
+            details?.googleMapsUri ||
+            `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(resolvedId)}`,
         },
       };
     }
@@ -214,9 +230,6 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
           },
         });
 
@@ -243,10 +256,16 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
           formattedAddress: '',
           rating: details?.rating,
           userRatingCount: details?.userRatingCount,
-          googleMapsUri: details?.googleMapsUri,
+          googleMapsUri:
+            details?.googleMapsUri ||
+            `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(resolvedId)}`,
         },
       };
     }
+
+    // Look for ChIJ pattern in expanded URL or HTML content
+    const chijMatch = (expandedUrl + ' ' + htmlContent).match(/(ChIJ[a-zA-Z0-9_-]{20,80})/);
+    const directChij = chijMatch ? chijMatch[1] : null;
 
     // Step B: Extract the business name from the URL path or HTML content
     let extractedName: string | null = null;
@@ -313,29 +332,59 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
         .trim();
     }
 
-    // Step C: Pass this extracted name into searchPlacesAction to reliably resolve the exact placeId
-    if (extractedName && extractedName.length > 1) {
-      console.log('[GMB_ACTION] Extracted business name from Google Maps link:', extractedName);
+    // If API key is present and we have an extracted name, attempt live resolution
+    const apiKey = getGooglePlacesApiKey();
+    if (apiKey && extractedName && extractedName.length > 1) {
       const searchRes = await searchPlacesAction(extractedName);
       if (searchRes.success && searchRes.data && searchRes.data.length > 0) {
         return {
           success: true,
           data: searchRes.data[0],
         };
-      } else if (!searchRes.success) {
-        return {
-          success: false,
-          error:
-            searchRes.error ||
-            `Found business name "${extractedName}" from the link, but Google Places search failed.`,
-        };
       }
+    }
+
+    // Direct Place ID found in regex
+    if (directChij) {
+      const details = await GmbService.getPlaceData(directChij);
+      return {
+        success: true,
+        data: {
+          placeId: directChij,
+          name: details?.name || extractedName || 'Verified Google Place',
+          formattedAddress: '',
+          rating: details?.rating,
+          userRatingCount: details?.userRatingCount,
+          googleMapsUri:
+            details?.googleMapsUri ||
+            expandedUrl ||
+            `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(directChij)}`,
+        },
+      };
+    }
+
+    // Mode B URL Fallback: Store the full expanded Google Maps link
+    if (
+      expandedUrl.includes('google.com') ||
+      expandedUrl.includes('maps.app') ||
+      expandedUrl.includes('goo.gl') ||
+      cleanInput.startsWith('http')
+    ) {
+      return {
+        success: true,
+        data: {
+          placeId: expandedUrl,
+          name: extractedName || 'Google Maps Verified Location',
+          formattedAddress: '',
+          googleMapsUri: expandedUrl,
+        },
+      };
     }
 
     return {
       success: false,
       error:
-        'Could not automatically resolve a Google Place ID from the provided link. Please ensure this is a link to a verified business on Google Maps, or use the search box to find your studio by name.',
+        'Could not automatically resolve a Google Place ID or location link. Please check your link or enter your Place ID directly.',
     };
   } catch (error: any) {
     console.error('[GMB_ACTION_EXTRACT_ERROR]', error);
@@ -347,7 +396,7 @@ export async function extractPlaceIdFromUrlAction(url: string): Promise<{
 }
 
 /**
- * Server action to get full details of an already saved placeId.
+ * Server action to get full details of an already saved placeId or location URL.
  */
 export async function getPlaceDetailsAction(placeId: string): Promise<{
   success: boolean;
@@ -362,28 +411,24 @@ export async function getPlaceDetailsAction(placeId: string): Promise<{
     }
 
     const cleanId = placeId.trim();
+    const isUrl = cleanId.startsWith('http://') || cleanId.startsWith('https://');
     const details = await GmbService.getPlaceData(cleanId);
 
-    if (!details) {
-      return {
-        success: true,
-        data: {
-          placeId: cleanId,
-          name: 'Connected Google Business',
-          formattedAddress: '',
-        },
-      };
-    }
+    const googleMapsUri =
+      details?.googleMapsUri ||
+      (isUrl
+        ? cleanId
+        : `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${encodeURIComponent(cleanId)}`);
 
     return {
       success: true,
       data: {
         placeId: cleanId,
-        name: details.name || 'Connected Google Business',
+        name: details?.name || 'Connected Google Business',
         formattedAddress: '',
-        rating: details.rating,
-        userRatingCount: details.userRatingCount,
-        googleMapsUri: details.googleMapsUri,
+        rating: details?.rating,
+        userRatingCount: details?.userRatingCount,
+        googleMapsUri,
       },
     };
   } catch (error: any) {

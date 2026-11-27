@@ -30,7 +30,7 @@ export const tenantUpdateSchema = z.object({
   currency: z.string().min(1, 'Currency is required'),
   language: z.string().min(1, 'Language is required'),
   fiscalYearStartMonth: z.coerce.number().min(1).max(12),
-  gmbPlaceId: z.string().max(100).optional().nullable().or(z.literal('')),
+  gmbPlaceId: z.string().max(1000).optional().nullable().or(z.literal('')),
   bankDetails: bankDetailsSchema,
   isActive: z.boolean().default(true),
 });
