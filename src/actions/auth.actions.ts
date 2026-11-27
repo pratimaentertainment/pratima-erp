@@ -18,12 +18,18 @@ export async function loginAction(formData: FormData): Promise<LoginActionResult
   const password = rawData.password as string;
   const remember = rawData.remember === 'true';
   const rawRedirectTo = (rawData.redirectTo as string) || '/dashboard';
-  const redirectTo = rawRedirectTo.startsWith('/') && !rawRedirectTo.startsWith('//')
+  let redirectTo = rawRedirectTo.startsWith('/') && !rawRedirectTo.startsWith('//')
     ? rawRedirectTo
     : '/dashboard';
 
   if (!email || !password) {
     return { success: false, error: 'Email and password are required.' };
+  }
+
+  // Direct super admin logins to /super-admin if default /dashboard was targeted
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'framiqbypratima@gmail.com').toLowerCase();
+  if (email === superAdminEmail && redirectTo === '/dashboard') {
+    redirectTo = '/super-admin';
   }
 
   try {

@@ -71,6 +71,9 @@ export const authConfig = {
         if (role === 'DEALER') {
           return Response.redirect(new URL('/dealer', request.nextUrl));
         }
+        if (role === 'SUPER_ADMIN') {
+          return Response.redirect(new URL('/super-admin', request.nextUrl));
+        }
         return Response.redirect(new URL('/dashboard', request.nextUrl));
       }
 
@@ -113,6 +116,9 @@ export const authConfig = {
         const role = (auth?.user as any)?.role;
         if (role === 'DEALER') {
           return Response.redirect(new URL('/dealer', request.nextUrl));
+        }
+        if (role === 'SUPER_ADMIN') {
+          return Response.redirect(new URL('/super-admin', request.nextUrl));
         }
         return Response.redirect(new URL('/dashboard', request.nextUrl));
       }
