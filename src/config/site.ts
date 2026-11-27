@@ -5,7 +5,7 @@ export const siteConfig = {
   subtitle: 'by Pratima Entertainment & Technology',
   operator: 'Pratima Entertainment & Technology',
   founder: 'Suhas Wagire',
-  email: 'suhaswagire.photo@gmail.com',
+  email: process.env.SUPPORT_EMAIL || 'framiqbypratima@gmail.com',
   phone: '+91 8087226509',
   phoneFormatted: '+91 80872 26509',
   whatsappUrl: 'https://wa.me/918087226509',

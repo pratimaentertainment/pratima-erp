@@ -33,7 +33,7 @@ export default async function SuperAdminLayout({
   }
 
   const adminName = session.user.name || 'Platform Admin';
-  const adminEmail = session.user.email || 'suhaswagire.photo@gmail.com';
+  const adminEmail = session.user.email || process.env.SUPER_ADMIN_EMAIL || 'framiqbypratima@gmail.com';
 
   const impersonation = await getActiveImpersonationState();
 

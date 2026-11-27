@@ -463,7 +463,7 @@ export function DealerPortalClient({ data }: { data: DealerPortalData }) {
                   </p>
                 )}
                 <p className="text-[11px] text-muted-foreground">
-                  To update your bank details, phone, or commission terms, please contact FRAMIQ Support at suhaswagire.photo@gmail.com / +91 8087226509.
+                  To update your bank details, phone, or commission terms, please contact FRAMIQ Support at framiqbypratima@gmail.com / +91 8087226509.
                 </p>
               </div>
             </CardContent>

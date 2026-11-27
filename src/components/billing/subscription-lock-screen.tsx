@@ -232,7 +232,7 @@ export async function SubscriptionLockScreen({
         <div className="flex items-center gap-4 text-[11px]">
           <span className="flex items-center gap-1">
             <Mail className="h-3.5 w-3.5" />
-            suhaswagire.photo@gmail.com
+            framiqbypratima@gmail.com
           </span>
           <span className="flex items-center gap-1">
             <Headphones className="h-3.5 w-3.5" />

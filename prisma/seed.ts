@@ -12,7 +12,7 @@ async function main() {
   console.log('Starting Pratima ERP database seed...');
 
   // 1. Seed Global Super Admin
-  const superAdminEmail = 'suhaswagire.photo@gmail.com'.trim().toLowerCase();
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'framiqbypratima@gmail.com').trim().toLowerCase();
   const superAdminHashedPassword = await bcrypt.hash('Pratima@2026', 10);
 
   const existingSuperAdmin = await prisma.user.findFirst({

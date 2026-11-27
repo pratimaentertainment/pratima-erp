@@ -158,7 +158,7 @@ export function PremiumQuotationDocument({
   const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Photography Studio';
   const studioAddress = settings?.address || tenant?.address || branch?.address || 'Near Old Water Tank, Tardal Road, Khotwadi, Dist. Kolhapur, Maharashtra, India';
   const studioPhone = settings?.phone || tenant?.phone || branch?.phone || '+91 80872 26509';
-  const studioEmail = settings?.email || tenant?.email || branch?.email || 'suhaswagire.photo@gmail.com';
+  const studioEmail = settings?.email || tenant?.email || branch?.email || 'framiqbypratima@gmail.com';
   const studioWebsite = settings?.website || tenant?.website || 'https://pratima-erp.vercel.app';
   const gstNumber = settings?.gstNumber || tenant?.gstNumber || branch?.gstNumber;
   const logoUrl = settings?.logoUrl || tenant?.logoUrl || branch?.logoUrl;

@@ -40,7 +40,7 @@ const DEFAULT_PLANS = DEFAULT_PACKAGING_PLANS;
  * GET /api/setup/bootstrap?secret=...
  *
  * Secure, idempotent, production bootstrap endpoint to provision:
- * 1. Global Super Admin account (suhaswagire.photo@gmail.com)
+ * 1. Global Super Admin account (framiqbypratima@gmail.com)
  * 2. Default tiered Subscription Plans (Starter Studio as Base Plan, Pro Studio, Enterprise Franchise)
  * 3. Default Modular Add-on Capabilities Price Catalog
  *
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
     }
 
     // 1. Upsert Super Admin Account
-    const superAdminEmail = 'suhaswagire.photo@gmail.com'.trim().toLowerCase();
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'framiqbypratima@gmail.com').trim().toLowerCase();
     const superAdminPassword = 'Pratima@2026';
     const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
 

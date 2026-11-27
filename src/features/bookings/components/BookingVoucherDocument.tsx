@@ -112,7 +112,7 @@ export function BookingVoucherDocument({
   const studioName = settings?.studioName || tenant?.tradeName || tenant?.name || 'Photography Studio';
   const studioAddress = settings?.address || tenant?.address || 'Near Old Water Tank, Tardal Road, Khotwadi, Dist. Kolhapur, Maharashtra, India';
   const studioPhone = settings?.phone || tenant?.phone || '+91 80872 26509';
-  const studioEmail = settings?.email || tenant?.email || 'suhaswagire.photo@gmail.com';
+  const studioEmail = settings?.email || tenant?.email || 'framiqbypratima@gmail.com';
   const studioWebsite = settings?.website || tenant?.website || 'https://pratima-erp.vercel.app';
   const gstNumber = settings?.gstNumber || tenant?.gstNumber;
   const logoUrl = tenant?.logoUrl;
