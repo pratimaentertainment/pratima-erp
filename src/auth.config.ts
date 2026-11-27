@@ -19,7 +19,15 @@ export const authConfig = {
     // Providers are configured in auth.ts to avoid Edge compatibility issues with Prisma
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
+      if (trigger === 'update') {
+        if (typeof session?.mustChangePassword === 'boolean') {
+          token.mustChangePassword = session.mustChangePassword;
+        }
+        if (session?.user && typeof session.user.mustChangePassword === 'boolean') {
+          token.mustChangePassword = session.user.mustChangePassword;
+        }
+      }
       if (user) {
         token.id = user.id;
         token.sub = user.id;
@@ -51,7 +59,7 @@ export const authConfig = {
         if (token.role) (session.user as any).role = token.role;
         if (token.tenantId !== undefined) (session.user as any).tenantId = token.tenantId;
         if (token.sessionId) (session.user as any).sessionId = token.sessionId;
-        if (token.mustChangePassword !== undefined) (session.user as any).mustChangePassword = token.mustChangePassword;
+        (session.user as any).mustChangePassword = Boolean(token.mustChangePassword);
       }
       return session;
     },

@@ -3,9 +3,57 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthService } from '@/services/auth.service';
 import { userAgent } from 'next/server';
 import { authConfig } from './auth.config';
+import { prisma } from '@/lib/prisma';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user, trigger, session }) {
+      let updatedToken = token;
+      if (authConfig.callbacks?.jwt) {
+        updatedToken =
+          (await authConfig.callbacks.jwt({ token, user, trigger, session } as any)) || token;
+      }
+
+      if (trigger === 'update') {
+        if (typeof session?.mustChangePassword === 'boolean') {
+          updatedToken.mustChangePassword = session.mustChangePassword;
+        }
+        if (session?.user && typeof session.user.mustChangePassword === 'boolean') {
+          updatedToken.mustChangePassword = session.user.mustChangePassword;
+        }
+      }
+
+      // Database Self-Heal Safeguard:
+      // Whenever token.mustChangePassword === true and user ID exists, query DB directly
+      const userId = (updatedToken.id as string) || (updatedToken.sub as string);
+      if (updatedToken.mustChangePassword && userId) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { mustChangePassword: true },
+          });
+          if (dbUser && dbUser.mustChangePassword === false) {
+            updatedToken.mustChangePassword = false;
+          }
+        } catch (dbErr) {
+          console.error('[auth.jwt] Self-heal check failed:', dbErr);
+        }
+      }
+
+      return updatedToken;
+    },
+    session({ session, token }) {
+      if (authConfig.callbacks?.session) {
+        session = authConfig.callbacks.session({ session, token } as any);
+      }
+      if (session?.user) {
+        (session.user as any).mustChangePassword = Boolean(token.mustChangePassword);
+      }
+      return session;
+    },
+  },
   providers: [
     CredentialsProvider({
       name: 'Credentials',

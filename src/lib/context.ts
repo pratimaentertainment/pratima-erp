@@ -12,6 +12,7 @@ export interface ActiveContextUser {
   email: string;
   role: string;
   roles: string[];
+  mustChangePassword?: boolean;
 }
 
 export interface ActiveContextBranch {
@@ -93,6 +94,7 @@ export const getActiveContext = cache(async function getActiveContext(): Promise
         name: true,
         email: true,
         role: true,
+        mustChangePassword: true,
         roles: {
           include: {
             role: {
@@ -248,6 +250,7 @@ export const getActiveContext = cache(async function getActiveContext(): Promise
         email: dbUser.email,
         role: primaryRole,
         roles: roleNames,
+        mustChangePassword: dbUser.mustChangePassword ?? false,
       }
     : null;
 

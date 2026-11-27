@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   ShieldAlert,
   KeyRound,
@@ -78,6 +79,7 @@ export function SecuritySettings({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { update } = useSession();
   const isForcedReset = searchParams.get('forced') === 'true';
 
   const [isChangingPass, setIsChangingPass] = useState(false);
@@ -154,9 +156,14 @@ export function SecuritySettings({
         form.reset();
 
         if (isForcedReset) {
+          try {
+            await update({ mustChangePassword: false });
+          } catch (updateErr) {
+            console.error('Session update error:', updateErr);
+          }
           setTimeout(() => {
-            router.push('/dashboard');
-          }, 2000);
+            window.location.assign('/dashboard');
+          }, 1500);
         }
       } else {
         setPassError(res.error || 'Failed to update password.');
@@ -229,9 +236,26 @@ export function SecuritySettings({
               {passSuccess && (
                 <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-500">
                   <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                  <p className="leading-snug">
-                    Password updated successfully! {isForcedReset && 'Redirecting to your dashboard...'}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="leading-snug">
+                      Password updated successfully! {isForcedReset && 'Redirecting to your dashboard...'}
+                    </p>
+                    {isForcedReset && (
+                      <p className="text-xs text-emerald-400">
+                        If you are not redirected automatically,{' '}
+                        <a
+                          href="/dashboard"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.assign('/dashboard');
+                          }}
+                          className="underline font-semibold hover:text-emerald-300"
+                        >
+                          click here to proceed to Dashboard &rarr;
+                        </a>
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 

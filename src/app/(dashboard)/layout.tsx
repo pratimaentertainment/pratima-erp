@@ -47,9 +47,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Mandatory Password Reset Enforcement: If temporary password is active, redirect to /profile/security
   const reqHeaders = await headers();
   const currentPath = reqHeaders.get('x-pathname') || '';
-  const mustChangePassword = Boolean(
-    (session.user as any)?.mustChangePassword || (context.user as any)?.mustChangePassword
-  );
+  
+  // Verify against the fresh database user record from context, falling back to session only if context user is absent
+  const dbMustChange = context.user?.mustChangePassword;
+  const sessionMustChange = (session.user as any)?.mustChangePassword;
+  const mustChangePassword = typeof dbMustChange === 'boolean'
+    ? dbMustChange
+    : Boolean(sessionMustChange);
+
   if (mustChangePassword && !currentPath.startsWith('/profile/security')) {
     redirect('/profile/security?forced=true');
   }

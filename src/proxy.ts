@@ -103,7 +103,10 @@ export const proxy = auth((req) => {
   }
 
   // 4.0 Forced Password Change: Users with temporary/reset passwords must update before continuing
-  if (isLoggedIn && (req.auth?.user as any)?.mustChangePassword && !pathname.startsWith('/profile/security') && !pathname.startsWith('/api') && pathname !== '/login') {
+  const isProfileSecurity = pathname === '/profile/security' || pathname.startsWith('/profile/security');
+  const isAuthApiOrPublic = pathname.startsWith('/api/auth') || pathname.startsWith('/api') || pathname === '/login';
+
+  if (isLoggedIn && Boolean((req.auth?.user as any)?.mustChangePassword) && !isProfileSecurity && !isAuthApiOrPublic) {
     return NextResponse.redirect(new URL('/profile/security?forced=true', nextUrl));
   }
 
