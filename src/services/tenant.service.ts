@@ -12,12 +12,13 @@ export class TenantService {
         if (!oldTenant) throw new Error('Tenant not found');
 
         // Update tenant
-        const { bankDetails, ...rest } = data;
+        const { bankDetails, storefrontMedia, ...rest } = data;
         const newTenant = await tx.tenant.update({
           where: { id: tenantId },
           data: {
             ...rest,
             bankDetails: bankDetails !== undefined ? (bankDetails as any) : undefined,
+            storefrontMedia: storefrontMedia !== undefined ? (storefrontMedia as any) : undefined,
           },
         });
 

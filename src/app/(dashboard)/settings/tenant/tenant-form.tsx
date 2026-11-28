@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Star, Sparkles, Building2 } from 'lucide-react';
+import { Star, Sparkles, Building2, Film, Plus, Trash2, Video, Play } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TenantGmbConnector } from '@/components/forms/tenant-gmb-connector';
 
 export function TenantForm({ initialData }: { initialData: any }) {
@@ -40,6 +41,8 @@ export function TenantForm({ initialData }: { initialData: any }) {
       language: initialData?.language || 'en',
       fiscalYearStartMonth: initialData?.fiscalYearStartMonth || 1,
       gmbPlaceId: initialData?.gmbPlaceId || '',
+      defaultPromoVideoUrl: initialData?.defaultPromoVideoUrl || '',
+      storefrontMedia: initialData?.storefrontMedia || { videos: [], featuredPhotos: [] },
       isActive: initialData?.isActive ?? true,
     },
   });
@@ -55,6 +58,58 @@ export function TenantForm({ initialData }: { initialData: any }) {
       toast.error(result.error || 'Failed to update profile');
     }
   }
+
+  const storefrontMedia = form.watch('storefrontMedia') || { videos: [], featuredPhotos: [] };
+  const videos: Array<{ id: string; title: string; url: string; category: string }> = storefrontMedia.videos || [];
+
+  const handleAddVideo = () => {
+    if (videos.length >= 6) {
+      toast.error('You can add up to 6 featured videos.');
+      return;
+    }
+    const newVideos = [
+      ...videos,
+      {
+        id: `vid-${Date.now()}`,
+        title: 'Wedding Highlights',
+        url: '',
+        category: 'Weddings',
+      },
+    ];
+    form.setValue(
+      'storefrontMedia',
+      {
+        ...storefrontMedia,
+        videos: newVideos,
+      },
+      { shouldDirty: true }
+    );
+  };
+
+  const handleRemoveVideo = (index: number) => {
+    const newVideos = videos.filter((_, idx) => idx !== index);
+    form.setValue(
+      'storefrontMedia',
+      {
+        ...storefrontMedia,
+        videos: newVideos,
+      },
+      { shouldDirty: true }
+    );
+  };
+
+  const handleUpdateVideo = (index: number, field: string, value: string) => {
+    const newVideos = [...videos];
+    newVideos[index] = { ...newVideos[index], [field]: value };
+    form.setValue(
+      'storefrontMedia',
+      {
+        ...storefrontMedia,
+        videos: newVideos,
+      },
+      { shouldDirty: true }
+    );
+  };
 
   return (
     <Form {...form}>
@@ -260,6 +315,171 @@ export function TenantForm({ initialData }: { initialData: any }) {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 By loading photos and reviews directly from Google&apos;s edge cache, your storefront loads with zero cloud storage bandwidth costs and signals high local relevance for Google Search and Maps rankings.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Storefront Videos & Featured Media Card */}
+        <Card className="border-border/80 shadow-xs relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500" />
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                  <Film className="w-4 h-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <span>Storefront Videos & Featured Media</span>
+                    <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider">
+                      Reels & YouTube
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Showcase cinematic wedding films, teasers, and Instagram Reels directly on your public studio storefront.
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            {/* Primary Promo Video URL */}
+            <FormField
+              control={form.control}
+              name="defaultPromoVideoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold">Primary Featured Hero Film URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                      className="text-xs h-9"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-[11px] leading-relaxed">
+                    Paste a YouTube link or Instagram Reel URL to feature as the centerpiece film trailer on your storefront banner.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Featured Videos List */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Video className="w-3.5 h-3.5 text-purple-500" />
+                    <span>Featured Films & Reels Showcase ({videos.length}/6)</span>
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Embed up to 6 YouTube videos or Instagram Reels across weddings, pre-wedding teasers, and portraits.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddVideo}
+                  disabled={videos.length >= 6}
+                  className="h-8 text-xs gap-1 border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Video</span>
+                </Button>
+              </div>
+
+              {videos.length === 0 ? (
+                <div className="p-6 rounded-xl border border-dashed border-border/80 text-center space-y-2 bg-muted/20">
+                  <Play className="w-8 h-8 text-muted-foreground/60 mx-auto" />
+                  <p className="text-xs font-medium text-foreground">No featured films or reels added yet</p>
+                  <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                    Click &quot;Add Video&quot; above to embed YouTube cinematic highlights or Instagram Reels directly onto your public portfolio.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {videos.map((vid, index) => (
+                    <div
+                      key={vid.id || `v-${index}`}
+                      className="p-3.5 rounded-xl border border-border/70 bg-card/60 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <Film className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span>Video #{index + 1}</span>
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveVideo(index)}
+                          className="h-7 px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-500/10"
+                          title="Remove video"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div className="sm:col-span-4 space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Title</label>
+                          <Input
+                            value={vid.title}
+                            onChange={(e) => handleUpdateVideo(index, 'title', e.target.value)}
+                            placeholder="e.g. Royal Udaipur Wedding Highlights"
+                            className="text-xs h-8"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Category</label>
+                          <Select
+                            value={vid.category || 'Weddings'}
+                            onValueChange={(val) => handleUpdateVideo(index, 'category', val || 'Weddings')}
+                          >
+                            <SelectTrigger className="text-xs h-8">
+                              <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Weddings">Weddings</SelectItem>
+                              <SelectItem value="Pre-Wedding">Pre-Wedding</SelectItem>
+                              <SelectItem value="Teasers">Teasers</SelectItem>
+                              <SelectItem value="Reels">Reels</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="sm:col-span-5 space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">
+                            Video URL (YouTube / Instagram Reel)
+                          </label>
+                          <Input
+                            value={vid.url}
+                            onChange={(e) => handleUpdateVideo(index, 'url', e.target.value)}
+                            placeholder="https://youtu.be/... or https://www.instagram.com/reel/..."
+                            className="text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-xs space-y-1 text-purple-950 dark:text-purple-200">
+                <p className="font-semibold text-xs text-purple-900 dark:text-purple-100 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Supports YouTube &amp; Instagram Reels</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  YouTube standard links (<code>youtube.com/watch?v=...</code>), shortlinks (<code>youtu.be/...</code>), Shorts (<code>youtube.com/shorts/...</code>), and Instagram Reels (<code>instagram.com/reel/...</code>) are automatically transformed into fast, responsive embeds without consuming any ERP storage quota.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

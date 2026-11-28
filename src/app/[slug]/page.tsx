@@ -157,8 +157,18 @@ export default async function StorefrontPage({ params }: StorefrontPageProps) {
   }));
 
   // Zero private client storage records or selection photos are ever exposed to the public storefront.
-  // Curated showcase defaults are safely managed client-side, with Google My Business serving as the verified public gallery.
-  const portfolioItems: StorefrontData['portfolioItems'] = [];
+  // Storefront displays custom featured media configured by the studio, plus live verified Google Business media.
+  const storefrontMedia = (tenant.storefrontMedia || {}) as any;
+  const configuredVideos = Array.isArray(storefrontMedia.videos) ? storefrontMedia.videos : [];
+  const configuredPhotos = Array.isArray(storefrontMedia.featuredPhotos) ? storefrontMedia.featuredPhotos : [];
+
+  const portfolioItems: StorefrontData['portfolioItems'] = configuredPhotos.map((p: any, idx: number) => ({
+    id: p.id || `cp-${idx}`,
+    title: p.title || 'Featured Capture',
+    category: p.category || 'Weddings',
+    imageUrl: p.url,
+    tag: 'Studio Featured',
+  }));
 
   // Fetch GMB data (Reviews & Photos) with 3600s cache
   const gmbData = tenant.gmbPlaceId ? await GmbService.getPlaceData(tenant.gmbPlaceId) : null;
@@ -178,9 +188,11 @@ export default async function StorefrontPage({ params }: StorefrontPageProps) {
       address: tenant.address,
       currency: tenant.currency || 'INR',
       gmbPlaceId: tenant.gmbPlaceId,
+      defaultPromoVideoUrl: tenant.defaultPromoVideoUrl,
     },
     packages,
     portfolioItems,
+    videos: configuredVideos,
     gmb: gmbData,
   };
 

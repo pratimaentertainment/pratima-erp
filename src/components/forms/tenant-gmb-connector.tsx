@@ -27,6 +27,7 @@ import {
   searchPlacesAction,
   extractPlaceIdFromUrlAction,
   getPlaceDetailsAction,
+  syncTenantGmbMediaAction,
   PlaceSuggestion,
 } from '@/actions/gmb.actions';
 
@@ -64,6 +65,7 @@ export function TenantGmbConnector({
   const [urlInput, setUrlInput] = useState<string>('');
   const [isResolvingUrl, setIsResolvingUrl] = useState<boolean>(false);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Check API key configuration on mount
   useEffect(() => {
@@ -188,6 +190,36 @@ export function TenantGmbConnector({
     }
   };
 
+  // Immediate sync of Google Business photos and reviews
+  const handleSyncGmb = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncTenantGmbMediaAction();
+      if (res.success && res.data) {
+        toast.success(
+          `Synced Google Business profile: ${res.data.photoCount} photos and ${res.data.reviewCount} reviews updated.`
+        );
+        if (res.data.placeId && res.data.placeId !== value) {
+          onChange(res.data.placeId);
+        }
+        setConnectedDetails((prev) => ({
+          placeId: res.data!.placeId,
+          name: res.data!.name || prev?.name || studioName,
+          formattedAddress: prev?.formattedAddress || '',
+          rating: res.data!.rating !== undefined ? res.data!.rating : prev?.rating,
+          userRatingCount: res.data!.userRatingCount !== undefined ? res.data!.userRatingCount : prev?.userRatingCount,
+          googleMapsUri: prev?.googleMapsUri,
+        }));
+      } else {
+        toast.error(res.error || 'Failed to sync Google Business profile.');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error syncing Google Business profile.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // 1. Render Connected Business State
   if (value && value.trim() && !isChanging) {
     const isUrl = value.trim().startsWith('http://') || value.trim().startsWith('https://');
@@ -246,7 +278,20 @@ export function TenantGmbConnector({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-1 sm:pt-0 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 pt-1 sm:pt-0 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSyncing}
+                onClick={handleSyncGmb}
+                className="h-8 text-xs gap-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
+                title="Immediately refresh Google Place media and reviews"
+              >
+                <RefreshCw className={cn('w-3.5 h-3.5', isSyncing && 'animate-spin text-emerald-600')} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync GMB Photos Now'}</span>
+              </Button>
+
               <a
                 href={mapsUrl}
                 target="_blank"

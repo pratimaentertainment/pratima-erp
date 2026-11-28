@@ -1,6 +1,8 @@
 'use server';
 
 import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { GmbService } from '@/services/marketing/gmb.service';
 
 /**
@@ -435,6 +437,98 @@ export async function getPlaceDetailsAction(placeId: string): Promise<{
     return {
       success: false,
       error: error.message || 'Failed to fetch place details.',
+    };
+  }
+}
+
+/**
+ * Server action to immediately synchronize Google Business media, reviews, and canonical Place ID.
+ * Resolves raw URLs to canonical ChIJ... IDs, refreshes Next.js edge cache tags, and fetches fresh data.
+ */
+export async function syncTenantGmbMediaAction(): Promise<{
+  success: boolean;
+  data?: {
+    placeId: string;
+    name?: string;
+    rating?: number;
+    userRatingCount?: number;
+    photoCount: number;
+    reviewCount: number;
+  };
+  error?: string;
+}> {
+  try {
+    const { tenantId } = await validateSession();
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, slug: true, gmbPlaceId: true, name: true },
+    });
+
+    if (!tenant) {
+      return { success: false, error: 'Tenant record not found.' };
+    }
+
+    if (!tenant.gmbPlaceId || tenant.gmbPlaceId.trim() === '') {
+      return {
+        success: false,
+        error: 'No Google My Business profile or location is currently connected to your studio.',
+      };
+    }
+
+    const currentPlaceId = tenant.gmbPlaceId.trim();
+    let resolvedCanonicalId = currentPlaceId;
+
+    // If currently stored as a URL, attempt to resolve canonical ChIJ... ID
+    const isUrl = currentPlaceId.startsWith('http://') || currentPlaceId.startsWith('https://');
+    if (isUrl) {
+      const resolution = await extractPlaceIdFromUrlAction(currentPlaceId);
+      if (resolution.success && resolution.data?.placeId && !resolution.data.placeId.startsWith('http')) {
+        resolvedCanonicalId = resolution.data.placeId;
+        // Persist the upgraded canonical ChIJ... Place ID
+        await prisma.tenant.update({
+          where: { id: tenant.id },
+          data: { gmbPlaceId: resolvedCanonicalId },
+        });
+      }
+    }
+
+    // Invalidate caches
+    try {
+      (revalidateTag as any)('gmb');
+      (revalidateTag as any)(`gmb-${currentPlaceId}`);
+      if (resolvedCanonicalId !== currentPlaceId) {
+        (revalidateTag as any)(`gmb-${resolvedCanonicalId}`);
+      }
+      revalidatePath('/[slug]', 'page');
+      if (tenant.slug) {
+        revalidatePath(`/${tenant.slug}`, 'page');
+      }
+      revalidatePath('/settings/tenant');
+      revalidatePath('/dashboard/settings/tenant');
+    } catch (cacheErr) {
+      console.warn('[GMB_SYNC_CACHE_REVALIDATE_WARN]', cacheErr);
+    }
+
+    // Fetch fresh place data directly from Google Places API
+    const freshData = await GmbService.fetchFreshPlaceData(resolvedCanonicalId);
+
+    return {
+      success: true,
+      data: {
+        placeId: resolvedCanonicalId,
+        name: freshData?.name || tenant.name,
+        rating: freshData?.rating,
+        userRatingCount: freshData?.userRatingCount,
+        photoCount: freshData?.photos?.length || 0,
+        reviewCount: freshData?.reviews?.length || 0,
+      },
+    };
+  } catch (error: any) {
+    console.error('[GMB_SYNC_ACTION_ERROR]', error?.message || error);
+    return {
+      success: false,
+      error: error?.message || 'Failed to sync Google Business profile.',
     };
   }
 }

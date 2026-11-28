@@ -412,6 +412,7 @@ model Tenant {
   defaultPromoVideoUrl       String?
   whyChooseUs                String[]           @default([])
   gmbPlaceId                 String?
+  storefrontMedia            Json?
   isActive                   Boolean            @default(true)
 
   subscriptions     Subscription[]

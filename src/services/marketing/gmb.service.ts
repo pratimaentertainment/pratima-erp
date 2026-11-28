@@ -111,7 +111,7 @@ class GoogleMyBusinessService {
         const rawPhotos: any[] = Array.isArray(data.photos) ? data.photos : [];
         const photos: GmbPhoto[] = rawPhotos.slice(0, 12).map((photo, idx) => {
           const photoName = photo.name; // e.g. "places/{placeId}/photos/{photoId}"
-          const mediaUrl = `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=1200&maxWidthPx=1600&key=${apiKey}`;
+          const mediaUrl = `/api/gmb/photo?name=${encodeURIComponent(photoName)}&maxWidth=1200`;
           return {
             id: photoName || `photo-${idx}`,
             url: mediaUrl,
@@ -167,7 +167,7 @@ class GoogleMyBusinessService {
           const rawPhotos: any[] = Array.isArray(result.photos) ? result.photos : [];
           const photos: GmbPhoto[] = rawPhotos.slice(0, 12).map((photo, idx) => ({
             id: photo.photo_reference || `leg-photo-${idx}`,
-            url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1600&photo_reference=${photo.photo_reference}&key=${apiKey}`,
+            url: `/api/gmb/photo?name=${encodeURIComponent(photo.photo_reference)}&maxWidth=1200`,
             width: photo.width,
             height: photo.height,
             attribution: photo.html_attributions?.[0] || null,
@@ -228,6 +228,16 @@ class GoogleMyBusinessService {
   /**
    * Fetch top 5 highest-rated reviews for a Place ID
    */
+  /**
+   * Fetch fresh uncached place data directly from Google (bypasses Next.js cache)
+   */
+  public async fetchFreshPlaceData(placeId: string | null | undefined): Promise<GmbPlaceData | null> {
+    if (!placeId) return null;
+    const cleanId = placeId.trim();
+    if (!cleanId) return null;
+    return this.fetchRawPlaceData(cleanId);
+  }
+
   public async fetchGmbReviews(placeId: string | null | undefined): Promise<GmbReview[]> {
     const data = await this.getPlaceData(placeId);
     return data?.reviews || [];

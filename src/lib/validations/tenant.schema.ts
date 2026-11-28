@@ -10,6 +10,25 @@ export const bankDetailsSchema = z.object({
   qrCodeUrl: z.string().optional().nullable().or(z.literal('')),
 }).optional().nullable();
 
+export const storefrontVideoItemSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1, 'Title is required').max(120),
+  url: z.string().url('Invalid video URL'),
+  category: z.enum(['Weddings', 'Pre-Wedding', 'Teasers', 'Reels', 'Other']).default('Weddings'),
+});
+
+export const storefrontFeaturedPhotoItemSchema = z.object({
+  id: z.string(),
+  title: z.string().max(120).optional().nullable(),
+  url: z.string().url('Invalid image URL'),
+  category: z.enum(['Weddings', 'Pre-Wedding', 'Portraits', 'Cinematic']).default('Weddings'),
+});
+
+export const storefrontMediaSchema = z.object({
+  videos: z.array(storefrontVideoItemSchema).max(6).default([]),
+  featuredPhotos: z.array(storefrontFeaturedPhotoItemSchema).max(12).default([]),
+}).optional().nullable();
+
 export const tenantUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   companyLegalName: z.string().max(100).optional().nullable(),
@@ -31,8 +50,13 @@ export const tenantUpdateSchema = z.object({
   language: z.string().min(1, 'Language is required'),
   fiscalYearStartMonth: z.coerce.number().min(1).max(12),
   gmbPlaceId: z.string().max(1000).optional().nullable().or(z.literal('')),
+  defaultPromoVideoUrl: z.string().url('Invalid video URL').optional().nullable().or(z.literal('')),
+  storefrontMedia: storefrontMediaSchema,
   bankDetails: bankDetailsSchema,
   isActive: z.boolean().default(true),
 });
 
 export type TenantUpdateInput = z.infer<typeof tenantUpdateSchema>;
+export type StorefrontVideoItem = z.infer<typeof storefrontVideoItemSchema>;
+export type StorefrontFeaturedPhotoItem = z.infer<typeof storefrontFeaturedPhotoItemSchema>;
+export type StorefrontMedia = z.infer<typeof storefrontMediaSchema>;

@@ -57,6 +57,13 @@ export interface StorefrontPortfolioItem {
   tag?: string;
 }
 
+export interface StorefrontVideo {
+  id: string;
+  title: string;
+  url: string;
+  category: string;
+}
+
 export interface StorefrontData {
   tenant: {
     id: string;
@@ -72,9 +79,11 @@ export interface StorefrontData {
     address: string | null;
     currency: string;
     gmbPlaceId?: string | null;
+    defaultPromoVideoUrl?: string | null;
   };
   packages: StorefrontPackage[];
   portfolioItems: StorefrontPortfolioItem[];
+  videos?: StorefrontVideo[];
   gmb?: {
     placeId: string;
     rating?: number;
@@ -89,58 +98,47 @@ interface StorefrontClientProps {
   data: StorefrontData;
 }
 
-// Curated public editorial showcase for photography studios (zero private database records or client photos)
-const DEFAULT_PORTFOLIO: StorefrontPortfolioItem[] = [
-  {
-    id: 'p-1',
-    title: 'Royal Palace Vows',
-    category: 'Weddings',
-    imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-    tag: 'Traditional & Candid',
-  },
-  {
-    id: 'p-2',
-    title: 'Sunset Coastline Reverie',
-    category: 'Pre-Wedding',
-    imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80',
-    tag: 'Golden Hour Pre-Wedding',
-  },
-  {
-    id: 'p-3',
-    title: 'The Sangeet Night Celebration',
-    category: 'Weddings',
-    imageUrl: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80',
-    tag: 'High-Energy Dance',
-  },
-  {
-    id: 'p-4',
-    title: 'Archival Bridal Portrait',
-    category: 'Portraits',
-    imageUrl: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=1200&q=80',
-    tag: 'Fine-Art Portrait',
-  },
-  {
-    id: 'p-5',
-    title: 'Cinematic Teaser & Drone Frames',
-    category: 'Cinematic',
-    imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80',
-    tag: '4K Cinema Reel',
-  },
-  {
-    id: 'p-6',
-    title: 'Sacred Pheras & Fireworks',
-    category: 'Weddings',
-    imageUrl: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=80',
-    tag: 'Ceremony Masterpiece',
-  },
-];
+/**
+ * Extracts embeddable video URL for YouTube links.
+ * Supports standard watch, youtu.be, embed, and shorts formats.
+ */
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/;
+  const match = url.match(regExp);
+  return match && match[1]
+    ? `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1`
+    : null;
+}
+
+/**
+ * Extracts embeddable URL for Instagram Reels / Posts.
+ */
+function getInstagramEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const match = url.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/);
+  return match && match[1] ? `https://www.instagram.com/reel/${match[1]}/embed` : null;
+}
 
 export function StorefrontClient({ data }: StorefrontClientProps) {
   const { tenant, packages, gmb } = data;
-  const portfolioList =
-    data.portfolioItems && data.portfolioItems.length > 0
-      ? data.portfolioItems
-      : DEFAULT_PORTFOLIO;
+  const portfolioList = data.portfolioItems || [];
+
+  // Assemble featured videos (primary promo video + studio videos)
+  const rawVideos = data.videos || [];
+  const allVideos: StorefrontVideo[] = [...rawVideos];
+  if (
+    tenant.defaultPromoVideoUrl &&
+    !allVideos.some((v) => v.url === tenant.defaultPromoVideoUrl)
+  ) {
+    allVideos.unshift({
+      id: 'promo-hero-vid',
+      title: 'Featured Studio Showcase',
+      url: tenant.defaultPromoVideoUrl,
+      category: 'Weddings',
+    });
+  }
+  const validVideos = allVideos.filter((v) => Boolean(v.url && v.url.trim()));
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [inquiryName, setInquiryName] = useState('');
@@ -207,9 +205,16 @@ export function StorefrontClient({ data }: StorefrontClientProps) {
             <a href="#about" className="hover:text-foreground transition-colors">
               About
             </a>
-            <a href="#portfolio" className="hover:text-foreground transition-colors">
-              Portfolio
-            </a>
+            {portfolioList.length > 0 && (
+              <a href="#portfolio" className="hover:text-foreground transition-colors">
+                Portfolio
+              </a>
+            )}
+            {validVideos.length > 0 && (
+              <a href="#films" className="hover:text-foreground transition-colors">
+                Films &amp; Reels
+              </a>
+            )}
             <a href="#google-gallery" className="hover:text-foreground transition-colors">
               Moments
             </a>
@@ -293,14 +298,27 @@ export function StorefrontClient({ data }: StorefrontClientProps) {
               <ArrowRight className="w-4 h-4" />
             </Link>
 
+            {validVideos.length > 0 && (
+              <a
+                href="#films"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'lg' }),
+                  'w-full sm:w-auto text-sm font-semibold rounded-full px-8 py-6 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm gap-2'
+                )}
+              >
+                <Film className="w-4 h-4 text-purple-400" />
+                <span>Watch Wedding Films</span>
+              </a>
+            )}
+
             <a
-              href="#portfolio"
+              href={portfolioList.length > 0 ? '#portfolio' : '#google-gallery'}
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
                 'w-full sm:w-auto text-sm font-semibold rounded-full px-8 py-6 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm'
               )}
             >
-              View Our Portfolio
+              <span>{portfolioList.length > 0 ? 'View Portfolio' : 'Moments on Google'}</span>
             </a>
           </div>
 
@@ -411,67 +429,166 @@ export function StorefrontClient({ data }: StorefrontClientProps) {
         </div>
       </section>
 
-      {/* 4. Portfolio Grid Section */}
-      <section id="portfolio" className="py-24 border-b border-border/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          {/* Section Header */}
-          <div className="text-center space-y-3 max-w-2xl mx-auto">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Curated Portfolio</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Our Signature Showcase
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Explore our recent wedding ceremonies, pre-wedding destination shoots, and cinematic film stills.
-            </p>
+      {/* 4. Portfolio Grid Section (Rendered only when custom portfolio photos are configured) */}
+      {portfolioList.length > 0 && (
+        <section id="portfolio" className="py-24 border-b border-border/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <div className="text-center space-y-3 max-w-2xl mx-auto">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Curated Portfolio</span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                Our Signature Showcase
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Explore our recent wedding ceremonies, pre-wedding destination shoots, and cinematic film stills.
+              </p>
 
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={cn(
-                    'text-xs font-semibold px-4 py-2 rounded-full transition-all',
-                    activeCategory === cat
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
+              {/* Category Filter Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={cn(
+                      'text-xs font-semibold px-4 py-2 rounded-full transition-all',
+                      activeCategory === cat
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Masonry / Grid of Works */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPortfolio.map((item) => (
+                <div
+                  key={item.id}
+                  className="group relative rounded-2xl overflow-hidden border border-border/80 bg-card shadow-xs aspect-4/5 cursor-pointer"
                 >
-                  {cat}
-                </button>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+
+                  {/* Content Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 space-y-1.5 text-white">
+                    <Badge variant="secondary" className="bg-white/20 text-white text-[10px] uppercase font-bold border-none backdrop-blur-xs">
+                      {item.category}
+                    </Badge>
+                    <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                    {item.tag && <p className="text-xs text-slate-300">{item.tag}</p>}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
+        </section>
+      )}
 
-          {/* Masonry / Grid of Works */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPortfolio.map((item) => (
-              <div
-                key={item.id}
-                className="group relative rounded-2xl overflow-hidden border border-border/80 bg-card shadow-xs aspect-4/5 cursor-pointer"
-              >
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-1.5 text-white">
-                  <Badge variant="secondary" className="bg-white/20 text-white text-[10px] uppercase font-bold border-none backdrop-blur-xs">
-                    {item.category}
-                  </Badge>
-                  <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                  {item.tag && <p className="text-xs text-slate-300">{item.tag}</p>}
-                </div>
+      {/* 4.5 Featured Wedding Films & Reels Showcase */}
+      {validVideos.length > 0 && (
+        <section id="films" className="py-24 border-b border-border/60 bg-muted/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <div className="text-center space-y-3 max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold border border-purple-500/20">
+                <Film className="w-3.5 h-3.5 text-purple-500" />
+                <span>Cinematic Cinema &amp; Reels</span>
               </div>
-            ))}
+
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                Featured Wedding Films &amp; Teasers
+              </h2>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Handcrafted wedding cinematography, audio vows, and emotional motion highlights preserved by{' '}
+                <strong className="text-foreground">{tenant.name}</strong>.
+              </p>
+            </div>
+
+            {/* Videos Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {validVideos.map((video, idx) => {
+                const ytEmbed = getYouTubeEmbedUrl(video.url);
+                const igEmbed = getInstagramEmbedUrl(video.url);
+
+                return (
+                  <div
+                    key={video.id || `vid-${idx}`}
+                    className="group rounded-2xl overflow-hidden border border-border/80 bg-card shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col"
+                  >
+                    <div className="relative aspect-video w-full bg-black/90 overflow-hidden flex items-center justify-center">
+                      {ytEmbed ? (
+                        <iframe
+                          src={ytEmbed}
+                          title={video.title || `Featured Film ${idx + 1}`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                        />
+                      ) : igEmbed ? (
+                        <iframe
+                          src={igEmbed}
+                          title={video.title || `Instagram Reel ${idx + 1}`}
+                          className="w-full h-full border-0"
+                          allowFullScreen
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-6 text-center space-y-2">
+                          <Film className="w-10 h-10 text-purple-400" />
+                          <a
+                            href={video.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-full font-semibold transition-colors"
+                          >
+                            <span>Watch Cinema Film</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 space-y-1.5 flex-1 flex flex-col justify-between">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] uppercase font-bold tracking-wider bg-purple-500/10 text-purple-700 dark:text-purple-300 border-none"
+                        >
+                          {video.category || 'Cinema'}
+                        </Badge>
+                        <a
+                          href={video.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 transition-colors"
+                          title="Open video in new tab"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                        {video.title || 'Wedding Film Highlights'}
+                      </h3>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 4.5 Google My Business Live Public Gallery (If available) */}
       <StorefrontGmbGallery

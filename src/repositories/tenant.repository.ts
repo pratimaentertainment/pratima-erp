@@ -9,12 +9,13 @@ export class TenantRepository {
   }
 
   static async updateTenantProfile(tenantId: string, data: TenantUpdateInput) {
-    const { bankDetails, ...rest } = data;
+    const { bankDetails, storefrontMedia, ...rest } = data;
     return prisma.tenant.update({
       where: { id: tenantId },
       data: {
         ...rest,
         bankDetails: bankDetails !== undefined ? (bankDetails as any) : undefined,
+        storefrontMedia: storefrontMedia !== undefined ? (storefrontMedia as any) : undefined,
       },
     });
   }
